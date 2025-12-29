@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio Signal Test v3</title>
+    <title>Audio Signal Test v4</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -34,29 +34,37 @@
         }
         
         .section {
-            margin-bottom: 1rem;
-            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+            padding: 0.6rem;
             border: 1px solid #333;
         }
         
+        .section.tx { border-color: #0a0; }
+        .section.rx { border-color: #0aa; }
+        
         .section-title {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: #666;
             text-transform: uppercase;
             letter-spacing: 0.1em;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
         }
+        
+        .section.tx .section-title { color: #0f0; }
+        .section.rx .section-title { color: #0ff; }
         
         .row {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            margin-bottom: 0.4rem;
-            font-size: 0.75rem;
+            margin-bottom: 0.35rem;
+            font-size: 0.7rem;
         }
         
-        .row label { color: #888; min-width: 70px; }
-        .row .value { color: #fff; font-weight: bold; }
+        .row label { color: #888; min-width: 50px; }
         
         input[type="range"] {
             flex: 1;
@@ -68,25 +76,28 @@
         
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             background: #fff;
             cursor: pointer;
             border-radius: 50%;
         }
         
-        input[type="number"], input[type="text"] {
-            width: 70px;
+        .section.tx input[type="range"]::-webkit-slider-thumb { background: #0f0; }
+        .section.rx input[type="range"]::-webkit-slider-thumb { background: #0ff; }
+        
+        input[type="number"] {
+            width: 60px;
             background: #111;
             border: 1px solid #444;
             color: #fff;
-            padding: 0.3rem 0.4rem;
+            padding: 0.25rem 0.3rem;
             font-family: inherit;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             text-align: center;
         }
         
-        input[type="number"]:focus, input[type="text"]:focus {
+        input[type="number"]:focus {
             outline: none;
             border-color: #fff;
         }
@@ -94,12 +105,12 @@
         .toggle-group {
             display: flex;
             gap: 0;
+            margin-left: auto;
         }
         
         .toggle-btn {
-            flex: 1;
-            padding: 0.4rem 0.5rem;
-            font-size: 0.65rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.6rem;
             font-family: inherit;
             text-transform: uppercase;
             background: #222;
@@ -112,81 +123,106 @@
         .toggle-btn:last-child { border-radius: 0 3px 3px 0; border-left: none; }
         .toggle-btn.active { background: #fff; color: #000; border-color: #fff; }
         
+        .range-display {
+            font-size: 0.6rem;
+            color: #666;
+            margin-left: auto;
+        }
+        
+        .section.tx .range-display { color: #0a0; }
+        .section.rx .range-display { color: #0aa; }
+        
+        .hz { font-size: 0.6rem; color: #666; }
+        
         .indicators {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 1rem;
-            margin: 0.75rem 0;
+            gap: 1.5rem;
+            margin: 0.5rem 0;
         }
         
         .indicator {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 0.4rem;
-            font-size: 0.65rem;
+            gap: 0.25rem;
+            font-size: 0.6rem;
             color: #666;
         }
         
         .dot {
-            width: 10px;
-            height: 10px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
-            background: #333;
-            border: 1px solid #555;
+            background: #222;
+            border: 1px solid #444;
             transition: all 0.1s;
         }
         
-        .dot.tx-active { background: #0f0; box-shadow: 0 0 10px #0f0; }
-        .dot.rx-active { background: #0ff; box-shadow: 0 0 10px #0ff; }
-        .dot.rx-ignored { background: #f80; box-shadow: 0 0 10px #f80; }
+        .dot.tx-on { background: #0f0; box-shadow: 0 0 10px #0f0; }
+        .dot.rx-on { background: #0ff; box-shadow: 0 0 10px #0ff; }
+        .dot.ign-on { background: #f80; box-shadow: 0 0 8px #f80; }
+        .dot.out-on { background: #808; box-shadow: 0 0 8px #808; }
         
         .stats {
             display: flex;
             justify-content: space-around;
-            font-size: 0.7rem;
-            margin-top: 0.5rem;
+            font-size: 0.65rem;
+            padding: 0.5rem 0;
         }
         
         .stat { text-align: center; }
-        .stat .num { font-size: 1.2rem; font-weight: bold; }
-        .stat .lbl { color: #666; font-size: 0.6rem; }
+        .stat .num { font-size: 1.1rem; font-weight: bold; }
+        .stat .lbl { color: #666; font-size: 0.55rem; }
+        .stat.tx .num { color: #0f0; }
+        .stat.rx .num { color: #0ff; }
+        .stat.ign .num { color: #f80; }
+        .stat.out .num { color: #808; }
         
-        .freq-display {
+        .detection-info {
             text-align: center;
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             color: #555;
-            margin-top: 0.5rem;
-            min-height: 1.2em;
+            min-height: 1.1em;
+            padding: 0.25rem 0;
         }
         
         .log-panel {
-            height: 100px;
+            height: 80px;
             overflow-y: auto;
-            background: #0a0a0a;
-            padding: 0.5rem;
-            font-size: 0.65rem;
+            background: #050505;
+            padding: 0.4rem;
+            font-size: 0.6rem;
             border: 1px solid #222;
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
         }
         
-        .log-entry { margin-bottom: 0.2rem; color: #666; }
-        .log-entry.signal { color: #0ff; }
+        .log-entry { margin-bottom: 0.15rem; color: #555; }
+        .log-entry.rx { color: #0ff; }
         .log-entry.tx { color: #0f0; }
-        .log-entry.ignored { color: #f80; }
-        .log-entry.error { color: #f00; }
-        .log-entry .ts { color: #444; margin-right: 0.3rem; }
+        .log-entry.ign { color: #f80; }
+        .log-entry.out { color: #808; }
+        .log-entry.err { color: #f00; }
+        .log-entry .ts { color: #333; margin-right: 0.25rem; }
         
-        .button-row {
-            display: flex;
-            gap: 0.5rem;
+        .timer {
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin: 0.3rem 0;
         }
+        
+        .timer.active { animation: pulse 1s infinite; }
+        @keyframes pulse { 50% { opacity: 0.4; } }
+        
+        .button-row { display: flex; gap: 0.5rem; }
         
         button.main-btn {
             flex: 1;
-            padding: 0.75rem;
+            padding: 0.6rem;
             font-family: inherit;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 0.1em;
             cursor: pointer;
@@ -196,7 +232,7 @@
         
         .btn-init { background: #fff; color: #000; }
         .btn-test { background: #0f0; color: #000; }
-        .btn-reset { background: transparent; color: #fff; border: 1px solid #fff !important; }
+        .btn-reset { background: transparent; color: #fff; border: 1px solid #555 !important; }
         
         button.main-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
         button.main-btn:hover:not(:disabled) { opacity: 0.8; }
@@ -204,7 +240,7 @@
         .progress {
             height: 2px;
             background: #222;
-            margin-top: 1rem;
+            margin-top: 0.75rem;
         }
         
         .progress-fill {
@@ -213,86 +249,71 @@
             width: 0%;
             transition: width 0.1s;
         }
-        
-        .timer {
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin: 0.5rem 0;
-        }
-        
-        .timer.active { animation: pulse 1s infinite; }
-        @keyframes pulse { 50% { opacity: 0.4; } }
-        
-        .hz { font-size: 0.65rem; color: #666; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Audio Signal Test v3</h1>
+        <h1>Audio Signal Test v4</h1>
         
-        <!-- Frequency Settings -->
-        <div class="section">
-            <div class="section-title">Transmit Frequency</div>
+        <!-- TX Settings -->
+        <div class="section tx">
+            <div class="section-title">▲ Transmit</div>
             <div class="row">
-                <input type="range" id="freq-slider" min="500" max="8000" step="100" value="1800">
-                <input type="number" id="freq-input" value="1800" min="100" max="22000" step="100">
+                <label>Freq</label>
+                <input type="range" id="tx-slider" min="500" max="8000" step="100" value="1800">
+                <input type="number" id="tx-input" value="1800" min="100" max="22000" step="100">
                 <span class="hz">Hz</span>
             </div>
-            <div class="row" style="margin-top: 0.5rem;">
-                <label>Mode</label>
-                <div class="toggle-group">
-                    <button class="toggle-btn active" id="btn-audible" onclick="setMode('audible')">Audible</button>
-                    <button class="toggle-btn" id="btn-inaudible" onclick="setMode('inaudible')">Ultrasonic</button>
-                </div>
+            <div class="row">
+                <label>Ignore ±</label>
+                <input type="number" id="tx-ignore" value="150" min="0" max="2000" step="50" style="width:50px;">
+                <span class="hz">Hz</span>
+                <span class="range-display" id="tx-range-display"></span>
             </div>
         </div>
         
-        <!-- Ignore Range -->
-        <div class="section">
-            <div class="section-title">Ignore Range (own signal filter)</div>
+        <!-- RX Settings -->
+        <div class="section rx">
+            <div class="section-title">▼ Receive Target</div>
             <div class="row">
-                <label>± Range</label>
-                <input type="number" id="ignore-range" value="150" min="0" max="2000" step="50">
+                <label>Freq</label>
+                <input type="range" id="rx-slider" min="500" max="8000" step="100" value="2400">
+                <input type="number" id="rx-input" value="2400" min="100" max="22000" step="100">
                 <span class="hz">Hz</span>
-                <span class="value" id="ignore-display" style="margin-left: auto; font-size: 0.65rem; color: #f80;"></span>
+            </div>
+            <div class="row">
+                <label>Range ±</label>
+                <input type="number" id="rx-range" value="200" min="50" max="2000" step="50" style="width:50px;">
+                <span class="hz">Hz</span>
+                <span class="range-display" id="rx-range-display"></span>
+            </div>
+        </div>
+        
+        <!-- Mode Toggle -->
+        <div class="row" style="justify-content: center; margin: 0.5rem 0;">
+            <span class="hz" style="margin-right: 0.5rem;">Mode:</span>
+            <div class="toggle-group">
+                <button class="toggle-btn active" id="btn-audible" onclick="setMode('audible')">Audible</button>
+                <button class="toggle-btn" id="btn-ultra" onclick="setMode('ultra')">Ultrasonic</button>
             </div>
         </div>
         
         <!-- Status -->
-        <div class="section">
-            <div class="indicators">
-                <div class="indicator">
-                    <span>TX</span>
-                    <div class="dot" id="tx-dot"></div>
-                </div>
-                <div class="indicator">
-                    <span>RX</span>
-                    <div class="dot" id="rx-dot"></div>
-                </div>
-                <div class="indicator">
-                    <span>IGN</span>
-                    <div class="dot" id="ign-dot"></div>
-                </div>
-            </div>
-            
-            <div class="stats">
-                <div class="stat">
-                    <div class="num" id="sent-count">0</div>
-                    <div class="lbl">SENT</div>
-                </div>
-                <div class="stat">
-                    <div class="num" id="recv-count">0</div>
-                    <div class="lbl">RECEIVED</div>
-                </div>
-                <div class="stat">
-                    <div class="num" id="ignored-count">0</div>
-                    <div class="lbl">IGNORED</div>
-                </div>
-            </div>
-            
-            <div class="freq-display" id="detection-info">—</div>
+        <div class="indicators">
+            <div class="indicator"><div class="dot" id="tx-dot"></div><span>TX</span></div>
+            <div class="indicator"><div class="dot" id="rx-dot"></div><span>RX</span></div>
+            <div class="indicator"><div class="dot" id="ign-dot"></div><span>IGN</span></div>
+            <div class="indicator"><div class="dot" id="out-dot"></div><span>OUT</span></div>
         </div>
+        
+        <div class="stats">
+            <div class="stat tx"><div class="num" id="sent-count">0</div><div class="lbl">SENT</div></div>
+            <div class="stat rx"><div class="num" id="recv-count">0</div><div class="lbl">RECV</div></div>
+            <div class="stat ign"><div class="num" id="ign-count">0</div><div class="lbl">IGNORED</div></div>
+            <div class="stat out"><div class="num" id="out-count">0</div><div class="lbl">OUT-OF-RANGE</div></div>
+        </div>
+        
+        <div class="detection-info" id="detection-info">—</div>
         
         <div class="timer" id="timer">00:10</div>
         
@@ -304,71 +325,41 @@
             <button class="main-btn btn-reset" onclick="resetAll()">↻</button>
         </div>
         
-        <div class="progress">
-            <div class="progress-fill" id="progress"></div>
-        </div>
+        <div class="progress"><div class="progress-fill" id="progress"></div></div>
     </div>
 
     <script>
-        // ============================================
-        // AUDIO SIGNAL TEST v3
-        // Multi-device frequency testing
-        // ============================================
-        
         // Config
-        const AUDIBLE_MIN = 500, AUDIBLE_MAX = 8000;
-        const ULTRA_MIN = 18000, ULTRA_MAX = 21000;
+        const AUDIBLE = [500, 8000], ULTRA = [18000, 21000];
         const FFT_SIZE = 4096;
-        const DETECT_THRESHOLD = 20;
-        const POWER_THRESHOLD = 40;
+        const DETECT_THRESHOLD = 18;
+        const POWER_THRESHOLD = 45;
         
         // State
-        let audioCtx = null;
-        let analyser = null;
-        let oscillator = null;
-        let gainNode = null;
-        let micStream = null;
-        let detectInterval = null;
-        let testInterval = null;
+        let audioCtx, analyser, oscillator, gainNode, micStream;
+        let detectInterval, testInterval;
+        let isInit = false, isRunning = false, isSending = false;
+        let mode = 'audible';
         
-        let isInitialized = false;
-        let isTestRunning = false;
-        let isSending = false;
-        let currentMode = 'audible';
-        
-        let sendFreq = 1800;
-        let ignoreRange = 150;
-        let timeRemaining = 10;
-        let sentCount = 0;
-        let recvCount = 0;
-        let ignoredCount = 0;
-        let lastDetectedFreq = 0;
-        let lastDetectionTime = 0;
+        let txFreq = 1800, txIgnore = 150;
+        let rxFreq = 2400, rxRange = 200;
+        let timeLeft = 10;
+        let sent = 0, recv = 0, ign = 0, out = 0;
+        let lastDetectTime = 0, lastDetectFreq = 0;
         
         // DOM
         const $ = id => document.getElementById(id);
-        const elSlider = $('freq-slider');
-        const elFreqInput = $('freq-input');
-        const elIgnoreRange = $('ignore-range');
-        const elIgnoreDisplay = $('ignore-display');
-        const elTxDot = $('tx-dot');
-        const elRxDot = $('rx-dot');
-        const elIgnDot = $('ign-dot');
-        const elSent = $('sent-count');
-        const elRecv = $('recv-count');
-        const elIgnored = $('ignored-count');
-        const elDetectionInfo = $('detection-info');
-        const elTimer = $('timer');
-        const elLog = $('log');
-        const elProgress = $('progress');
-        const elBtnInit = $('btn-init');
-        const elBtnTest = $('btn-test');
+        const elTxSlider = $('tx-slider'), elTxInput = $('tx-input'), elTxIgnore = $('tx-ignore');
+        const elRxSlider = $('rx-slider'), elRxInput = $('rx-input'), elRxRange = $('rx-range');
+        const elTxRangeDisp = $('tx-range-display'), elRxRangeDisp = $('rx-range-display');
+        const elTxDot = $('tx-dot'), elRxDot = $('rx-dot'), elIgnDot = $('ign-dot'), elOutDot = $('out-dot');
+        const elSent = $('sent-count'), elRecv = $('recv-count'), elIgn = $('ign-count'), elOut = $('out-count');
+        const elInfo = $('detection-info'), elTimer = $('timer'), elLog = $('log'), elProgress = $('progress');
+        const elBtnInit = $('btn-init'), elBtnTest = $('btn-test');
         
-        // Logging
+        // Helpers
         function log(msg, type = '') {
-            const ts = new Date().toLocaleTimeString('en-US', { 
-                hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' 
-            });
+            const ts = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
             const el = document.createElement('div');
             el.className = `log-entry ${type}`;
             el.innerHTML = `<span class="ts">[${ts}]</span>${msg}`;
@@ -376,310 +367,279 @@
             elLog.scrollTop = elLog.scrollHeight;
         }
         
-        // Update displays
-        function updateIgnoreDisplay() {
-            const lo = sendFreq - ignoreRange;
-            const hi = sendFreq + ignoreRange;
-            elIgnoreDisplay.textContent = `Ignoring ${lo}-${hi} Hz`;
-        }
-        
-        function updateTimer(sec) {
-            const m = Math.floor(sec / 60).toString().padStart(2, '0');
-            const s = (sec % 60).toString().padStart(2, '0');
+        function updateTimer() {
+            const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const s = (timeLeft % 60).toString().padStart(2, '0');
             elTimer.textContent = `${m}:${s}`;
         }
         
-        // Frequency controls
-        function setFrequency(freq) {
-            freq = Math.round(freq / 100) * 100; // Snap to 100Hz
-            const [min, max] = currentMode === 'audible' 
-                ? [AUDIBLE_MIN, AUDIBLE_MAX] 
-                : [ULTRA_MIN, ULTRA_MAX];
-            freq = Math.max(min, Math.min(max, freq));
-            
-            sendFreq = freq;
-            elSlider.value = freq;
-            elFreqInput.value = freq;
-            updateIgnoreDisplay();
-            
-            if (oscillator) {
-                oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            }
+        function flashDot(el, cls, dur = 250) {
+            el.classList.add(cls);
+            setTimeout(() => el.classList.remove(cls), dur);
         }
         
-        function setMode(mode) {
-            currentMode = mode;
-            $('btn-audible').classList.toggle('active', mode === 'audible');
-            $('btn-inaudible').classList.toggle('active', mode === 'inaudible');
-            
-            const [min, max] = mode === 'audible' 
-                ? [AUDIBLE_MIN, AUDIBLE_MAX] 
-                : [ULTRA_MIN, ULTRA_MAX];
-            
-            elSlider.min = min;
-            elSlider.max = max;
-            
-            // Set default for mode
-            const defaultFreq = mode === 'audible' ? 1800 : 19000;
-            setFrequency(defaultFreq);
-            
-            log(`Mode: ${mode} (${min}-${max} Hz)`);
+        function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+        function snap(v, step = 100) { return Math.round(v / step) * step; }
+        
+        // Frequency updates
+        function updateTx(freq) {
+            const [min, max] = mode === 'audible' ? AUDIBLE : ULTRA;
+            txFreq = snap(clamp(freq, min, max));
+            elTxSlider.value = txFreq;
+            elTxInput.value = txFreq;
+            elTxRangeDisp.textContent = `Ign: ${txFreq - txIgnore}–${txFreq + txIgnore}`;
+            if (oscillator) oscillator.frequency.setValueAtTime(txFreq, audioCtx.currentTime);
         }
         
-        // Event listeners for frequency controls
-        elSlider.addEventListener('input', () => setFrequency(parseInt(elSlider.value)));
-        elFreqInput.addEventListener('change', () => setFrequency(parseInt(elFreqInput.value)));
-        elIgnoreRange.addEventListener('change', () => {
-            ignoreRange = parseInt(elIgnoreRange.value) || 0;
-            updateIgnoreDisplay();
-        });
+        function updateRx(freq) {
+            const [min, max] = mode === 'audible' ? AUDIBLE : ULTRA;
+            rxFreq = snap(clamp(freq, min, max));
+            elRxSlider.value = rxFreq;
+            elRxInput.value = rxFreq;
+            elRxRangeDisp.textContent = `Listen: ${rxFreq - rxRange}–${rxFreq + rxRange}`;
+        }
         
-        // Initialize
+        function updateTxIgnore(v) {
+            txIgnore = parseInt(v) || 0;
+            elTxRangeDisp.textContent = `Ign: ${txFreq - txIgnore}–${txFreq + txIgnore}`;
+        }
+        
+        function updateRxRange(v) {
+            rxRange = parseInt(v) || 50;
+            elRxRangeDisp.textContent = `Listen: ${rxFreq - rxRange}–${rxFreq + rxRange}`;
+        }
+        
+        function setMode(m) {
+            mode = m;
+            $('btn-audible').classList.toggle('active', m === 'audible');
+            $('btn-ultra').classList.toggle('active', m === 'ultra');
+            
+            const [min, max] = m === 'audible' ? AUDIBLE : ULTRA;
+            elTxSlider.min = elRxSlider.min = min;
+            elTxSlider.max = elRxSlider.max = max;
+            
+            const defTx = m === 'audible' ? 1800 : 19000;
+            const defRx = m === 'audible' ? 2400 : 19500;
+            updateTx(defTx);
+            updateRx(defRx);
+            log(`Mode: ${m} (${min}–${max}Hz)`);
+        }
+        
+        // Event listeners
+        elTxSlider.oninput = () => updateTx(parseInt(elTxSlider.value));
+        elTxInput.onchange = () => updateTx(parseInt(elTxInput.value));
+        elTxIgnore.onchange = () => updateTxIgnore(elTxIgnore.value);
+        elRxSlider.oninput = () => updateRx(parseInt(elRxSlider.value));
+        elRxInput.onchange = () => updateRx(parseInt(elRxInput.value));
+        elRxRange.onchange = () => updateRxRange(elRxRange.value);
+        
+        // Init
         async function init() {
-            if (isInitialized) return;
-            
+            if (isInit) return;
             elBtnInit.disabled = true;
             log('Initializing...');
             
             try {
-                // AudioContext
                 const AC = window.AudioContext || window.webkitAudioContext;
                 audioCtx = new AC({ sampleRate: 44100 });
                 if (audioCtx.state === 'suspended') await audioCtx.resume();
                 log(`AudioContext: ${audioCtx.sampleRate}Hz`);
                 
-                // Microphone
                 micStream = await navigator.mediaDevices.getUserMedia({
                     audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
                 });
-                log('Microphone ready ✓', 'signal');
+                log('Mic ready ✓', 'rx');
                 
-                // Analyser
                 analyser = audioCtx.createAnalyser();
                 analyser.fftSize = FFT_SIZE;
                 analyser.smoothingTimeConstant = 0.4;
-                const source = audioCtx.createMediaStreamSource(micStream);
-                source.connect(analyser);
+                audioCtx.createMediaStreamSource(micStream).connect(analyser);
                 
-                // Oscillator
                 gainNode = audioCtx.createGain();
                 gainNode.gain.value = 0;
                 gainNode.connect(audioCtx.destination);
                 
                 oscillator = audioCtx.createOscillator();
                 oscillator.type = 'sine';
-                oscillator.frequency.value = sendFreq;
+                oscillator.frequency.value = txFreq;
                 oscillator.connect(gainNode);
                 oscillator.start();
                 
-                // Start detection
                 startDetection();
                 
-                isInitialized = true;
+                isInit = true;
                 elBtnInit.style.display = 'none';
                 elBtnTest.style.display = 'block';
-                updateIgnoreDisplay();
                 
-                log('═══════════════════', 'signal');
-                log('READY', 'signal');
-                log(`TX: ${sendFreq}Hz`, 'signal');
-                log('═══════════════════', 'signal');
+                log('════════════════', 'rx');
+                log('READY', 'rx');
+                log(`TX: ${txFreq}Hz → RX: ${rxFreq}Hz`, 'rx');
+                log('════════════════', 'rx');
                 
-            } catch (err) {
-                log(`ERROR: ${err.message}`, 'error');
+            } catch (e) {
+                log(`ERROR: ${e.message}`, 'err');
                 elBtnInit.disabled = false;
             }
         }
         
         // Detection
         function startDetection() {
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-            const binWidth = audioCtx.sampleRate / analyser.fftSize;
+            const bufLen = analyser.frequencyBinCount;
+            const data = new Uint8Array(bufLen);
+            const binW = audioCtx.sampleRate / analyser.fftSize;
             
             detectInterval = setInterval(() => {
-                if (!analyser || isSending) {
-                    elDetectionInfo.textContent = isSending ? `TX: ${sendFreq}Hz` : '—';
+                if (!analyser) return;
+                
+                // Pause detection briefly while sending
+                if (isSending) {
+                    elInfo.textContent = `TX: ${txFreq}Hz`;
                     return;
                 }
                 
-                analyser.getByteFrequencyData(dataArray);
+                analyser.getByteFrequencyData(data);
                 
-                // Find peak frequency above threshold
-                let maxPower = 0;
-                let maxBin = 0;
+                // Scan range
+                const [sMin, sMax] = mode === 'audible' ? AUDIBLE : ULTRA;
+                const startBin = Math.floor(sMin / binW);
+                const endBin = Math.ceil(sMax / binW);
                 
-                // Scan relevant frequency range
-                const scanMin = currentMode === 'audible' ? AUDIBLE_MIN : ULTRA_MIN;
-                const scanMax = currentMode === 'audible' ? AUDIBLE_MAX : ULTRA_MAX;
-                const startBin = Math.floor(scanMin / binWidth);
-                const endBin = Math.ceil(scanMax / binWidth);
-                
-                // Calculate noise floor
+                // Noise floor
                 let sum = 0;
-                for (let i = startBin; i < endBin; i++) sum += dataArray[i];
-                const avgPower = sum / (endBin - startBin);
+                for (let i = startBin; i < endBin; i++) sum += data[i];
+                const avg = sum / (endBin - startBin);
                 
-                // Find peak
+                // Peak
+                let maxP = 0, maxB = 0;
                 for (let i = startBin; i < endBin; i++) {
-                    if (dataArray[i] > maxPower) {
-                        maxPower = dataArray[i];
-                        maxBin = i;
-                    }
+                    if (data[i] > maxP) { maxP = data[i]; maxB = i; }
                 }
                 
-                const peakFreq = Math.round(maxBin * binWidth);
-                const snr = maxPower - avgPower;
+                const peakFreq = Math.round(maxB * binW);
+                const snr = maxP - avg;
                 
-                // Update display
-                elDetectionInfo.textContent = `Peak: ${peakFreq}Hz (${maxPower}) | Avg: ${avgPower.toFixed(0)} | SNR: ${snr.toFixed(0)}`;
+                elInfo.textContent = `Peak: ${peakFreq}Hz | Pwr: ${maxP} | SNR: ${snr.toFixed(0)}`;
                 
-                // Check if signal detected
-                if (snr > DETECT_THRESHOLD && maxPower > POWER_THRESHOLD) {
-                    const ignoreMin = sendFreq - ignoreRange;
-                    const ignoreMax = sendFreq + ignoreRange;
-                    const inIgnoreRange = peakFreq >= ignoreMin && peakFreq <= ignoreMax;
-                    
-                    // Debounce - only count new signals (300ms gap)
+                // Signal detected?
+                if (snr > DETECT_THRESHOLD && maxP > POWER_THRESHOLD) {
                     const now = Date.now();
-                    const isNewSignal = (now - lastDetectionTime > 300) || 
-                                       (Math.abs(peakFreq - lastDetectedFreq) > 200);
+                    const isNew = (now - lastDetectTime > 250) || (Math.abs(peakFreq - lastDetectFreq) > 150);
                     
-                    if (isNewSignal) {
-                        lastDetectionTime = now;
-                        lastDetectedFreq = peakFreq;
+                    // Ranges
+                    const inIgnore = peakFreq >= (txFreq - txIgnore) && peakFreq <= (txFreq + txIgnore);
+                    const inTarget = peakFreq >= (rxFreq - rxRange) && peakFreq <= (rxFreq + rxRange);
+                    
+                    if (isNew) {
+                        lastDetectTime = now;
+                        lastDetectFreq = peakFreq;
                         
-                        if (inIgnoreRange) {
-                            // Ignored (own signal)
-                            ignoredCount++;
-                            elIgnored.textContent = ignoredCount;
-                            flashDot(elIgnDot, 'rx-ignored');
-                            log(`IGN: ${peakFreq}Hz (in ignore range)`, 'ignored');
+                        if (inIgnore) {
+                            ign++;
+                            elIgn.textContent = ign;
+                            flashDot(elIgnDot, 'ign-on');
+                            log(`IGN: ${peakFreq}Hz (own TX range)`, 'ign');
+                        } else if (inTarget) {
+                            recv++;
+                            elRecv.textContent = recv;
+                            flashDot(elRxDot, 'rx-on');
+                            log(`RX: ${peakFreq}Hz ✓`, 'rx');
                         } else {
-                            // Valid received signal
-                            recvCount++;
-                            elRecv.textContent = recvCount;
-                            flashDot(elRxDot, 'rx-active');
-                            log(`RX: ${peakFreq}Hz (SNR: ${snr.toFixed(0)})`, 'signal');
+                            out++;
+                            elOut.textContent = out;
+                            flashDot(elOutDot, 'out-on');
+                            log(`OUT: ${peakFreq}Hz (not in target)`, 'out');
                         }
                     } else {
-                        // Continuous signal - just show indicator
-                        if (inIgnoreRange) {
-                            elIgnDot.classList.add('rx-ignored');
-                            elRxDot.classList.remove('rx-active');
-                        } else {
-                            elRxDot.classList.add('rx-active');
-                            elIgnDot.classList.remove('rx-ignored');
-                        }
+                        // Continuous - show indicator
+                        elIgnDot.classList.toggle('ign-on', inIgnore);
+                        elRxDot.classList.toggle('rx-on', !inIgnore && inTarget);
+                        elOutDot.classList.toggle('out-on', !inIgnore && !inTarget);
                     }
                 } else {
-                    elRxDot.classList.remove('rx-active');
-                    elIgnDot.classList.remove('rx-ignored');
+                    elRxDot.classList.remove('rx-on');
+                    elIgnDot.classList.remove('ign-on');
+                    elOutDot.classList.remove('out-on');
                 }
-                
-            }, 80);
-        }
-        
-        function flashDot(el, className) {
-            el.classList.add(className);
-            setTimeout(() => el.classList.remove(className), 300);
+            }, 70);
         }
         
         // Transmit
-        function sendTone(durationMs) {
+        function sendTone(dur) {
             if (!gainNode) return;
-            
             isSending = true;
-            elTxDot.classList.add('tx-active');
+            elTxDot.classList.add('tx-on');
             gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
             
             setTimeout(() => {
                 gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-                elTxDot.classList.remove('tx-active');
-                // Small delay before allowing detection again
-                setTimeout(() => { isSending = false; }, 100);
-            }, durationMs);
+                elTxDot.classList.remove('tx-on');
+                setTimeout(() => { isSending = false; }, 80);
+            }, dur);
         }
         
         function sendSignal() {
-            sentCount++;
-            elSent.textContent = sentCount;
-            log(`TX: Signal #${sentCount} @ ${sendFreq}Hz`, 'tx');
-            sendTone(400);
+            sent++;
+            elSent.textContent = sent;
+            log(`TX: #${sent} @ ${txFreq}Hz`, 'tx');
+            sendTone(350);
         }
         
         // Test
         function startTest() {
-            if (!isInitialized || isTestRunning) return;
-            
-            isTestRunning = true;
-            timeRemaining = 10;
+            if (!isInit || isRunning) return;
+            isRunning = true;
+            timeLeft = 10;
             elBtnTest.disabled = true;
             elTimer.classList.add('active');
             
-            log('═══ TEST START ═══', 'tx');
+            log('═══ TEST ═══', 'tx');
             sendSignal();
-            updateTimer(timeRemaining);
+            updateTimer();
             
             testInterval = setInterval(() => {
-                timeRemaining--;
-                updateTimer(timeRemaining);
-                elProgress.style.width = `${((10 - timeRemaining) / 10) * 100}%`;
+                timeLeft--;
+                updateTimer();
+                elProgress.style.width = `${((10 - timeLeft) / 10) * 100}%`;
                 
-                if (timeRemaining % 2 === 0 && timeRemaining > 0) {
-                    sendSignal();
-                }
-                
-                if (timeRemaining <= 0) {
-                    endTest();
-                }
+                if (timeLeft % 2 === 0 && timeLeft > 0) sendSignal();
+                if (timeLeft <= 0) endTest();
             }, 1000);
         }
         
         function endTest() {
-            isTestRunning = false;
+            isRunning = false;
             if (testInterval) clearInterval(testInterval);
-            
             elTimer.classList.remove('active');
             elBtnTest.disabled = false;
             elProgress.style.width = '100%';
-            
-            log('═══ TEST END ═══', 'tx');
-            log(`Sent: ${sentCount} | Recv: ${recvCount} | Ign: ${ignoredCount}`, 'signal');
+            log(`Done: S=${sent} R=${recv} I=${ign} O=${out}`, 'rx');
         }
         
         function resetAll() {
             if (testInterval) clearInterval(testInterval);
-            
-            isTestRunning = false;
-            timeRemaining = 10;
-            sentCount = 0;
-            recvCount = 0;
-            ignoredCount = 0;
-            
-            updateTimer(10);
-            elSent.textContent = '0';
-            elRecv.textContent = '0';
-            elIgnored.textContent = '0';
+            isRunning = false;
+            timeLeft = 10;
+            sent = recv = ign = out = 0;
+            updateTimer();
+            elSent.textContent = elRecv.textContent = elIgn.textContent = elOut.textContent = '0';
             elProgress.style.width = '0%';
             elTimer.classList.remove('active');
             elBtnTest.disabled = false;
-            elDetectionInfo.textContent = '—';
-            
+            elInfo.textContent = '—';
             elLog.innerHTML = '';
             log('Reset');
-            if (isInitialized) log(`TX: ${sendFreq}Hz`);
+            if (isInit) log(`TX: ${txFreq}Hz → RX: ${rxFreq}Hz`);
         }
         
-        // Init on load
+        // Init display
         document.addEventListener('DOMContentLoaded', () => {
-            updateIgnoreDisplay();
-            log('Audio Signal Test v3');
-            log('Multi-device frequency testing');
-            log('────────────────────');
-            log('1. Set unique frequency per device');
-            log('2. Set ignore range to filter own TX');
-            log('3. INIT → TEST');
+            updateTx(txFreq);
+            updateRx(rxFreq);
+            log('Audio Signal Test v4');
+            log('───────────────────');
+            log('Set TX freq (green)');
+            log('Set RX target (cyan)');
+            log('INIT → TEST');
         });
     </script>
 </body>
