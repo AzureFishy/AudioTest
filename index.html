@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio Signal Test v2</title>
+    <title>Quiet.js Audio Signal Test</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
-            font-family: 'Courier New', monospace;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', monospace;
             background: #000;
             color: #fff;
             min-height: 100vh;
@@ -16,531 +16,397 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 1.5rem;
+            padding: 20px;
         }
         
         .container {
-            max-width: 480px;
+            max-width: 400px;
             width: 100%;
-            border: 1px solid #fff;
-            padding: 1.5rem;
+            text-align: center;
         }
         
         h1 {
-            font-size: 1.1rem;
-            font-weight: normal;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            margin-bottom: 1.5rem;
-            text-align: center;
-            border-bottom: 1px solid #333;
-            padding-bottom: 0.75rem;
-        }
-        
-        .status-panel {
-            margin-bottom: 1.5rem;
-            padding: 1rem;
-            border: 1px solid #333;
-        }
-        
-        .status-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.4rem;
-            font-size: 0.8rem;
-        }
-        
-        .status-label { color: #666; }
-        .status-value { font-weight: bold; }
-        
-        .signal-indicator {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            margin: 1rem 0 0.5rem;
-        }
-        
-        .signal-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #333;
-            border: 1px solid #555;
-            transition: all 0.1s;
-        }
-        
-        .signal-dot.active {
-            background: #fff;
-            box-shadow: 0 0 15px #fff;
-        }
-        
-        .timer {
-            font-size: 2.5rem;
-            text-align: center;
-            margin: 1rem 0;
-            font-weight: bold;
+            font-size: 1.2rem;
+            font-weight: 400;
+            margin-bottom: 8px;
             letter-spacing: 0.1em;
+            text-transform: uppercase;
         }
         
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
+        .subtitle {
+            font-size: 0.75rem;
+            color: #666;
+            margin-bottom: 40px;
         }
         
-        .timer.active { animation: pulse 1s infinite; }
-        
-        .log-panel {
-            margin-bottom: 1.5rem;
-            padding: 0.75rem;
+        #status {
             border: 1px solid #333;
-            height: 140px;
-            overflow-y: auto;
-            font-size: 0.7rem;
+            padding: 20px;
+            margin-bottom: 30px;
+            min-height: 120px;
+            font-size: 0.8rem;
+            text-align: left;
             background: #0a0a0a;
         }
         
-        .log-entry { margin-bottom: 0.25rem; color: #888; }
-        .log-entry.signal { color: #fff; }
-        .log-entry.error { color: #fff; background: #500; padding: 0.15rem 0.3rem; }
-        .log-entry .ts { color: #444; margin-right: 0.4rem; }
+        .status-line {
+            margin: 6px 0;
+            display: flex;
+            justify-content: space-between;
+        }
         
-        .button-row { display: flex; gap: 0.75rem; }
+        .status-label { color: #666; }
+        .status-value { color: #fff; }
+        .status-value.active { color: #0f0; }
+        .status-value.error { color: #f00; }
+        .status-value.warning { color: #ff0; }
         
-        button {
-            flex: 1;
+        #testBtn {
             background: #fff;
             color: #000;
             border: none;
-            padding: 0.9rem 1.5rem;
-            font-family: inherit;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
+            padding: 16px 48px;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.15em;
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: all 0.15s;
+            text-transform: uppercase;
         }
         
-        button:hover:not(:disabled) { background: #ccc; }
-        button:active:not(:disabled) { background: #999; }
-        button:disabled { background: #333; color: #666; cursor: not-allowed; }
-        
-        button.secondary {
-            background: transparent;
-            color: #fff;
-            border: 1px solid #fff;
+        #testBtn:hover:not(:disabled) {
+            background: #ccc;
         }
         
-        button.secondary:hover:not(:disabled) { background: #fff; color: #000; }
-        button.secondary:disabled { border-color: #333; color: #333; }
-        
-        .progress-bar {
-            width: 100%;
-            height: 3px;
-            background: #222;
-            margin-top: 1.5rem;
+        #testBtn:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
         }
         
-        .progress-fill {
-            height: 100%;
-            background: #fff;
-            width: 0%;
-            transition: width 0.1s linear;
+        #testBtn.transmitting {
+            background: #0f0;
+            color: #000;
+            animation: pulse 0.5s infinite alternate;
         }
         
-        .instructions {
-            margin-top: 1.5rem;
-            font-size: 0.65rem;
-            color: #555;
-            text-align: center;
-            line-height: 1.5;
+        @keyframes pulse {
+            from { opacity: 1; }
+            to { opacity: 0.7; }
         }
         
-        .freq-display {
-            text-align: center;
+        #timer {
+            font-size: 2rem;
+            font-weight: 300;
+            margin: 30px 0;
+            font-family: monospace;
+        }
+        
+        #log {
+            margin-top: 30px;
+            border: 1px solid #222;
+            padding: 15px;
             font-size: 0.7rem;
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+            background: #050505;
+            color: #555;
+        }
+        
+        #log .entry { margin: 3px 0; }
+        #log .entry.rx { color: #0a0; }
+        #log .entry.tx { color: #00a; }
+        #log .entry.err { color: #a00; }
+        
+        .note {
+            font-size: 0.65rem;
             color: #444;
-            margin-top: 0.5rem;
+            margin-top: 40px;
+            line-height: 1.6;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Audio Signal Test v2</h1>
+        <h1>Audio Signal Test</h1>
+        <p class="subtitle">Quiet.js Wireless Communication</p>
         
-        <div class="status-panel">
-            <div class="status-row">
-                <span class="status-label">Mode</span>
-                <span class="status-value" id="mode">IDLE</span>
+        <div id="status">
+            <div class="status-line">
+                <span class="status-label">Library:</span>
+                <span class="status-value" id="libStatus">Loading...</span>
             </div>
-            <div class="status-row">
-                <span class="status-label">Signals Sent</span>
-                <span class="status-value" id="signals-sent">0</span>
+            <div class="status-line">
+                <span class="status-label">Receiver:</span>
+                <span class="status-value" id="rxStatus">—</span>
             </div>
-            <div class="status-row">
-                <span class="status-label">Signals Received</span>
-                <span class="status-value" id="signals-received">0</span>
+            <div class="status-line">
+                <span class="status-label">Transmitter:</span>
+                <span class="status-value" id="txStatus">—</span>
             </div>
-            <div class="status-row">
-                <span class="status-label">Detection</span>
-                <span class="status-value" id="detection">—</span>
+            <div class="status-line">
+                <span class="status-label">Signals RX:</span>
+                <span class="status-value" id="rxCount">0</span>
             </div>
-            
-            <div class="signal-indicator">
-                <span style="font-size: 0.65rem; color: #666;">TX</span>
-                <div class="signal-dot" id="tx-indicator"></div>
-                <span style="margin: 0 0.75rem; color: #333;">|</span>
-                <div class="signal-dot" id="rx-indicator"></div>
-                <span style="font-size: 0.65rem; color: #666;">RX</span>
+            <div class="status-line">
+                <span class="status-label">Last Message:</span>
+                <span class="status-value" id="lastMsg">—</span>
             </div>
-            <div class="freq-display" id="freq-display">—</div>
         </div>
         
-        <div class="timer" id="timer">00:10</div>
+        <div id="timer">—</div>
         
-        <div class="log-panel" id="log"></div>
+        <button id="testBtn" disabled>Initializing</button>
         
-        <div class="button-row">
-            <button id="btn-init" onclick="init()">⚡ INIT</button>
-            <button id="btn-test" onclick="startTest()" style="display:none;">▶ TEST</button>
-            <button id="btn-reset" class="secondary" onclick="resetAll()">↻ RESET</button>
-        </div>
+        <div id="log"></div>
         
-        <div class="progress-bar">
-            <div class="progress-fill" id="progress"></div>
-        </div>
-        
-        <div class="instructions">
-            Pure Web Audio API - No external libraries<br>
-            Uses FSK: 1800Hz = signal, silence = no signal<br>
-            Open on 2 devices → INIT both → TEST on one
-        </div>
+        <p class="note">
+            Open this page on two devices. Press TEST to transmit.<br>
+            Uses audible frequencies (~4kHz). Chrome/Edge recommended.<br>
+            Requires HTTPS for microphone access in production.
+        </p>
     </div>
 
+    <!-- Quiet.js Library -->
+    <script src="https://cdn.jsdelivr.net/gh/quiet/quiet-js@master/quiet.js"></script>
     <script>
-        // ============================================
-        // AUDIO SIGNAL TEST v2
-        // Pure Web Audio API implementation
-        // Uses simple FSK (Frequency Shift Keying)
-        // ============================================
+        // Configure paths BEFORE loading emscripten
+        Quiet.setProfilesPrefix("https://cdn.jsdelivr.net/gh/quiet/quiet-js@master/");
+        Quiet.setMemoryInitializerPrefix("https://cdn.jsdelivr.net/gh/quiet/quiet-js@master/");
+    </script>
+    <script async src="https://cdn.jsdelivr.net/gh/quiet/quiet-js@master/quiet-emscripten.js"></script>
+    
+    <script>
+    (function() {
+        'use strict';
         
-        // Configuration
-        const SIGNAL_FREQ = 1800;      // Hz - the tone frequency
-        const SAMPLE_RATE = 44100;     // Standard sample rate
-        const FFT_SIZE = 2048;         // FFT analysis size
-        const DETECTION_THRESHOLD = 15; // dB above noise floor
+        // DOM elements
+        const libStatus = document.getElementById('libStatus');
+        const rxStatus = document.getElementById('rxStatus');
+        const txStatus = document.getElementById('txStatus');
+        const rxCount = document.getElementById('rxCount');
+        const lastMsg = document.getElementById('lastMsg');
+        const timerEl = document.getElementById('timer');
+        const testBtn = document.getElementById('testBtn');
+        const logEl = document.getElementById('log');
         
         // State
-        let audioCtx = null;
-        let analyser = null;
-        let micStream = null;
-        let oscillator = null;
-        let gainNode = null;
-        let isInitialized = false;
-        let isTestRunning = false;
-        let isSending = false;
-        let testInterval = null;
-        let detectInterval = null;
-        let timeRemaining = 10;
-        let signalsSent = 0;
+        let transmitter = null;
+        let receiver = null;
+        let isTransmitting = false;
         let signalsReceived = 0;
-        let lastDetection = false;
+        let testInterval = null;
+        let testSecondsLeft = 0;
         
-        // DOM
-        const $ = id => document.getElementById(id);
-        const elMode = $('mode');
-        const elSignalsSent = $('signals-sent');
-        const elSignalsReceived = $('signals-received');
-        const elDetection = $('detection');
-        const elTimer = $('timer');
-        const elLog = $('log');
-        const elProgress = $('progress');
-        const elBtnInit = $('btn-init');
-        const elBtnTest = $('btn-test');
-        const elTxIndicator = $('tx-indicator');
-        const elRxIndicator = $('rx-indicator');
-        const elFreqDisplay = $('freq-display');
+        // Configuration
+        const PROFILE = 'audible';  // Good cross-browser compatibility
+        const TEST_DURATION = 10;   // seconds
+        const PING_INTERVAL = 800;  // ms between pings
         
         // Logging
-        function log(msg, type = 'info') {
-            const ts = new Date().toLocaleTimeString('en-US', {
-                hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit'
-            });
-            const el = document.createElement('div');
-            el.className = `log-entry ${type}`;
-            el.innerHTML = `<span class="ts">[${ts}]</span>${msg}`;
-            elLog.appendChild(el);
-            elLog.scrollTop = elLog.scrollHeight;
-            console.log(`[${type}] ${msg}`);
-        }
-        
-        function updateTimer(sec) {
-            const m = Math.floor(sec / 60).toString().padStart(2, '0');
-            const s = (sec % 60).toString().padStart(2, '0');
-            elTimer.textContent = `${m}:${s}`;
-        }
-        
-        function flash(el, dur = 200) {
-            el.classList.add('active');
-            setTimeout(() => el.classList.remove('active'), dur);
-        }
-        
-        // Initialize audio
-        async function init() {
-            if (isInitialized) {
-                log('Already initialized');
-                return;
+        function log(msg, type = '') {
+            const entry = document.createElement('div');
+            entry.className = 'entry ' + type;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            logEl.insertBefore(entry, logEl.firstChild);
+            if (logEl.children.length > 50) {
+                logEl.removeChild(logEl.lastChild);
             }
-            
-            elBtnInit.disabled = true;
-            elMode.textContent = 'INIT...';
-            log('Initializing...');
+        }
+        
+        // Generate unique test message
+        function generatePing() {
+            const id = Math.random().toString(36).substring(2, 6).toUpperCase();
+            return `PING:${id}:${Date.now()}`;
+        }
+        
+        // Initialize receiver
+        function initReceiver() {
+            rxStatus.textContent = 'Starting...';
+            rxStatus.className = 'status-value warning';
             
             try {
-                // Step 1: Create AudioContext
-                log('Creating AudioContext...');
-                const AC = window.AudioContext || window.webkitAudioContext;
-                if (!AC) throw new Error('AudioContext not supported');
-                
-                audioCtx = new AC({ sampleRate: SAMPLE_RATE });
-                log(`AudioContext: ${audioCtx.state}, ${audioCtx.sampleRate}Hz`);
-                
-                // Resume if suspended
-                if (audioCtx.state === 'suspended') {
-                    await audioCtx.resume();
-                    log('AudioContext resumed');
-                }
-                
-                // Step 2: Get microphone
-                log('Requesting microphone...');
-                if (!navigator.mediaDevices?.getUserMedia) {
-                    throw new Error('getUserMedia not supported');
-                }
-                
-                micStream = await navigator.mediaDevices.getUserMedia({
-                    audio: {
-                        echoCancellation: false,
-                        noiseSuppression: false,
-                        autoGainControl: false
+                Quiet.receiver({
+                    profile: PROFILE,
+                    onReceive: function(payload) {
+                        const message = Quiet.ab2str(payload);
+                        signalsReceived++;
+                        rxCount.textContent = signalsReceived;
+                        rxCount.className = 'status-value active';
+                        lastMsg.textContent = message.substring(0, 20);
+                        lastMsg.className = 'status-value active';
+                        log(`RX: ${message}`, 'rx');
+                        
+                        // Flash effect
+                        setTimeout(() => {
+                            rxCount.className = 'status-value';
+                            lastMsg.className = 'status-value';
+                        }, 500);
+                    },
+                    onCreate: function() {
+                        receiver = true;
+                        rxStatus.textContent = 'Listening';
+                        rxStatus.className = 'status-value active';
+                        log('Receiver ready', 'rx');
+                        checkReady();
+                    },
+                    onCreateFail: function(reason) {
+                        rxStatus.textContent = 'Failed';
+                        rxStatus.className = 'status-value error';
+                        log(`Receiver failed: ${reason}`, 'err');
+                    },
+                    onReceiveFail: function(count) {
+                        log(`Checksum fail #${count}`, 'err');
                     }
                 });
-                log('Microphone access granted ✓', 'signal');
-                
-                // Step 3: Create analyser for frequency detection
-                log('Setting up analyser...');
-                analyser = audioCtx.createAnalyser();
-                analyser.fftSize = FFT_SIZE;
-                analyser.smoothingTimeConstant = 0.3;
-                
-                const source = audioCtx.createMediaStreamSource(micStream);
-                source.connect(analyser);
-                log('Analyser connected ✓');
-                
-                // Step 4: Create oscillator for transmission (not started yet)
-                gainNode = audioCtx.createGain();
-                gainNode.gain.value = 0;
-                gainNode.connect(audioCtx.destination);
-                
-                oscillator = audioCtx.createOscillator();
-                oscillator.type = 'sine';
-                oscillator.frequency.value = SIGNAL_FREQ;
-                oscillator.connect(gainNode);
-                oscillator.start();
-                log('Oscillator ready ✓');
-                
-                // Step 5: Start detection loop
-                startDetection();
-                
-                // Success
-                isInitialized = true;
-                elMode.textContent = 'READY';
-                elBtnInit.style.display = 'none';
-                elBtnTest.style.display = 'block';
-                log('═══════════════════', 'signal');
-                log('INIT COMPLETE', 'signal');
-                log(`Listening at ${SIGNAL_FREQ}Hz`, 'signal');
-                log('═══════════════════', 'signal');
-                
-            } catch (err) {
-                log(`ERROR: ${err.name}: ${err.message}`, 'error');
-                elMode.textContent = 'ERROR';
-                elBtnInit.disabled = false;
-                
-                if (err.name === 'NotAllowedError') {
-                    log('→ Microphone permission denied', 'error');
-                    log('→ Check Chrome settings', 'error');
-                }
+            } catch (e) {
+                rxStatus.textContent = 'Error';
+                rxStatus.className = 'status-value error';
+                log(`Receiver error: ${e.message}`, 'err');
             }
         }
         
-        // Frequency detection
-        function startDetection() {
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-            const binWidth = audioCtx.sampleRate / analyser.fftSize;
-            const targetBin = Math.round(SIGNAL_FREQ / binWidth);
+        // Initialize transmitter
+        function initTransmitter() {
+            txStatus.textContent = 'Starting...';
+            txStatus.className = 'status-value warning';
             
-            log(`Target bin: ${targetBin} (${(targetBin * binWidth).toFixed(1)}Hz)`);
-            
-            detectInterval = setInterval(() => {
-                if (!analyser) return;
-                
-                analyser.getByteFrequencyData(dataArray);
-                
-                // Get power at target frequency
-                const targetPower = dataArray[targetBin];
-                
-                // Get average power (noise floor)
-                let sum = 0;
-                for (let i = 0; i < bufferLength; i++) {
-                    sum += dataArray[i];
-                }
-                const avgPower = sum / bufferLength;
-                
-                // Calculate signal-to-noise
-                const snr = targetPower - avgPower;
-                
-                // Detect signal
-                const detected = snr > DETECTION_THRESHOLD && targetPower > 50;
-                
-                // Update display
-                elFreqDisplay.textContent = `${SIGNAL_FREQ}Hz: ${targetPower} | Avg: ${avgPower.toFixed(0)} | SNR: ${snr.toFixed(0)}`;
-                
-                if (detected && !lastDetection && !isSending) {
-                    // Rising edge - signal just detected
-                    signalsReceived++;
-                    elSignalsReceived.textContent = signalsReceived;
-                    flash(elRxIndicator, 300);
-                    elDetection.textContent = 'SIGNAL!';
-                    log(`RX: Signal detected! (SNR: ${snr.toFixed(1)})`, 'signal');
-                } else if (detected && !isSending) {
-                    elDetection.textContent = 'SIGNAL';
-                    elRxIndicator.classList.add('active');
-                } else {
-                    elDetection.textContent = '—';
-                    elRxIndicator.classList.remove('active');
-                }
-                
-                lastDetection = detected;
-                
-            }, 100); // Check 10 times per second
+            try {
+                transmitter = Quiet.transmitter({
+                    profile: PROFILE,
+                    onFinish: function() {
+                        // Called when transmission queue is empty
+                    }
+                });
+                txStatus.textContent = 'Ready';
+                txStatus.className = 'status-value active';
+                log('Transmitter ready', 'tx');
+                checkReady();
+            } catch (e) {
+                txStatus.textContent = 'Error';
+                txStatus.className = 'status-value error';
+                log(`Transmitter error: ${e.message}`, 'err');
+            }
         }
         
-        // Send a tone burst
-        function sendTone(durationMs) {
-            if (!gainNode) return;
-            
-            isSending = true;
-            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            flash(elTxIndicator, durationMs);
-            
-            setTimeout(() => {
-                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-                isSending = false;
-            }, durationMs);
+        // Check if everything is ready
+        function checkReady() {
+            if (transmitter && receiver) {
+                testBtn.disabled = false;
+                testBtn.textContent = 'TEST';
+                timerEl.textContent = `${TEST_DURATION}s`;
+            }
         }
         
-        // Start test
+        // Start test transmission
         function startTest() {
-            if (!isInitialized) {
-                log('Please INIT first', 'error');
-                return;
-            }
-            if (isTestRunning) return;
+            if (isTransmitting) return;
             
-            isTestRunning = true;
-            timeRemaining = 10;
-            signalsSent = 0;
-            elSignalsSent.textContent = '0';
-            elBtnTest.disabled = true;
-            elMode.textContent = 'TESTING';
-            elTimer.classList.add('active');
+            isTransmitting = true;
+            testSecondsLeft = TEST_DURATION;
+            testBtn.classList.add('transmitting');
+            testBtn.textContent = 'TRANSMITTING';
+            testBtn.disabled = true;
             
-            log('═══ TEST START ═══', 'signal');
-            log('Sending signals...', 'signal');
+            log(`Starting ${TEST_DURATION}s test`, 'tx');
             
-            // Send initial burst
-            sendSignal();
-            
-            updateTimer(timeRemaining);
-            
-            testInterval = setInterval(() => {
-                timeRemaining--;
-                updateTimer(timeRemaining);
-                elProgress.style.width = `${((10 - timeRemaining) / 10) * 100}%`;
-                
-                // Send signal every 2 seconds
-                if (timeRemaining % 2 === 0 && timeRemaining > 0) {
-                    sendSignal();
+            // Update timer
+            function updateTimer() {
+                timerEl.textContent = `${testSecondsLeft}s`;
+                if (testSecondsLeft <= 0) {
+                    stopTest();
+                } else {
+                    testSecondsLeft--;
                 }
+            }
+            
+            // Send pings
+            function sendPing() {
+                if (!isTransmitting) return;
                 
-                if (timeRemaining <= 0) {
-                    endTest();
+                const msg = generatePing();
+                try {
+                    transmitter.transmit(Quiet.str2ab(msg));
+                    log(`TX: ${msg}`, 'tx');
+                } catch (e) {
+                    log(`TX error: ${e.message}`, 'err');
+                }
+            }
+            
+            // Initial ping
+            sendPing();
+            updateTimer();
+            
+            // Set up intervals
+            testInterval = setInterval(sendPing, PING_INTERVAL);
+            const timerInterval = setInterval(() => {
+                updateTimer();
+                if (testSecondsLeft < 0) {
+                    clearInterval(timerInterval);
                 }
             }, 1000);
         }
         
-        function sendSignal() {
-            signalsSent++;
-            elSignalsSent.textContent = signalsSent;
-            log(`TX: Signal #${signalsSent} (${SIGNAL_FREQ}Hz, 500ms)`);
-            sendTone(500); // 500ms tone burst
-        }
-        
-        function endTest() {
-            isTestRunning = false;
+        // Stop test
+        function stopTest() {
+            isTransmitting = false;
+            
             if (testInterval) {
                 clearInterval(testInterval);
                 testInterval = null;
             }
             
-            elTimer.classList.remove('active');
-            elBtnTest.disabled = false;
-            elMode.textContent = 'DONE';
-            elProgress.style.width = '100%';
+            testBtn.classList.remove('transmitting');
+            testBtn.textContent = 'TEST';
+            testBtn.disabled = false;
+            timerEl.textContent = `${TEST_DURATION}s`;
             
-            log('═══ TEST END ═══', 'signal');
-            log(`Sent: ${signalsSent} | Received: ${signalsReceived}`, 'signal');
+            log('Test complete', 'tx');
         }
         
-        function resetAll() {
-            if (testInterval) {
-                clearInterval(testInterval);
-                testInterval = null;
+        // Button handler - needs user interaction to start AudioContext
+        testBtn.addEventListener('click', function() {
+            if (!isTransmitting) {
+                startTest();
             }
-            
-            isTestRunning = false;
-            timeRemaining = 10;
-            signalsSent = 0;
-            signalsReceived = 0;
-            
-            updateTimer(10);
-            elSignalsSent.textContent = '0';
-            elSignalsReceived.textContent = '0';
-            elDetection.textContent = '—';
-            elProgress.style.width = '0%';
-            elTimer.classList.remove('active');
-            elBtnTest.disabled = false;
-            elMode.textContent = isInitialized ? 'READY' : 'IDLE';
-            
-            elLog.innerHTML = '';
-            log('Reset complete');
-            if (isInitialized) {
-                log(`Listening at ${SIGNAL_FREQ}Hz`);
-            }
-        }
-        
-        // Init on load
-        document.addEventListener('DOMContentLoaded', () => {
-            log('Audio Signal Test v2');
-            log('Pure Web Audio API');
-            log('───────────────────');
-            log('1. Tap INIT');
-            log('2. Allow microphone');
-            log('3. Tap TEST to send');
-            log('───────────────────');
-            updateTimer(10);
         });
+        
+        // Initialize when Quiet.js is ready
+        Quiet.addReadyCallback(function() {
+            libStatus.textContent = 'Ready';
+            libStatus.className = 'status-value active';
+            log('Quiet.js loaded');
+            
+            // Need user interaction for AudioContext in modern browsers
+            testBtn.disabled = false;
+            testBtn.textContent = 'CLICK TO INIT';
+            
+            testBtn.addEventListener('click', function initOnClick() {
+                testBtn.removeEventListener('click', initOnClick);
+                testBtn.disabled = true;
+                testBtn.textContent = 'INITIALIZING...';
+                
+                // Initialize components
+                initTransmitter();
+                initReceiver();
+            }, { once: true });
+        }, function(reason) {
+            libStatus.textContent = 'Failed';
+            libStatus.className = 'status-value error';
+            log(`Library failed: ${reason}`, 'err');
+        });
+        
+        // Timeout fallback
+        setTimeout(function() {
+            if (libStatus.textContent === 'Loading...') {
+                libStatus.textContent = 'Timeout';
+                libStatus.className = 'status-value error';
+                log('Library load timeout - check network/CORS', 'err');
+            }
+        }, 15000);
+        
+    })();
     </script>
 </body>
 </html>
