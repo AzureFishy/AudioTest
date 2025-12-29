@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Signal Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 480px;
+            width: 100%;
+            border: 1px solid #fff;
+            padding: 2rem;
+        }
+        
+        h1 {
+            font-size: 1.2rem;
+            font-weight: normal;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin-bottom: 2rem;
+            text-align: center;
+            border-bottom: 1px solid #333;
+            padding-bottom: 1rem;
+        }
+        
+        .status-panel {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid #333;
+            min-height: 120px;
+        }
+        
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+        }
+        
+        .status-label {
+            color: #666;
+        }
+        
+        .status-value {
+            font-weight: bold;
+        }
+        
+        .status-value.active {
+            color: #fff;
+        }
+        
+        .status-value.receiving {
+            animation: pulse 0.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        .timer {
+            font-size: 3rem;
+            text-align: center;
+            margin: 1.5rem 0;
+            font-weight: bold;
+            letter-spacing: 0.1em;
+        }
+        
+        .timer.active {
+            animation: pulse 1s infinite;
+        }
+        
+        .log-panel {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid #333;
+            height: 150px;
+            overflow-y: auto;
+            font-size: 0.75rem;
+            background: #0a0a0a;
+        }
+        
+        .log-entry {
+            margin-bottom: 0.3rem;
+            color: #888;
+        }
+        
+        .log-entry.signal {
+            color: #fff;
+        }
+        
+        .log-entry.error {
+            color: #fff;
+            background: #333;
+            padding: 0.2rem;
+        }
+        
+        .log-entry .timestamp {
+            color: #444;
+            margin-right: 0.5rem;
+        }
+        
+        .button-row {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        button {
+            flex: 1;
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 1rem 2rem;
+            font-family: inherit;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        
+        button:hover:not(:disabled) {
+            background: #ccc;
+        }
+        
+        button:active:not(:disabled) {
+            background: #999;
+        }
+        
+        button:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+        
+        button.secondary {
+            background: transparent;
+            color: #fff;
+            border: 1px solid #fff;
+        }
+        
+        button.secondary:hover:not(:disabled) {
+            background: #fff;
+            color: #000;
+        }
+        
+        button.secondary:disabled {
+            border-color: #333;
+            color: #333;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #222;
+            margin-top: 2rem;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #fff;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+        
+        .instructions {
+            margin-top: 2rem;
+            font-size: 0.7rem;
+            color: #555;
+            text-align: center;
+            line-height: 1.6;
+        }
+        
+        .signal-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+        
+        .signal-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #333;
+            border: 1px solid #555;
+        }
+        
+        .signal-dot.active {
+            background: #fff;
+            box-shadow: 0 0 10px #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Audio Signal Test</h1>
+        
+        <div class="status-panel">
+            <div class="status-row">
+                <span class="status-label">Mode</span>
+                <span class="status-value" id="mode">IDLE</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">RX State</span>
+                <span class="status-value" id="rx-state">—</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">Signals Sent</span>
+                <span class="status-value" id="signals-sent">0</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">Signals Received</span>
+                <span class="status-value" id="signals-received">0</span>
+            </div>
+            
+            <div class="signal-indicator">
+                <span style="font-size: 0.7rem; color: #666;">TX</span>
+                <div class="signal-dot" id="tx-indicator"></div>
+                <span style="margin: 0 1rem; color: #333;">|</span>
+                <div class="signal-dot" id="rx-indicator"></div>
+                <span style="font-size: 0.7rem; color: #666;">RX</span>
+            </div>
+        </div>
+        
+        <div class="timer" id="timer">00:10</div>
+        
+        <div class="log-panel" id="log"></div>
+        
+        <div class="button-row">
+            <button id="btn-init" onclick="initAudioNetwork()" style="display:block;">⚡ INIT</button>
+            <button id="btn-test" onclick="startTest()" style="display:none;">▶ TEST</button>
+            <button id="btn-reset" class="secondary" onclick="resetSystem()">↻ RESET</button>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress"></div>
+        </div>
+        
+        <div class="instructions">
+            1. Press INIT and allow microphone<br>
+            2. Open on second device, also INIT<br>
+            3. Press TEST on one to transmit<br>
+            4. Watch for signals on receiver<br>
+            Test duration: 10 seconds
+        </div>
+    </div>
+
+    <script src="https://cdn.rypula.pl/audio-network/v1.3.2/audio-network-v1.3.2.min.js"></script>
+    <script>
+        // ============================================
+        // AUDIO SIGNAL TEST APPLICATION
+        // Using AudioNetwork library for sound-based
+        // data transmission between devices
+        // ============================================
+
+        // State
+        let physicalLayer = null;
+        let transmitAdapter = null;
+        let receiveAdapter = null;
+        let testInterval = null;
+        let timeRemaining = 10;
+        let signalsSent = 0;
+        let signalsReceived = 0;
+        let isTestRunning = false;
+        let isInitialized = false;
+        let syncInProgress = false;
+        let audioContext = null;
+        let micStream = null;
+
+        // DOM Elements
+        const elMode = document.getElementById('mode');
+        const elRxState = document.getElementById('rx-state');
+        const elSignalsSent = document.getElementById('signals-sent');
+        const elSignalsReceived = document.getElementById('signals-received');
+        const elTimer = document.getElementById('timer');
+        const elLog = document.getElementById('log');
+        const elProgress = document.getElementById('progress');
+        const elBtnInit = document.getElementById('btn-init');
+        const elBtnTest = document.getElementById('btn-test');
+        const elBtnReset = document.getElementById('btn-reset');
+        const elTxIndicator = document.getElementById('tx-indicator');
+        const elRxIndicator = document.getElementById('rx-indicator');
+
+        // Logging
+        function log(message, type = 'info') {
+            const now = new Date();
+            const timestamp = now.toLocaleTimeString('en-US', { 
+                hour12: false, 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit' 
+            });
+            
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `<span class="timestamp">[${timestamp}]</span>${message}`;
+            elLog.appendChild(entry);
+            elLog.scrollTop = elLog.scrollHeight;
+            console.log(`[${type}] ${message}`);
+        }
+
+        // Update timer display
+        function updateTimer(seconds) {
+            const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const secs = (seconds % 60).toString().padStart(2, '0');
+            elTimer.textContent = `${mins}:${secs}`;
+        }
+
+        // Flash indicator
+        function flashIndicator(element, duration = 200) {
+            element.classList.add('active');
+            setTimeout(() => element.classList.remove('active'), duration);
+        }
+
+        // Step 1: Create and unlock AudioContext
+        async function unlockAudio() {
+            log('Step 1: Unlocking audio...');
+            try {
+                const AC = window.AudioContext || window.webkitAudioContext;
+                if (!AC) {
+                    throw new Error('AudioContext not supported');
+                }
+                
+                audioContext = new AC();
+                log(`AudioContext created (state: ${audioContext.state})`);
+                
+                if (audioContext.state === 'suspended') {
+                    await audioContext.resume();
+                    log(`AudioContext resumed (state: ${audioContext.state})`);
+                }
+                
+                // Play a tiny silent sound to fully unlock on iOS/Android
+                const oscillator = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                gain.gain.value = 0.001;
+                oscillator.connect(gain);
+                gain.connect(audioContext.destination);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.1);
+                
+                await new Promise(r => setTimeout(r, 150));
+                log('Audio unlocked ✓', 'signal');
+                return true;
+            } catch (e) {
+                log(`Audio unlock failed: ${e.message}`, 'error');
+                return false;
+            }
+        }
+
+        // Step 2: Get microphone stream
+        async function getMicrophone() {
+            log('Step 2: Requesting microphone...');
+            try {
+                // Check if getUserMedia is available
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('getUserMedia not supported');
+                }
+                
+                // List available devices first
+                try {
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    const audioInputs = devices.filter(d => d.kind === 'audioinput');
+                    log(`Found ${audioInputs.length} audio input(s)`);
+                } catch (e) {
+                    log('Could not enumerate devices');
+                }
+                
+                // Request microphone with minimal constraints
+                micStream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: true,
+                    video: false
+                });
+                
+                const tracks = micStream.getAudioTracks();
+                log(`Mic stream obtained: ${tracks.length} track(s)`);
+                if (tracks.length > 0) {
+                    log(`Track: ${tracks[0].label || 'unnamed'}`);
+                }
+                
+                log('Microphone ready ✓', 'signal');
+                return true;
+            } catch (e) {
+                log(`Microphone failed: ${e.name}: ${e.message}`, 'error');
+                if (e.name === 'NotAllowedError') {
+                    log('→ Permission denied. Check browser settings.', 'error');
+                } else if (e.name === 'NotFoundError') {
+                    log('→ No microphone found.', 'error');
+                } else if (e.name === 'NotReadableError') {
+                    log('→ Mic in use by another app?', 'error');
+                }
+                return false;
+            }
+        }
+
+        // Step 3: Initialize AudioNetwork
+        async function initAudioNetwork() {
+            if (isInitialized) {
+                log('Already initialized');
+                return true;
+            }
+            
+            elMode.textContent = 'INITIALIZING';
+            elBtnInit.disabled = true;
+            
+            try {
+                // Step 1: Unlock audio
+                if (!await unlockAudio()) {
+                    throw new Error('Could not unlock audio');
+                }
+                
+                // Step 2: Get microphone
+                if (!await getMicrophone()) {
+                    throw new Error('Could not access microphone');
+                }
+                
+                // Step 3: Check AudioNetwork library
+                log('Step 3: Loading AudioNetwork...');
+                if (typeof AudioNetwork === 'undefined') {
+                    throw new Error('AudioNetwork library not loaded');
+                }
+                log('AudioNetwork library found ✓');
+                
+                // Log available namespaces for debugging
+                const namespaces = Object.keys(AudioNetwork);
+                log(`Namespaces: ${namespaces.join(', ')}`);
+
+                // Step 4: Create PhysicalLayer
+                log('Step 4: Creating PhysicalLayer...');
+                
+                // Close our temporary audio context - AudioNetwork creates its own
+                if (audioContext) {
+                    audioContext.close();
+                    audioContext = null;
+                }
+                
+                // Stop our mic stream - AudioNetwork creates its own
+                if (micStream) {
+                    micStream.getTracks().forEach(t => t.stop());
+                    micStream = null;
+                }
+                
+                // Small delay before AudioNetwork takes over
+                await new Promise(r => setTimeout(r, 300));
+                
+                // Try creating PhysicalLayer with minimal config
+                physicalLayer = new AudioNetwork.PhysicalLayer.PhysicalLayer({
+                    tx: {
+                        channel: [{
+                            baseFrequency: 4000,
+                            ofdmSize: 1,
+                            ofdmFrequencySpacing: 250,
+                            pskSize: 2,
+                            amplitude: 0.3
+                        }]
+                    },
+                    rx: {
+                        channel: [{
+                            baseFrequency: 4000,
+                            ofdmSize: 1,
+                            ofdmFrequencySpacing: 250,
+                            pskSize: 2
+                        }],
+                        notificationPerSecond: 15,
+                        dftWindowTime: 0.1
+                    }
+                });
+                
+                log('PhysicalLayer created ✓');
+
+                // Step 5: Create adapters
+                log('Step 5: Creating adapters...');
+                transmitAdapter = new AudioNetwork.PhysicalLayerAdapter.TransmitAdapter(physicalLayer);
+                receiveAdapter = new AudioNetwork.PhysicalLayerAdapter.ReceiveAdapter(physicalLayer);
+                log('Adapters created ✓');
+
+                // Step 6: Set up handlers
+                log('Step 6: Setting up handlers...');
+                receiveAdapter.setPacketHandler(function(channelIndex, data) {
+                    onPacketReceived(channelIndex, data);
+                });
+                receiveAdapter.setStateHandler(function(state) {
+                    onStateChange(state);
+                });
+                try {
+                    receiveAdapter.setSyncInProgressHandler(function(inProgress) {
+                        onSyncProgress(inProgress);
+                    });
+                } catch(e) {
+                    log('SyncHandler not available (ok)');
+                }
+                log('Handlers set ✓');
+
+                // Success!
+                await new Promise(r => setTimeout(r, 200));
+                isInitialized = true;
+                
+                log('══════════════════════', 'signal');
+                log('INITIALIZATION COMPLETE', 'signal');
+                log('══════════════════════', 'signal');
+                
+                elMode.textContent = 'READY';
+                elRxState.textContent = 'IDLE_INIT';
+                elBtnInit.style.display = 'none';
+                elBtnTest.style.display = 'block';
+                elBtnInit.disabled = false;
+                
+                return true;
+                
+            } catch (error) {
+                log(`INIT FAILED: ${error.message}`, 'error');
+                console.error('Full error:', error);
+                elMode.textContent = 'ERROR';
+                elBtnInit.disabled = false;
+                
+                // Cleanup
+                if (audioContext) {
+                    try { audioContext.close(); } catch(e) {}
+                }
+                if (micStream) {
+                    try { micStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                }
+                
+                return false;
+            }
+        }
+
+        // Handle sync progress
+        function onSyncProgress(inProgress) {
+            syncInProgress = inProgress;
+            if (inProgress) {
+                flashIndicator(elRxIndicator, 500);
+                log('RX: Sync in progress...', 'signal');
+            }
+        }
+
+        // Handle state changes from receiver adapter
+        function onStateChange(state) {
+            const stateNames = {
+                0: 'IDLE_INIT',
+                1: 'FIRST_SYNC_WAIT', 
+                2: 'FIRST_SYNC',
+                3: 'FATAL_ERROR',
+                4: 'IDLE',
+                5: 'SYMBOL',
+                6: 'SYNC',
+                7: 'GUARD'
+            };
+            
+            const stateName = stateNames[state] || `STATE_${state}`;
+            elRxState.textContent = stateName;
+            
+            if (state === 2 || state === 6) {
+                flashIndicator(elRxIndicator, 500);
+                log(`RX: ${stateName}`, 'signal');
+            } else if (state === 3) {
+                log(`RX: ${stateName} - Try reset`, 'error');
+            } else if (state === 4) {
+                log(`RX: Ready to receive`);
+            }
+        }
+
+        // Handle received packets
+        function onPacketReceived(channelIndex, data) {
+            signalsReceived++;
+            elSignalsReceived.textContent = signalsReceived;
+            flashIndicator(elRxIndicator, 300);
+            
+            let dataStr = '';
+            if (Array.isArray(data)) {
+                dataStr = data.join(' ');
+            } else {
+                dataStr = String(data);
+            }
+            
+            log(`RX: Packet #${signalsReceived} [${dataStr}]`, 'signal');
+        }
+
+        // Start the test
+        async function startTest() {
+            if (!isInitialized) {
+                log('Please press INIT first', 'error');
+                return;
+            }
+            
+            if (isTestRunning) return;
+            
+            isTestRunning = true;
+            timeRemaining = 10;
+            elBtnTest.disabled = true;
+            elBtnReset.disabled = true;
+            elMode.textContent = 'TESTING';
+            elTimer.classList.add('active');
+            
+            log('═══ TEST STARTED ═══', 'signal');
+            
+            try {
+                log('TX: Sending SYNC (2s)...');
+                flashIndicator(elTxIndicator, 2000);
+                transmitAdapter.sendSync();
+                signalsSent++;
+                elSignalsSent.textContent = signalsSent;
+            } catch (e) {
+                log(`TX Sync error: ${e.message}`, 'error');
+            }
+            
+            updateTimer(timeRemaining);
+            
+            testInterval = setInterval(() => {
+                timeRemaining--;
+                updateTimer(timeRemaining);
+                
+                const progress = ((10 - timeRemaining) / 10) * 100;
+                elProgress.style.width = `${progress}%`;
+                
+                if (timeRemaining === 7 || timeRemaining === 5 || 
+                    timeRemaining === 3 || timeRemaining === 1) {
+                    sendTestSignal();
+                }
+                
+                if (timeRemaining <= 0) {
+                    endTest();
+                }
+            }, 1000);
+        }
+
+        // Send a test signal packet
+        function sendTestSignal() {
+            if (!transmitAdapter) return;
+            
+            try {
+                const testData = [1, 0, 1, 0, 1, 0, 1, 0];
+                transmitAdapter.sendPacket(testData);
+                
+                signalsSent++;
+                elSignalsSent.textContent = signalsSent;
+                flashIndicator(elTxIndicator, 400);
+                log(`TX: Packet #${signalsSent}`);
+            } catch (e) {
+                log(`TX error: ${e.message}`, 'error');
+            }
+        }
+
+        // End the test
+        function endTest() {
+            isTestRunning = false;
+            
+            if (testInterval) {
+                clearInterval(testInterval);
+                testInterval = null;
+            }
+            
+            elTimer.classList.remove('active');
+            elBtnTest.disabled = false;
+            elBtnReset.disabled = false;
+            elMode.textContent = 'COMPLETE';
+            elProgress.style.width = '100%';
+            
+            log('═══ TEST COMPLETE ═══', 'signal');
+            log(`TX=${signalsSent} RX=${signalsReceived}`, 'signal');
+        }
+
+        // Reset the system
+        function resetSystem() {
+            if (testInterval) {
+                clearInterval(testInterval);
+                testInterval = null;
+            }
+            
+            isTestRunning = false;
+            timeRemaining = 10;
+            signalsSent = 0;
+            signalsReceived = 0;
+            
+            updateTimer(10);
+            elSignalsSent.textContent = '0';
+            elSignalsReceived.textContent = '0';
+            elProgress.style.width = '0%';
+            elTimer.classList.remove('active');
+            elBtnTest.disabled = false;
+            elBtnReset.disabled = false;
+            
+            if (receiveAdapter) {
+                try {
+                    receiveAdapter.reset();
+                    elRxState.textContent = 'IDLE_INIT';
+                } catch (e) {}
+            }
+            
+            elMode.textContent = isInitialized ? 'READY' : 'IDLE';
+            
+            if (isInitialized) {
+                elBtnInit.style.display = 'none';
+                elBtnTest.style.display = 'block';
+            } else {
+                elBtnInit.style.display = 'block';
+                elBtnTest.style.display = 'none';
+            }
+            
+            elLog.innerHTML = '';
+            log('System reset');
+            log('Press INIT to start');
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            log('Audio Signal Test v1.1');
+            log('─────────────────────');
+            log('1. Tap INIT button');
+            log('2. Allow microphone');
+            log('3. Wait for READY');
+            log('4. Tap TEST to send');
+            log('─────────────────────');
+            updateTimer(10);
+        });
+
+        // Handle visibility change
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden && isTestRunning) {
+                log('⚠ Tab hidden', 'error');
+            }
+        });
+    </script>
+</body>
+</html>
