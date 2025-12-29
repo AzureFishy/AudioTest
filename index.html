@@ -3,13 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio Signal Test</title>
+    <title>Audio Signal Test v2</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
             font-family: 'Courier New', monospace;
@@ -20,136 +16,114 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 2rem;
+            padding: 1.5rem;
         }
         
         .container {
             max-width: 480px;
             width: 100%;
             border: 1px solid #fff;
-            padding: 2rem;
+            padding: 1.5rem;
         }
         
         h1 {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: normal;
             text-transform: uppercase;
-            letter-spacing: 0.2em;
-            margin-bottom: 2rem;
+            letter-spacing: 0.15em;
+            margin-bottom: 1.5rem;
             text-align: center;
             border-bottom: 1px solid #333;
-            padding-bottom: 1rem;
+            padding-bottom: 0.75rem;
         }
         
         .status-panel {
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
             padding: 1rem;
             border: 1px solid #333;
-            min-height: 120px;
         }
         
         .status-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 0.5rem;
-            font-size: 0.85rem;
+            margin-bottom: 0.4rem;
+            font-size: 0.8rem;
         }
         
-        .status-label {
-            color: #666;
+        .status-label { color: #666; }
+        .status-value { font-weight: bold; }
+        
+        .signal-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 1rem 0 0.5rem;
         }
         
-        .status-value {
-            font-weight: bold;
+        .signal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #333;
+            border: 1px solid #555;
+            transition: all 0.1s;
         }
         
-        .status-value.active {
-            color: #fff;
-        }
-        
-        .status-value.receiving {
-            animation: pulse 0.5s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
+        .signal-dot.active {
+            background: #fff;
+            box-shadow: 0 0 15px #fff;
         }
         
         .timer {
-            font-size: 3rem;
+            font-size: 2.5rem;
             text-align: center;
-            margin: 1.5rem 0;
+            margin: 1rem 0;
             font-weight: bold;
             letter-spacing: 0.1em;
         }
         
-        .timer.active {
-            animation: pulse 1s infinite;
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
         }
         
+        .timer.active { animation: pulse 1s infinite; }
+        
         .log-panel {
-            margin-bottom: 2rem;
-            padding: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 0.75rem;
             border: 1px solid #333;
-            height: 150px;
+            height: 140px;
             overflow-y: auto;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             background: #0a0a0a;
         }
         
-        .log-entry {
-            margin-bottom: 0.3rem;
-            color: #888;
-        }
+        .log-entry { margin-bottom: 0.25rem; color: #888; }
+        .log-entry.signal { color: #fff; }
+        .log-entry.error { color: #fff; background: #500; padding: 0.15rem 0.3rem; }
+        .log-entry .ts { color: #444; margin-right: 0.4rem; }
         
-        .log-entry.signal {
-            color: #fff;
-        }
-        
-        .log-entry.error {
-            color: #fff;
-            background: #333;
-            padding: 0.2rem;
-        }
-        
-        .log-entry .timestamp {
-            color: #444;
-            margin-right: 0.5rem;
-        }
-        
-        .button-row {
-            display: flex;
-            gap: 1rem;
-        }
+        .button-row { display: flex; gap: 0.75rem; }
         
         button {
             flex: 1;
             background: #fff;
             color: #000;
             border: none;
-            padding: 1rem 2rem;
+            padding: 0.9rem 1.5rem;
             font-family: inherit;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             text-transform: uppercase;
-            letter-spacing: 0.15em;
+            letter-spacing: 0.1em;
             cursor: pointer;
             transition: all 0.15s ease;
         }
         
-        button:hover:not(:disabled) {
-            background: #ccc;
-        }
-        
-        button:active:not(:disabled) {
-            background: #999;
-        }
-        
-        button:disabled {
-            background: #333;
-            color: #666;
-            cursor: not-allowed;
-        }
+        button:hover:not(:disabled) { background: #ccc; }
+        button:active:not(:disabled) { background: #999; }
+        button:disabled { background: #333; color: #666; cursor: not-allowed; }
         
         button.secondary {
             background: transparent;
@@ -157,22 +131,14 @@
             border: 1px solid #fff;
         }
         
-        button.secondary:hover:not(:disabled) {
-            background: #fff;
-            color: #000;
-        }
-        
-        button.secondary:disabled {
-            border-color: #333;
-            color: #333;
-        }
+        button.secondary:hover:not(:disabled) { background: #fff; color: #000; }
+        button.secondary:disabled { border-color: #333; color: #333; }
         
         .progress-bar {
             width: 100%;
-            height: 4px;
+            height: 3px;
             background: #222;
-            margin-top: 2rem;
-            overflow: hidden;
+            margin-top: 1.5rem;
         }
         
         .progress-fill {
@@ -183,47 +149,29 @@
         }
         
         .instructions {
-            margin-top: 2rem;
-            font-size: 0.7rem;
+            margin-top: 1.5rem;
+            font-size: 0.65rem;
             color: #555;
             text-align: center;
-            line-height: 1.6;
+            line-height: 1.5;
         }
         
-        .signal-indicator {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            margin: 1rem 0;
-        }
-        
-        .signal-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #333;
-            border: 1px solid #555;
-        }
-        
-        .signal-dot.active {
-            background: #fff;
-            box-shadow: 0 0 10px #fff;
+        .freq-display {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #444;
+            margin-top: 0.5rem;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Audio Signal Test</h1>
+        <h1>Audio Signal Test v2</h1>
         
         <div class="status-panel">
             <div class="status-row">
                 <span class="status-label">Mode</span>
                 <span class="status-value" id="mode">IDLE</span>
-            </div>
-            <div class="status-row">
-                <span class="status-label">RX State</span>
-                <span class="status-value" id="rx-state">—</span>
             </div>
             <div class="status-row">
                 <span class="status-label">Signals Sent</span>
@@ -233,14 +181,19 @@
                 <span class="status-label">Signals Received</span>
                 <span class="status-value" id="signals-received">0</span>
             </div>
+            <div class="status-row">
+                <span class="status-label">Detection</span>
+                <span class="status-value" id="detection">—</span>
+            </div>
             
             <div class="signal-indicator">
-                <span style="font-size: 0.7rem; color: #666;">TX</span>
+                <span style="font-size: 0.65rem; color: #666;">TX</span>
                 <div class="signal-dot" id="tx-indicator"></div>
-                <span style="margin: 0 1rem; color: #333;">|</span>
+                <span style="margin: 0 0.75rem; color: #333;">|</span>
                 <div class="signal-dot" id="rx-indicator"></div>
-                <span style="font-size: 0.7rem; color: #666;">RX</span>
+                <span style="font-size: 0.65rem; color: #666;">RX</span>
             </div>
+            <div class="freq-display" id="freq-display">—</div>
         </div>
         
         <div class="timer" id="timer">00:10</div>
@@ -248,9 +201,9 @@
         <div class="log-panel" id="log"></div>
         
         <div class="button-row">
-            <button id="btn-init" onclick="initAudioNetwork()" style="display:block;">⚡ INIT</button>
+            <button id="btn-init" onclick="init()">⚡ INIT</button>
             <button id="btn-test" onclick="startTest()" style="display:none;">▶ TEST</button>
-            <button id="btn-reset" class="secondary" onclick="resetSystem()">↻ RESET</button>
+            <button id="btn-reset" class="secondary" onclick="resetAll()">↻ RESET</button>
         </div>
         
         <div class="progress-bar">
@@ -258,384 +211,267 @@
         </div>
         
         <div class="instructions">
-            1. Press INIT and allow microphone<br>
-            2. Open on second device, also INIT<br>
-            3. Press TEST on one to transmit<br>
-            4. Watch for signals on receiver<br>
-            Test duration: 10 seconds
+            Pure Web Audio API - No external libraries<br>
+            Uses FSK: 1800Hz = signal, silence = no signal<br>
+            Open on 2 devices → INIT both → TEST on one
         </div>
     </div>
 
-    <script src="https://cdn.rypula.pl/audio-network/v1.3.2/audio-network-v1.3.2.min.js"></script>
     <script>
         // ============================================
-        // AUDIO SIGNAL TEST APPLICATION
-        // Using AudioNetwork library for sound-based
-        // data transmission between devices
+        // AUDIO SIGNAL TEST v2
+        // Pure Web Audio API implementation
+        // Uses simple FSK (Frequency Shift Keying)
         // ============================================
-
+        
+        // Configuration
+        const SIGNAL_FREQ = 1800;      // Hz - the tone frequency
+        const SAMPLE_RATE = 44100;     // Standard sample rate
+        const FFT_SIZE = 2048;         // FFT analysis size
+        const DETECTION_THRESHOLD = 15; // dB above noise floor
+        
         // State
-        let physicalLayer = null;
-        let transmitAdapter = null;
-        let receiveAdapter = null;
+        let audioCtx = null;
+        let analyser = null;
+        let micStream = null;
+        let oscillator = null;
+        let gainNode = null;
+        let isInitialized = false;
+        let isTestRunning = false;
+        let isSending = false;
         let testInterval = null;
+        let detectInterval = null;
         let timeRemaining = 10;
         let signalsSent = 0;
         let signalsReceived = 0;
-        let isTestRunning = false;
-        let isInitialized = false;
-        let syncInProgress = false;
-        let audioContext = null;
-        let micStream = null;
-
-        // DOM Elements
-        const elMode = document.getElementById('mode');
-        const elRxState = document.getElementById('rx-state');
-        const elSignalsSent = document.getElementById('signals-sent');
-        const elSignalsReceived = document.getElementById('signals-received');
-        const elTimer = document.getElementById('timer');
-        const elLog = document.getElementById('log');
-        const elProgress = document.getElementById('progress');
-        const elBtnInit = document.getElementById('btn-init');
-        const elBtnTest = document.getElementById('btn-test');
-        const elBtnReset = document.getElementById('btn-reset');
-        const elTxIndicator = document.getElementById('tx-indicator');
-        const elRxIndicator = document.getElementById('rx-indicator');
-
+        let lastDetection = false;
+        
+        // DOM
+        const $ = id => document.getElementById(id);
+        const elMode = $('mode');
+        const elSignalsSent = $('signals-sent');
+        const elSignalsReceived = $('signals-received');
+        const elDetection = $('detection');
+        const elTimer = $('timer');
+        const elLog = $('log');
+        const elProgress = $('progress');
+        const elBtnInit = $('btn-init');
+        const elBtnTest = $('btn-test');
+        const elTxIndicator = $('tx-indicator');
+        const elRxIndicator = $('rx-indicator');
+        const elFreqDisplay = $('freq-display');
+        
         // Logging
-        function log(message, type = 'info') {
-            const now = new Date();
-            const timestamp = now.toLocaleTimeString('en-US', { 
-                hour12: false, 
-                hour: '2-digit', 
-                minute: '2-digit', 
-                second: '2-digit' 
+        function log(msg, type = 'info') {
+            const ts = new Date().toLocaleTimeString('en-US', {
+                hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit'
             });
-            
-            const entry = document.createElement('div');
-            entry.className = `log-entry ${type}`;
-            entry.innerHTML = `<span class="timestamp">[${timestamp}]</span>${message}`;
-            elLog.appendChild(entry);
+            const el = document.createElement('div');
+            el.className = `log-entry ${type}`;
+            el.innerHTML = `<span class="ts">[${ts}]</span>${msg}`;
+            elLog.appendChild(el);
             elLog.scrollTop = elLog.scrollHeight;
-            console.log(`[${type}] ${message}`);
+            console.log(`[${type}] ${msg}`);
         }
-
-        // Update timer display
-        function updateTimer(seconds) {
-            const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
-            const secs = (seconds % 60).toString().padStart(2, '0');
-            elTimer.textContent = `${mins}:${secs}`;
+        
+        function updateTimer(sec) {
+            const m = Math.floor(sec / 60).toString().padStart(2, '0');
+            const s = (sec % 60).toString().padStart(2, '0');
+            elTimer.textContent = `${m}:${s}`;
         }
-
-        // Flash indicator
-        function flashIndicator(element, duration = 200) {
-            element.classList.add('active');
-            setTimeout(() => element.classList.remove('active'), duration);
+        
+        function flash(el, dur = 200) {
+            el.classList.add('active');
+            setTimeout(() => el.classList.remove('active'), dur);
         }
-
-        // Step 1: Create and unlock AudioContext
-        async function unlockAudio() {
-            log('Step 1: Unlocking audio...');
-            try {
-                const AC = window.AudioContext || window.webkitAudioContext;
-                if (!AC) {
-                    throw new Error('AudioContext not supported');
-                }
-                
-                audioContext = new AC();
-                log(`AudioContext created (state: ${audioContext.state})`);
-                
-                if (audioContext.state === 'suspended') {
-                    await audioContext.resume();
-                    log(`AudioContext resumed (state: ${audioContext.state})`);
-                }
-                
-                // Play a tiny silent sound to fully unlock on iOS/Android
-                const oscillator = audioContext.createOscillator();
-                const gain = audioContext.createGain();
-                gain.gain.value = 0.001;
-                oscillator.connect(gain);
-                gain.connect(audioContext.destination);
-                oscillator.start();
-                oscillator.stop(audioContext.currentTime + 0.1);
-                
-                await new Promise(r => setTimeout(r, 150));
-                log('Audio unlocked ✓', 'signal');
-                return true;
-            } catch (e) {
-                log(`Audio unlock failed: ${e.message}`, 'error');
-                return false;
-            }
-        }
-
-        // Step 2: Get microphone stream
-        async function getMicrophone() {
-            log('Step 2: Requesting microphone...');
-            try {
-                // Check if getUserMedia is available
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    throw new Error('getUserMedia not supported');
-                }
-                
-                // List available devices first
-                try {
-                    const devices = await navigator.mediaDevices.enumerateDevices();
-                    const audioInputs = devices.filter(d => d.kind === 'audioinput');
-                    log(`Found ${audioInputs.length} audio input(s)`);
-                } catch (e) {
-                    log('Could not enumerate devices');
-                }
-                
-                // Request microphone with minimal constraints
-                micStream = await navigator.mediaDevices.getUserMedia({ 
-                    audio: true,
-                    video: false
-                });
-                
-                const tracks = micStream.getAudioTracks();
-                log(`Mic stream obtained: ${tracks.length} track(s)`);
-                if (tracks.length > 0) {
-                    log(`Track: ${tracks[0].label || 'unnamed'}`);
-                }
-                
-                log('Microphone ready ✓', 'signal');
-                return true;
-            } catch (e) {
-                log(`Microphone failed: ${e.name}: ${e.message}`, 'error');
-                if (e.name === 'NotAllowedError') {
-                    log('→ Permission denied. Check browser settings.', 'error');
-                } else if (e.name === 'NotFoundError') {
-                    log('→ No microphone found.', 'error');
-                } else if (e.name === 'NotReadableError') {
-                    log('→ Mic in use by another app?', 'error');
-                }
-                return false;
-            }
-        }
-
-        // Step 3: Initialize AudioNetwork
-        async function initAudioNetwork() {
+        
+        // Initialize audio
+        async function init() {
             if (isInitialized) {
                 log('Already initialized');
-                return true;
-            }
-            
-            elMode.textContent = 'INITIALIZING';
-            elBtnInit.disabled = true;
-            
-            try {
-                // Step 1: Unlock audio
-                if (!await unlockAudio()) {
-                    throw new Error('Could not unlock audio');
-                }
-                
-                // Step 2: Get microphone
-                if (!await getMicrophone()) {
-                    throw new Error('Could not access microphone');
-                }
-                
-                // Step 3: Check AudioNetwork library
-                log('Step 3: Loading AudioNetwork...');
-                if (typeof AudioNetwork === 'undefined') {
-                    throw new Error('AudioNetwork library not loaded');
-                }
-                log('AudioNetwork library found ✓');
-                
-                // Log available namespaces for debugging
-                const namespaces = Object.keys(AudioNetwork);
-                log(`Namespaces: ${namespaces.join(', ')}`);
-
-                // Step 4: Create PhysicalLayer
-                log('Step 4: Creating PhysicalLayer...');
-                
-                // Close our temporary audio context - AudioNetwork creates its own
-                if (audioContext) {
-                    audioContext.close();
-                    audioContext = null;
-                }
-                
-                // Stop our mic stream - AudioNetwork creates its own
-                if (micStream) {
-                    micStream.getTracks().forEach(t => t.stop());
-                    micStream = null;
-                }
-                
-                // Small delay before AudioNetwork takes over
-                await new Promise(r => setTimeout(r, 300));
-                
-                // Try creating PhysicalLayer with minimal config
-                physicalLayer = new AudioNetwork.PhysicalLayer.PhysicalLayer({
-                    tx: {
-                        channel: [{
-                            baseFrequency: 4000,
-                            ofdmSize: 1,
-                            ofdmFrequencySpacing: 250,
-                            pskSize: 2,
-                            amplitude: 0.3
-                        }]
-                    },
-                    rx: {
-                        channel: [{
-                            baseFrequency: 4000,
-                            ofdmSize: 1,
-                            ofdmFrequencySpacing: 250,
-                            pskSize: 2
-                        }],
-                        notificationPerSecond: 15,
-                        dftWindowTime: 0.1
-                    }
-                });
-                
-                log('PhysicalLayer created ✓');
-
-                // Step 5: Create adapters
-                log('Step 5: Creating adapters...');
-                transmitAdapter = new AudioNetwork.PhysicalLayerAdapter.TransmitAdapter(physicalLayer);
-                receiveAdapter = new AudioNetwork.PhysicalLayerAdapter.ReceiveAdapter(physicalLayer);
-                log('Adapters created ✓');
-
-                // Step 6: Set up handlers
-                log('Step 6: Setting up handlers...');
-                receiveAdapter.setPacketHandler(function(channelIndex, data) {
-                    onPacketReceived(channelIndex, data);
-                });
-                receiveAdapter.setStateHandler(function(state) {
-                    onStateChange(state);
-                });
-                try {
-                    receiveAdapter.setSyncInProgressHandler(function(inProgress) {
-                        onSyncProgress(inProgress);
-                    });
-                } catch(e) {
-                    log('SyncHandler not available (ok)');
-                }
-                log('Handlers set ✓');
-
-                // Success!
-                await new Promise(r => setTimeout(r, 200));
-                isInitialized = true;
-                
-                log('══════════════════════', 'signal');
-                log('INITIALIZATION COMPLETE', 'signal');
-                log('══════════════════════', 'signal');
-                
-                elMode.textContent = 'READY';
-                elRxState.textContent = 'IDLE_INIT';
-                elBtnInit.style.display = 'none';
-                elBtnTest.style.display = 'block';
-                elBtnInit.disabled = false;
-                
-                return true;
-                
-            } catch (error) {
-                log(`INIT FAILED: ${error.message}`, 'error');
-                console.error('Full error:', error);
-                elMode.textContent = 'ERROR';
-                elBtnInit.disabled = false;
-                
-                // Cleanup
-                if (audioContext) {
-                    try { audioContext.close(); } catch(e) {}
-                }
-                if (micStream) {
-                    try { micStream.getTracks().forEach(t => t.stop()); } catch(e) {}
-                }
-                
-                return false;
-            }
-        }
-
-        // Handle sync progress
-        function onSyncProgress(inProgress) {
-            syncInProgress = inProgress;
-            if (inProgress) {
-                flashIndicator(elRxIndicator, 500);
-                log('RX: Sync in progress...', 'signal');
-            }
-        }
-
-        // Handle state changes from receiver adapter
-        function onStateChange(state) {
-            const stateNames = {
-                0: 'IDLE_INIT',
-                1: 'FIRST_SYNC_WAIT', 
-                2: 'FIRST_SYNC',
-                3: 'FATAL_ERROR',
-                4: 'IDLE',
-                5: 'SYMBOL',
-                6: 'SYNC',
-                7: 'GUARD'
-            };
-            
-            const stateName = stateNames[state] || `STATE_${state}`;
-            elRxState.textContent = stateName;
-            
-            if (state === 2 || state === 6) {
-                flashIndicator(elRxIndicator, 500);
-                log(`RX: ${stateName}`, 'signal');
-            } else if (state === 3) {
-                log(`RX: ${stateName} - Try reset`, 'error');
-            } else if (state === 4) {
-                log(`RX: Ready to receive`);
-            }
-        }
-
-        // Handle received packets
-        function onPacketReceived(channelIndex, data) {
-            signalsReceived++;
-            elSignalsReceived.textContent = signalsReceived;
-            flashIndicator(elRxIndicator, 300);
-            
-            let dataStr = '';
-            if (Array.isArray(data)) {
-                dataStr = data.join(' ');
-            } else {
-                dataStr = String(data);
-            }
-            
-            log(`RX: Packet #${signalsReceived} [${dataStr}]`, 'signal');
-        }
-
-        // Start the test
-        async function startTest() {
-            if (!isInitialized) {
-                log('Please press INIT first', 'error');
                 return;
             }
             
+            elBtnInit.disabled = true;
+            elMode.textContent = 'INIT...';
+            log('Initializing...');
+            
+            try {
+                // Step 1: Create AudioContext
+                log('Creating AudioContext...');
+                const AC = window.AudioContext || window.webkitAudioContext;
+                if (!AC) throw new Error('AudioContext not supported');
+                
+                audioCtx = new AC({ sampleRate: SAMPLE_RATE });
+                log(`AudioContext: ${audioCtx.state}, ${audioCtx.sampleRate}Hz`);
+                
+                // Resume if suspended
+                if (audioCtx.state === 'suspended') {
+                    await audioCtx.resume();
+                    log('AudioContext resumed');
+                }
+                
+                // Step 2: Get microphone
+                log('Requesting microphone...');
+                if (!navigator.mediaDevices?.getUserMedia) {
+                    throw new Error('getUserMedia not supported');
+                }
+                
+                micStream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false
+                    }
+                });
+                log('Microphone access granted ✓', 'signal');
+                
+                // Step 3: Create analyser for frequency detection
+                log('Setting up analyser...');
+                analyser = audioCtx.createAnalyser();
+                analyser.fftSize = FFT_SIZE;
+                analyser.smoothingTimeConstant = 0.3;
+                
+                const source = audioCtx.createMediaStreamSource(micStream);
+                source.connect(analyser);
+                log('Analyser connected ✓');
+                
+                // Step 4: Create oscillator for transmission (not started yet)
+                gainNode = audioCtx.createGain();
+                gainNode.gain.value = 0;
+                gainNode.connect(audioCtx.destination);
+                
+                oscillator = audioCtx.createOscillator();
+                oscillator.type = 'sine';
+                oscillator.frequency.value = SIGNAL_FREQ;
+                oscillator.connect(gainNode);
+                oscillator.start();
+                log('Oscillator ready ✓');
+                
+                // Step 5: Start detection loop
+                startDetection();
+                
+                // Success
+                isInitialized = true;
+                elMode.textContent = 'READY';
+                elBtnInit.style.display = 'none';
+                elBtnTest.style.display = 'block';
+                log('═══════════════════', 'signal');
+                log('INIT COMPLETE', 'signal');
+                log(`Listening at ${SIGNAL_FREQ}Hz`, 'signal');
+                log('═══════════════════', 'signal');
+                
+            } catch (err) {
+                log(`ERROR: ${err.name}: ${err.message}`, 'error');
+                elMode.textContent = 'ERROR';
+                elBtnInit.disabled = false;
+                
+                if (err.name === 'NotAllowedError') {
+                    log('→ Microphone permission denied', 'error');
+                    log('→ Check Chrome settings', 'error');
+                }
+            }
+        }
+        
+        // Frequency detection
+        function startDetection() {
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            const binWidth = audioCtx.sampleRate / analyser.fftSize;
+            const targetBin = Math.round(SIGNAL_FREQ / binWidth);
+            
+            log(`Target bin: ${targetBin} (${(targetBin * binWidth).toFixed(1)}Hz)`);
+            
+            detectInterval = setInterval(() => {
+                if (!analyser) return;
+                
+                analyser.getByteFrequencyData(dataArray);
+                
+                // Get power at target frequency
+                const targetPower = dataArray[targetBin];
+                
+                // Get average power (noise floor)
+                let sum = 0;
+                for (let i = 0; i < bufferLength; i++) {
+                    sum += dataArray[i];
+                }
+                const avgPower = sum / bufferLength;
+                
+                // Calculate signal-to-noise
+                const snr = targetPower - avgPower;
+                
+                // Detect signal
+                const detected = snr > DETECTION_THRESHOLD && targetPower > 50;
+                
+                // Update display
+                elFreqDisplay.textContent = `${SIGNAL_FREQ}Hz: ${targetPower} | Avg: ${avgPower.toFixed(0)} | SNR: ${snr.toFixed(0)}`;
+                
+                if (detected && !lastDetection && !isSending) {
+                    // Rising edge - signal just detected
+                    signalsReceived++;
+                    elSignalsReceived.textContent = signalsReceived;
+                    flash(elRxIndicator, 300);
+                    elDetection.textContent = 'SIGNAL!';
+                    log(`RX: Signal detected! (SNR: ${snr.toFixed(1)})`, 'signal');
+                } else if (detected && !isSending) {
+                    elDetection.textContent = 'SIGNAL';
+                    elRxIndicator.classList.add('active');
+                } else {
+                    elDetection.textContent = '—';
+                    elRxIndicator.classList.remove('active');
+                }
+                
+                lastDetection = detected;
+                
+            }, 100); // Check 10 times per second
+        }
+        
+        // Send a tone burst
+        function sendTone(durationMs) {
+            if (!gainNode) return;
+            
+            isSending = true;
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            flash(elTxIndicator, durationMs);
+            
+            setTimeout(() => {
+                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+                isSending = false;
+            }, durationMs);
+        }
+        
+        // Start test
+        function startTest() {
+            if (!isInitialized) {
+                log('Please INIT first', 'error');
+                return;
+            }
             if (isTestRunning) return;
             
             isTestRunning = true;
             timeRemaining = 10;
+            signalsSent = 0;
+            elSignalsSent.textContent = '0';
             elBtnTest.disabled = true;
-            elBtnReset.disabled = true;
             elMode.textContent = 'TESTING';
             elTimer.classList.add('active');
             
-            log('═══ TEST STARTED ═══', 'signal');
+            log('═══ TEST START ═══', 'signal');
+            log('Sending signals...', 'signal');
             
-            try {
-                log('TX: Sending SYNC (2s)...');
-                flashIndicator(elTxIndicator, 2000);
-                transmitAdapter.sendSync();
-                signalsSent++;
-                elSignalsSent.textContent = signalsSent;
-            } catch (e) {
-                log(`TX Sync error: ${e.message}`, 'error');
-            }
+            // Send initial burst
+            sendSignal();
             
             updateTimer(timeRemaining);
             
             testInterval = setInterval(() => {
                 timeRemaining--;
                 updateTimer(timeRemaining);
+                elProgress.style.width = `${((10 - timeRemaining) / 10) * 100}%`;
                 
-                const progress = ((10 - timeRemaining) / 10) * 100;
-                elProgress.style.width = `${progress}%`;
-                
-                if (timeRemaining === 7 || timeRemaining === 5 || 
-                    timeRemaining === 3 || timeRemaining === 1) {
-                    sendTestSignal();
+                // Send signal every 2 seconds
+                if (timeRemaining % 2 === 0 && timeRemaining > 0) {
+                    sendSignal();
                 }
                 
                 if (timeRemaining <= 0) {
@@ -643,28 +479,16 @@
                 }
             }, 1000);
         }
-
-        // Send a test signal packet
-        function sendTestSignal() {
-            if (!transmitAdapter) return;
-            
-            try {
-                const testData = [1, 0, 1, 0, 1, 0, 1, 0];
-                transmitAdapter.sendPacket(testData);
-                
-                signalsSent++;
-                elSignalsSent.textContent = signalsSent;
-                flashIndicator(elTxIndicator, 400);
-                log(`TX: Packet #${signalsSent}`);
-            } catch (e) {
-                log(`TX error: ${e.message}`, 'error');
-            }
+        
+        function sendSignal() {
+            signalsSent++;
+            elSignalsSent.textContent = signalsSent;
+            log(`TX: Signal #${signalsSent} (${SIGNAL_FREQ}Hz, 500ms)`);
+            sendTone(500); // 500ms tone burst
         }
-
-        // End the test
+        
         function endTest() {
             isTestRunning = false;
-            
             if (testInterval) {
                 clearInterval(testInterval);
                 testInterval = null;
@@ -672,16 +496,14 @@
             
             elTimer.classList.remove('active');
             elBtnTest.disabled = false;
-            elBtnReset.disabled = false;
-            elMode.textContent = 'COMPLETE';
+            elMode.textContent = 'DONE';
             elProgress.style.width = '100%';
             
-            log('═══ TEST COMPLETE ═══', 'signal');
-            log(`TX=${signalsSent} RX=${signalsReceived}`, 'signal');
+            log('═══ TEST END ═══', 'signal');
+            log(`Sent: ${signalsSent} | Received: ${signalsReceived}`, 'signal');
         }
-
-        // Reset the system
-        function resetSystem() {
+        
+        function resetAll() {
             if (testInterval) {
                 clearInterval(testInterval);
                 testInterval = null;
@@ -695,50 +517,29 @@
             updateTimer(10);
             elSignalsSent.textContent = '0';
             elSignalsReceived.textContent = '0';
+            elDetection.textContent = '—';
             elProgress.style.width = '0%';
             elTimer.classList.remove('active');
             elBtnTest.disabled = false;
-            elBtnReset.disabled = false;
-            
-            if (receiveAdapter) {
-                try {
-                    receiveAdapter.reset();
-                    elRxState.textContent = 'IDLE_INIT';
-                } catch (e) {}
-            }
-            
             elMode.textContent = isInitialized ? 'READY' : 'IDLE';
             
-            if (isInitialized) {
-                elBtnInit.style.display = 'none';
-                elBtnTest.style.display = 'block';
-            } else {
-                elBtnInit.style.display = 'block';
-                elBtnTest.style.display = 'none';
-            }
-            
             elLog.innerHTML = '';
-            log('System reset');
-            log('Press INIT to start');
-        }
-
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            log('Audio Signal Test v1.1');
-            log('─────────────────────');
-            log('1. Tap INIT button');
-            log('2. Allow microphone');
-            log('3. Wait for READY');
-            log('4. Tap TEST to send');
-            log('─────────────────────');
-            updateTimer(10);
-        });
-
-        // Handle visibility change
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden && isTestRunning) {
-                log('⚠ Tab hidden', 'error');
+            log('Reset complete');
+            if (isInitialized) {
+                log(`Listening at ${SIGNAL_FREQ}Hz`);
             }
+        }
+        
+        // Init on load
+        document.addEventListener('DOMContentLoaded', () => {
+            log('Audio Signal Test v2');
+            log('Pure Web Audio API');
+            log('───────────────────');
+            log('1. Tap INIT');
+            log('2. Allow microphone');
+            log('3. Tap TEST to send');
+            log('───────────────────');
+            updateTimer(10);
         });
     </script>
 </body>
