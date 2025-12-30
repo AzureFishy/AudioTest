@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio Signal Test v7</title>
+    <title>Audio Signal Test v8</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -16,7 +16,7 @@
         }
         
         .container {
-            max-width: 500px;
+            max-width: 520px;
             margin: 0 auto;
             border: 1px solid #fff;
             padding: 1.25rem;
@@ -110,6 +110,98 @@
         
         .section.tx .range-display { color: #0a0; }
         .section.rx .range-display { color: #0aa; }
+        
+        /* Binary Toggle Row */
+        .binary-row {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid #222;
+        }
+        
+        .binary-label {
+            font-size: 0.6rem;
+            color: #666;
+            min-width: 45px;
+        }
+        
+        .section.tx .binary-label { color: #0a0; }
+        .section.rx .binary-label { color: #0aa; }
+        
+        .toggle-group {
+            display: flex;
+            gap: 2px;
+        }
+        
+        .bit-toggle {
+            width: 28px;
+            height: 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.15s;
+            position: relative;
+        }
+        
+        .bit-toggle:hover {
+            border-color: #555;
+        }
+        
+        .bit-toggle.on {
+            background: #0a0;
+            border-color: #0f0;
+        }
+        
+        .section.rx .bit-toggle.on {
+            background: #088;
+            border-color: #0ff;
+        }
+        
+        .bit-toggle .bit-num {
+            font-size: 0.5rem;
+            color: #555;
+            position: absolute;
+            top: 2px;
+        }
+        
+        .bit-toggle.on .bit-num {
+            color: #000;
+        }
+        
+        .bit-toggle .bit-val {
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #444;
+        }
+        
+        .bit-toggle.on .bit-val {
+            color: #000;
+        }
+        
+        .binary-string {
+            font-size: 0.65rem;
+            color: #555;
+            font-family: inherit;
+            letter-spacing: 0.05em;
+            margin-left: auto;
+        }
+        
+        .section.tx .binary-string { color: #0a0; }
+        .section.rx .binary-string { color: #0aa; }
+        
+        .freq-info {
+            font-size: 0.55rem;
+            color: #444;
+            margin-top: 0.3rem;
+            text-align: center;
+        }
         
         /* ON AIR Toggle */
         .air-toggle {
@@ -256,7 +348,7 @@
         
         #graph {
             width: 100%;
-            height: 80px;
+            height: 90px;
             display: block;
         }
         
@@ -266,6 +358,25 @@
             color: #555;
             min-height: 1.1em;
             padding: 0.25rem 0;
+        }
+        
+        .match-status {
+            text-align: center;
+            font-size: 0.7rem;
+            padding: 0.3rem;
+            margin-bottom: 0.5rem;
+            border: 1px solid #333;
+            background: #0a0a0a;
+        }
+        
+        .match-status.match {
+            color: #0f0;
+            border-color: #0a0;
+            background: #001a00;
+        }
+        
+        .match-status.no-match {
+            color: #888;
         }
         
         /* Log section */
@@ -288,7 +399,7 @@
         }
         
         .log-panel {
-            height: 100px;
+            height: 90px;
             overflow-y: auto;
             background: #050505;
             padding: 0.4rem;
@@ -302,8 +413,9 @@
         .log-entry.tx { color: #0f0; }
         .log-entry.info { color: #888; }
         .log-entry.err { color: #f00; }
+        .log-entry.match { color: #0f0; font-weight: bold; }
         .log-entry .ts { color: #333; margin-right: 0.25rem; }
-        .log-entry .hits { color: #088; }
+        .log-entry .pattern { color: #ff0; }
         
         .timer {
             text-align: center;
@@ -352,52 +464,70 @@
 </head>
 <body>
     <div class="container">
-        <h1>Audio Signal Test v7</h1>
+        <h1>Audio Signal Test v8</h1>
         
         <!-- TX Settings -->
         <div class="section tx">
             <div class="section-title">▲ Transmit</div>
             <div class="row">
-                <label>Freq</label>
+                <label>Base</label>
                 <input type="range" id="tx-slider" min="20" max="30000" step="10" value="1800">
                 <input type="number" id="tx-input" value="1800" min="1" max="30000" step="1">
                 <span class="hz">Hz</span>
             </div>
             <div class="row">
-                <label>Ignore ±</label>
-                <input type="number" id="tx-ignore" value="4" min="0" max="2000" step="1" style="width:50px;">
+                <label>Step</label>
+                <input type="number" id="tx-step" value="10" min="1" max="500" step="1" style="width:50px;">
                 <span class="hz">Hz</span>
                 <span class="range-display" id="tx-range-display"></span>
             </div>
+            <div class="binary-row">
+                <span class="binary-label">Binary</span>
+                <div class="toggle-group" id="tx-toggles"></div>
+                <span class="binary-string" id="tx-binary">00000000</span>
+            </div>
+            <div class="freq-info" id="tx-freq-info"></div>
         </div>
         
         <!-- RX Settings -->
         <div class="section rx">
-            <div class="section-title">▼ Receive Target</div>
+            <div class="section-title">▼ Receive Pattern</div>
             <div class="row">
-                <label>Freq</label>
-                <input type="range" id="rx-slider" min="20" max="30000" step="10" value="2400">
-                <input type="number" id="rx-input" value="2400" min="1" max="30000" step="1">
+                <label>Base</label>
+                <input type="range" id="rx-slider" min="20" max="30000" step="10" value="1800">
+                <input type="number" id="rx-input" value="1800" min="1" max="30000" step="1">
                 <span class="hz">Hz</span>
             </div>
             <div class="row">
-                <label>Range ±</label>
-                <input type="number" id="rx-range" value="4" min="1" max="2000" step="1" style="width:50px;">
+                <label>Step</label>
+                <input type="number" id="rx-step" value="10" min="1" max="500" step="1" style="width:50px;">
                 <span class="hz">Hz</span>
                 <span class="range-display" id="rx-range-display"></span>
             </div>
             <div class="row">
+                <label>Thresh</label>
+                <input type="number" id="rx-thresh" value="40" min="5" max="200" step="5" style="width:50px;">
+                <span class="hz">pwr</span>
+                <span class="range-display">detection level</span>
+            </div>
+            <div class="row">
                 <label>Window</label>
-                <input type="number" id="rx-window" value="250" min="10" max="2000" step="10" style="width:50px;">
+                <input type="number" id="rx-window" value="300" min="10" max="2000" step="10" style="width:50px;">
                 <span class="hz">ms</span>
                 <span class="range-display">debounce</span>
             </div>
             <div class="row">
                 <label>Poll</label>
-                <input type="number" id="poll-interval" value="70" min="10" max="500" step="10" style="width:50px;">
+                <input type="number" id="poll-interval" value="50" min="10" max="500" step="10" style="width:50px;">
                 <span class="hz">ms</span>
-                <span class="range-display" id="poll-display">~14/sec</span>
+                <span class="range-display" id="poll-display">~20/sec</span>
             </div>
+            <div class="binary-row">
+                <span class="binary-label">Expect</span>
+                <div class="toggle-group" id="rx-toggles"></div>
+                <span class="binary-string" id="rx-binary">00000000</span>
+            </div>
+            <div class="freq-info" id="rx-freq-info"></div>
         </div>
         
         <!-- ON AIR Toggle + Pulse -->
@@ -416,7 +546,7 @@
                 <span class="graph-title">Spectrum</span>
                 <div class="graph-controls">
                     <button class="zoom-btn" onclick="zoomGraph(-1)">−</button>
-                    <span class="zoom-label" id="zoom-label">30k</span>
+                    <span class="zoom-label" id="zoom-label">4k</span>
                     <button class="zoom-btn" onclick="zoomGraph(1)">+</button>
                 </div>
             </div>
@@ -426,6 +556,10 @@
         </div>
         
         <div class="detection-info" id="detection-info">—</div>
+        
+        <div class="match-status no-match" id="match-status">
+            Detected: <span id="detected-pattern">--------</span>
+        </div>
         
         <div class="timer" id="timer">00:10</div>
         
@@ -451,13 +585,12 @@
         const FREQ_MAX = 30000;
         const SLIDER_MIN = 20;
         const SLIDER_MAX = 30000;
-        const FFT_SIZE = 4096;
-        const DETECT_THRESHOLD = 18;
-        const POWER_THRESHOLD = 45;
+        const FFT_SIZE = 8192;
+        const NUM_BITS = 8;
         
-        // Graph zoom levels
-        const ZOOM_LEVELS = [8000, 12000, 16000, 20000, 24000, 30000];
-        let zoomIndex = 5; // Default to 30k
+        // Graph zoom levels (focused for binary signals)
+        const ZOOM_LEVELS = [500, 1000, 2000, 4000, 8000, 12000, 20000, 30000];
+        let zoomIndex = 3; // Default to 4k
         let graphMaxFreq = ZOOM_LEVELS[zoomIndex];
         
         // Flash effect state
@@ -466,26 +599,32 @@
         const FLASH_FADE = 500;
         
         // State
-        let audioCtx, analyser, oscillator, gainNode, micStream;
+        let audioCtx, analyser, micStream;
+        let oscillators = []; // Array of oscillators for multi-tone
+        let gainNodes = [];   // Array of gain nodes
         let detectInterval, testInterval;
         let isInit = false;
         let isRunning = false;
         let isSending = false;
         let isOnAir = false;
         
-        let txFreq = 1800;
-        let txIgnore = 4;
-        let rxFreq = 2400;
-        let rxRange = 4;
-        let rxWindow = 250;
-        let pollInterval = 70;
+        // TX settings
+        let txBaseFreq = 1800;
+        let txStep = 10;
+        let txToggles = [0, 0, 0, 0, 0, 0, 0, 0];
+        
+        // RX settings
+        let rxBaseFreq = 1800;
+        let rxStep = 10;
+        let rxThreshold = 40;
+        let rxWindow = 300;
+        let pollInterval = 50;
+        let rxToggles = [0, 0, 0, 0, 0, 0, 0, 0];
+        
         let pulseDuration = 350;
         let timeLeft = 10;
         let lastDetectTime = 0;
-        let lastDetectFreq = 0;
-        
-        // Hit counter during debounce
-        let rxHitCount = 0;
+        let lastDetectedPattern = '';
         
         // Log entry counter
         let logEntryCount = 0;
@@ -498,16 +637,23 @@
         const $ = id => document.getElementById(id);
         const elTxSlider = $('tx-slider');
         const elTxInput = $('tx-input');
-        const elTxIgnore = $('tx-ignore');
+        const elTxStep = $('tx-step');
         const elRxSlider = $('rx-slider');
         const elRxInput = $('rx-input');
-        const elRxRange = $('rx-range');
+        const elRxStep = $('rx-step');
+        const elRxThresh = $('rx-thresh');
         const elRxWindow = $('rx-window');
         const elPollInterval = $('poll-interval');
         const elPollDisplay = $('poll-display');
         const elTxRangeDisp = $('tx-range-display');
         const elRxRangeDisp = $('rx-range-display');
+        const elTxBinary = $('tx-binary');
+        const elRxBinary = $('rx-binary');
+        const elTxFreqInfo = $('tx-freq-info');
+        const elRxFreqInfo = $('rx-freq-info');
         const elInfo = $('detection-info');
+        const elMatchStatus = $('match-status');
+        const elDetectedPattern = $('detected-pattern');
         const elTimer = $('timer');
         const elLog = $('log');
         const elLogCount = $('log-count');
@@ -555,6 +701,28 @@
             return Math.max(min, Math.min(max, v));
         }
         
+        function togglesToString(toggles) {
+            return toggles.map(t => t ? '1' : '0').join('');
+        }
+        
+        function getActiveFreqs(baseFreq, step, toggles) {
+            const freqs = [];
+            for (let i = 0; i < NUM_BITS; i++) {
+                if (toggles[i]) {
+                    freqs.push(baseFreq + (i * step));
+                }
+            }
+            return freqs;
+        }
+        
+        function getAllFreqs(baseFreq, step) {
+            const freqs = [];
+            for (let i = 0; i < NUM_BITS; i++) {
+                freqs.push(baseFreq + (i * step));
+            }
+            return freqs;
+        }
+        
         // Graph zoom
         function zoomGraph(dir) {
             zoomIndex = clamp(zoomIndex + dir, 0, ZOOM_LEVELS.length - 1);
@@ -596,48 +764,99 @@
             return Math.min(totalIntensity, 1);
         }
         
+        // Create toggle buttons
+        function createToggles(containerId, toggleArray, updateCallback, isTx) {
+            const container = $(containerId);
+            container.innerHTML = '';
+            
+            for (let i = 0; i < NUM_BITS; i++) {
+                const btn = document.createElement('div');
+                btn.className = 'bit-toggle' + (toggleArray[i] ? ' on' : '');
+                btn.innerHTML = `<span class="bit-num">${i + 1}</span><span class="bit-val">${toggleArray[i]}</span>`;
+                btn.dataset.index = i;
+                
+                btn.onclick = () => {
+                    toggleArray[i] = toggleArray[i] ? 0 : 1;
+                    btn.classList.toggle('on', toggleArray[i]);
+                    btn.querySelector('.bit-val').textContent = toggleArray[i];
+                    updateCallback();
+                };
+                
+                container.appendChild(btn);
+            }
+        }
+        
         // Frequency updates
-        function updateTx(freq) {
-            txFreq = clamp(Math.round(freq), FREQ_MIN, FREQ_MAX);
-            elTxInput.value = txFreq;
-            if (txFreq >= SLIDER_MIN && txFreq <= SLIDER_MAX) {
-                elTxSlider.value = txFreq;
-            }
-            elTxRangeDisp.textContent = `Ign: ${txFreq - txIgnore}–${txFreq + txIgnore}`;
-            if (oscillator) {
-                oscillator.frequency.setValueAtTime(txFreq, audioCtx.currentTime);
+        function updateTxDisplay() {
+            elTxBinary.textContent = togglesToString(txToggles);
+            const activeFreqs = getActiveFreqs(txBaseFreq, txStep, txToggles);
+            const maxFreq = txBaseFreq + ((NUM_BITS - 1) * txStep);
+            elTxRangeDisp.textContent = `${txBaseFreq}–${maxFreq} Hz`;
+            
+            if (activeFreqs.length > 0) {
+                elTxFreqInfo.textContent = `Active: ${activeFreqs.join(', ')} Hz`;
+            } else {
+                elTxFreqInfo.textContent = 'No frequencies selected';
             }
         }
         
-        function updateRx(freq) {
-            rxFreq = clamp(Math.round(freq), FREQ_MIN, FREQ_MAX);
-            elRxInput.value = rxFreq;
-            if (rxFreq >= SLIDER_MIN && rxFreq <= SLIDER_MAX) {
-                elRxSlider.value = rxFreq;
+        function updateRxDisplay() {
+            elRxBinary.textContent = togglesToString(rxToggles);
+            const activeFreqs = getActiveFreqs(rxBaseFreq, rxStep, rxToggles);
+            const maxFreq = rxBaseFreq + ((NUM_BITS - 1) * rxStep);
+            elRxRangeDisp.textContent = `${rxBaseFreq}–${maxFreq} Hz`;
+            
+            if (activeFreqs.length > 0) {
+                elRxFreqInfo.textContent = `Expecting: ${activeFreqs.join(', ')} Hz`;
+            } else {
+                elRxFreqInfo.textContent = 'No pattern set';
             }
-            elRxRangeDisp.textContent = `Listen: ${rxFreq - rxRange}–${rxFreq + rxRange}`;
         }
         
-        function updateTxIgnore(v) {
-            txIgnore = parseInt(v) || 0;
-            elTxRangeDisp.textContent = `Ign: ${txFreq - txIgnore}–${txFreq + txIgnore}`;
+        function updateTxBaseFreq(freq) {
+            txBaseFreq = clamp(Math.round(freq), FREQ_MIN, FREQ_MAX);
+            elTxInput.value = txBaseFreq;
+            if (txBaseFreq >= SLIDER_MIN && txBaseFreq <= SLIDER_MAX) {
+                elTxSlider.value = txBaseFreq;
+            }
+            updateTxDisplay();
         }
         
-        function updateRxRange(v) {
-            rxRange = parseInt(v) || 1;
-            elRxRangeDisp.textContent = `Listen: ${rxFreq - rxRange}–${rxFreq + rxRange}`;
+        function updateTxStep(v) {
+            txStep = clamp(parseInt(v) || 10, 1, 500);
+            elTxStep.value = txStep;
+            updateTxDisplay();
+        }
+        
+        function updateRxBaseFreq(freq) {
+            rxBaseFreq = clamp(Math.round(freq), FREQ_MIN, FREQ_MAX);
+            elRxInput.value = rxBaseFreq;
+            if (rxBaseFreq >= SLIDER_MIN && rxBaseFreq <= SLIDER_MAX) {
+                elRxSlider.value = rxBaseFreq;
+            }
+            updateRxDisplay();
+        }
+        
+        function updateRxStep(v) {
+            rxStep = clamp(parseInt(v) || 10, 1, 500);
+            elRxStep.value = rxStep;
+            updateRxDisplay();
+        }
+        
+        function updateRxThreshold(v) {
+            rxThreshold = clamp(parseInt(v) || 40, 5, 200);
+            elRxThresh.value = rxThreshold;
         }
         
         function updateRxWindow(v) {
-            rxWindow = parseInt(v) || 250;
+            rxWindow = parseInt(v) || 300;
         }
         
         function updatePollInterval(v) {
-            pollInterval = clamp(parseInt(v) || 70, 10, 500);
+            pollInterval = clamp(parseInt(v) || 50, 10, 500);
             elPollInterval.value = pollInterval;
             elPollDisplay.textContent = `~${Math.round(1000 / pollInterval)}/sec`;
             
-            // Restart detection with new interval if running
             if (isInit && detectInterval) {
                 clearInterval(detectInterval);
                 startDetection();
@@ -650,12 +869,13 @@
         }
         
         // Event listeners
-        elTxSlider.oninput = () => updateTx(parseInt(elTxSlider.value));
-        elTxInput.onchange = () => updateTx(parseInt(elTxInput.value) || FREQ_MIN);
-        elTxIgnore.onchange = () => updateTxIgnore(elTxIgnore.value);
-        elRxSlider.oninput = () => updateRx(parseInt(elRxSlider.value));
-        elRxInput.onchange = () => updateRx(parseInt(elRxInput.value) || FREQ_MIN);
-        elRxRange.onchange = () => updateRxRange(elRxRange.value);
+        elTxSlider.oninput = () => updateTxBaseFreq(parseInt(elTxSlider.value));
+        elTxInput.onchange = () => updateTxBaseFreq(parseInt(elTxInput.value) || FREQ_MIN);
+        elTxStep.onchange = () => updateTxStep(elTxStep.value);
+        elRxSlider.oninput = () => updateRxBaseFreq(parseInt(elRxSlider.value));
+        elRxInput.onchange = () => updateRxBaseFreq(parseInt(elRxInput.value) || FREQ_MIN);
+        elRxStep.onchange = () => updateRxStep(elRxStep.value);
+        elRxThresh.onchange = () => updateRxThreshold(elRxThresh.value);
         elRxWindow.onchange = () => updateRxWindow(elRxWindow.value);
         elPollInterval.onchange = () => updatePollInterval(elPollInterval.value);
         elPulseDuration.onchange = () => updatePulseDuration(elPulseDuration.value);
@@ -671,12 +891,15 @@
             if (isOnAir) {
                 log('════════════════', 'info');
                 log('ON AIR', 'rx');
-                log(`TX: ${txFreq}Hz → RX: ${rxFreq}Hz`, 'info');
-                log(`Poll: ${pollInterval}ms | Window: ${rxWindow}ms`, 'info');
+                log(`TX: ${togglesToString(txToggles)} @ ${txBaseFreq}Hz +${txStep}Hz`, 'info');
+                log(`RX: ${togglesToString(rxToggles)} @ ${rxBaseFreq}Hz +${rxStep}Hz`, 'info');
             } else {
                 log('OFF AIR', 'info');
                 log('════════════════', 'info');
                 elInfo.textContent = '—';
+                elMatchStatus.classList.remove('match');
+                elMatchStatus.classList.add('no-match');
+                elDetectedPattern.textContent = '--------';
             }
         }
         
@@ -720,6 +943,30 @@
             }
             graphCtx.fillRect(0, 0, width, height);
             
+            // Draw RX expected frequency markers (20% transparent)
+            const rxFreqs = getAllFreqs(rxBaseFreq, rxStep);
+            for (let i = 0; i < NUM_BITS; i++) {
+                const freq = rxFreqs[i];
+                if (freq > graphMaxFreq) continue;
+                
+                const x = (freq / graphMaxFreq) * width;
+                const markerWidth = Math.max((rxStep / graphMaxFreq) * width * 0.8, 3);
+                
+                if (rxToggles[i]) {
+                    // Expected ON - cyan
+                    graphCtx.fillStyle = 'rgba(0, 255, 255, 0.2)';
+                } else {
+                    // Expected OFF - dim
+                    graphCtx.fillStyle = 'rgba(100, 100, 100, 0.1)';
+                }
+                graphCtx.fillRect(x - markerWidth / 2, 0, markerWidth, height);
+                
+                // Draw bit number at top
+                graphCtx.fillStyle = rxToggles[i] ? 'rgba(0, 255, 255, 0.5)' : 'rgba(100, 100, 100, 0.3)';
+                graphCtx.font = '8px Courier New';
+                graphCtx.fillText(i + 1, x - 3, 10);
+            }
+            
             if (!isOnAir || !analyser) {
                 requestAnimationFrame(drawGraph);
                 return;
@@ -737,12 +984,26 @@
                 const barHeight = v * height;
                 
                 const freq = i * binW;
-                const inIgnore = freq >= (txFreq - txIgnore) && freq <= (txFreq + txIgnore);
-                const inTarget = freq >= (rxFreq - rxRange) && freq <= (rxFreq + rxRange);
                 
-                if (inIgnore) {
-                    graphCtx.fillStyle = `rgba(0, 255, 0, ${0.3 + v * 0.7})`;
-                } else if (inTarget) {
+                // Check if this frequency is in any of the TX or RX bins
+                let isTxFreq = false;
+                let isRxFreq = false;
+                
+                const txFreqs = getAllFreqs(txBaseFreq, txStep);
+                const halfStep = txStep / 2;
+                
+                for (let j = 0; j < NUM_BITS; j++) {
+                    if (Math.abs(freq - txFreqs[j]) < halfStep && txToggles[j]) {
+                        isTxFreq = true;
+                    }
+                    if (Math.abs(freq - rxFreqs[j]) < halfStep) {
+                        isRxFreq = true;
+                    }
+                }
+                
+                if (isTxFreq && isSending) {
+                    graphCtx.fillStyle = `rgba(0, 255, 0, ${0.4 + v * 0.6})`;
+                } else if (isRxFreq) {
                     graphCtx.fillStyle = `rgba(0, 255, 255, ${0.3 + v * 0.7})`;
                 } else {
                     graphCtx.fillStyle = `rgba(100, 100, 100, ${0.2 + v * 0.6})`;
@@ -751,9 +1012,20 @@
                 graphCtx.fillRect(i * barWidth, height - barHeight, Math.max(barWidth - 1, 1), barHeight);
             }
             
+            // Draw threshold line
+            const threshY = height - (rxThreshold / 255) * height;
+            graphCtx.strokeStyle = 'rgba(255, 255, 0, 0.3)';
+            graphCtx.setLineDash([3, 3]);
+            graphCtx.beginPath();
+            graphCtx.moveTo(0, threshY);
+            graphCtx.lineTo(width, threshY);
+            graphCtx.stroke();
+            graphCtx.setLineDash([]);
+            
+            // Frequency markers
             graphCtx.fillStyle = '#444';
             graphCtx.font = '9px Courier New';
-            const markerStep = graphMaxFreq <= 8000 ? 2000 : graphMaxFreq <= 16000 ? 4000 : 6000;
+            const markerStep = graphMaxFreq <= 1000 ? 200 : graphMaxFreq <= 4000 ? 1000 : graphMaxFreq <= 8000 ? 2000 : 4000;
             for (let f = markerStep; f <= graphMaxFreq; f += markerStep) {
                 const x = (f / graphMaxFreq) * width;
                 const label = f >= 1000 ? `${f / 1000}k` : f;
@@ -786,20 +1058,25 @@
                 
                 analyser = audioCtx.createAnalyser();
                 analyser.fftSize = FFT_SIZE;
-                analyser.smoothingTimeConstant = 0.4;
+                analyser.smoothingTimeConstant = 0.3;
                 audioCtx.createMediaStreamSource(micStream).connect(analyser);
                 
                 frequencyData = new Uint8Array(analyser.frequencyBinCount);
                 
-                gainNode = audioCtx.createGain();
-                gainNode.gain.value = 0;
-                gainNode.connect(audioCtx.destination);
-                
-                oscillator = audioCtx.createOscillator();
-                oscillator.type = 'sine';
-                oscillator.frequency.value = txFreq;
-                oscillator.connect(gainNode);
-                oscillator.start();
+                // Create oscillators and gain nodes for each bit
+                for (let i = 0; i < NUM_BITS; i++) {
+                    const gain = audioCtx.createGain();
+                    gain.gain.value = 0;
+                    gain.connect(audioCtx.destination);
+                    gainNodes.push(gain);
+                    
+                    const osc = audioCtx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.value = txBaseFreq + (i * txStep);
+                    osc.connect(gain);
+                    osc.start();
+                    oscillators.push(osc);
+                }
                 
                 setupGraph();
                 startDetection();
@@ -831,83 +1108,93 @@
                 if (!analyser || !isOnAir) return;
                 
                 if (isSending) {
-                    elInfo.textContent = `TX: ${txFreq}Hz`;
+                    elInfo.textContent = `TX: ${togglesToString(txToggles)}`;
                     return;
                 }
                 
                 analyser.getByteFrequencyData(data);
                 
-                const startBin = Math.floor(FREQ_MIN / binW);
-                const endBin = Math.min(Math.ceil(FREQ_MAX / binW), bufLen);
+                // Detect pattern at RX frequencies
+                const rxFreqs = getAllFreqs(rxBaseFreq, rxStep);
+                const detectedPattern = [];
+                const powers = [];
                 
-                // Noise floor
-                let sum = 0;
-                for (let i = startBin; i < endBin; i++) sum += data[i];
-                const avg = sum / (endBin - startBin);
-                
-                // Peak
-                let maxP = 0, maxB = 0;
-                for (let i = startBin; i < endBin; i++) {
-                    if (data[i] > maxP) {
-                        maxP = data[i];
-                        maxB = i;
-                    }
-                }
-                
-                const peakFreq = Math.round(maxB * binW);
-                const snr = maxP - avg;
-                
-                elInfo.textContent = `Peak: ${peakFreq}Hz | Pwr: ${maxP} | SNR: ${snr.toFixed(0)}`;
-                
-                // Check ranges
-                const inIgnore = peakFreq >= (txFreq - txIgnore) && peakFreq <= (txFreq + txIgnore);
-                const inTarget = peakFreq >= (rxFreq - rxRange) && peakFreq <= (rxFreq + rxRange);
-                
-                // Signal detected?
-                if (snr > DETECT_THRESHOLD && maxP > POWER_THRESHOLD) {
-                    // Count hits in target range (even during debounce)
-                    if (inTarget && !inIgnore) {
-                        rxHitCount++;
+                for (let i = 0; i < NUM_BITS; i++) {
+                    const targetFreq = rxFreqs[i];
+                    const targetBin = Math.round(targetFreq / binW);
+                    
+                    // Check a few bins around the target for the strongest signal
+                    let maxPower = 0;
+                    for (let b = Math.max(0, targetBin - 2); b <= Math.min(bufLen - 1, targetBin + 2); b++) {
+                        if (data[b] > maxPower) maxPower = data[b];
                     }
                     
+                    powers.push(maxPower);
+                    detectedPattern.push(maxPower >= rxThreshold ? 1 : 0);
+                }
+                
+                const detectedString = togglesToString(detectedPattern);
+                const expectedString = togglesToString(rxToggles);
+                const maxPower = Math.max(...powers);
+                
+                elInfo.textContent = `Powers: [${powers.join(', ')}] | Max: ${maxPower}`;
+                elDetectedPattern.textContent = detectedString;
+                
+                // Check if any signal detected (at least one bit high)
+                const hasSignal = detectedPattern.some(b => b === 1);
+                
+                if (hasSignal) {
                     const now = Date.now();
-                    const isNew = (now - lastDetectTime > rxWindow) || (Math.abs(peakFreq - lastDetectFreq) > 150);
+                    const isNew = (now - lastDetectTime > rxWindow) || (detectedString !== lastDetectedPattern);
                     
                     if (isNew) {
                         lastDetectTime = now;
-                        lastDetectFreq = peakFreq;
+                        lastDetectedPattern = detectedString;
                         
-                        if (inIgnore) {
-                            log(`IGN: ${peakFreq}Hz (own TX)`, 'tx');
-                        } else if (inTarget) {
-                            log(`RX: ${peakFreq}Hz ✓ <span class="hits">(×${rxHitCount})</span>`, 'rx');
+                        const isMatch = detectedString === expectedString;
+                        
+                        elMatchStatus.classList.toggle('match', isMatch);
+                        elMatchStatus.classList.toggle('no-match', !isMatch);
+                        
+                        if (isMatch) {
+                            log(`✓ MATCH: <span class="pattern">${detectedString}</span>`, 'match');
                             triggerFlash();
-                            rxHitCount = 0;
                         } else {
-                            log(`OUT: ${peakFreq}Hz`, 'info');
+                            log(`RX: <span class="pattern">${detectedString}</span> (expected ${expectedString})`, 'rx');
                         }
                     }
-                } else {
-                    // No signal - could reset hit count if stale
-                    // Optional: reset if no detection for a while
                 }
             }, pollInterval);
         }
         
-        // Transmit
+        // Transmit multi-tone
         function sendTone(dur) {
-            if (!gainNode) return;
+            if (!gainNodes.length) return;
             isSending = true;
-            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            
+            // Update oscillator frequencies and turn on active ones
+            for (let i = 0; i < NUM_BITS; i++) {
+                oscillators[i].frequency.setValueAtTime(txBaseFreq + (i * txStep), audioCtx.currentTime);
+                
+                if (txToggles[i]) {
+                    gainNodes[i].gain.setValueAtTime(0.15, audioCtx.currentTime);
+                } else {
+                    gainNodes[i].gain.setValueAtTime(0, audioCtx.currentTime);
+                }
+            }
             
             setTimeout(() => {
-                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+                // Turn off all oscillators
+                for (let i = 0; i < NUM_BITS; i++) {
+                    gainNodes[i].gain.setValueAtTime(0, audioCtx.currentTime);
+                }
                 setTimeout(() => { isSending = false; }, 80);
             }, dur);
         }
         
         function sendSignal() {
-            log(`TX: ${txFreq}Hz (${pulseDuration}ms)`, 'tx');
+            const activeCount = txToggles.filter(t => t).length;
+            log(`TX: ${togglesToString(txToggles)} (${activeCount} tones, ${pulseDuration}ms)`, 'tx');
             sendTone(pulseDuration);
         }
         
@@ -958,26 +1245,35 @@
             elInfo.textContent = '—';
             elLog.innerHTML = '';
             flashQueue = [];
-            rxHitCount = 0;
             logEntryCount = 0;
+            lastDetectedPattern = '';
+            elDetectedPattern.textContent = '--------';
+            elMatchStatus.classList.remove('match');
+            elMatchStatus.classList.add('no-match');
             updateLogCount();
             log('Reset', 'info');
-            if (isInit) log(`TX: ${txFreq}Hz → RX: ${rxFreq}Hz`, 'info');
+            if (isInit) {
+                log(`TX: ${togglesToString(txToggles)} @ ${txBaseFreq}Hz`, 'info');
+                log(`RX: ${togglesToString(rxToggles)} @ ${rxBaseFreq}Hz`, 'info');
+            }
         }
         
         // Init display
         document.addEventListener('DOMContentLoaded', () => {
-            updateTx(txFreq);
-            updateRx(rxFreq);
+            createToggles('tx-toggles', txToggles, updateTxDisplay, true);
+            createToggles('rx-toggles', rxToggles, updateRxDisplay, false);
+            updateTxBaseFreq(txBaseFreq);
+            updateRxBaseFreq(rxBaseFreq);
             updateZoomLabel();
             updatePollInterval(pollInterval);
             setupGraph();
             requestAnimationFrame(drawGraph);
-            log('Audio Signal Test v7', 'info');
+            log('Audio Signal Test v8', 'info');
             log('───────────────────', 'info');
-            log('Set TX freq (green)', 'info');
-            log('Set RX target (cyan)', 'info');
-            log('INIT → ON AIR → TEST', 'info');
+            log('Binary Signal Mode', 'info');
+            log('Set TX pattern (green)', 'info');
+            log('Set RX expected (cyan)', 'info');
+            log('INIT → ON AIR → PULSE', 'info');
         });
         
         // Handle resize
