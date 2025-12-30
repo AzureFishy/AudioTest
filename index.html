@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio Signal Test v6</title>
+    <title>Audio Signal Test v7</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -268,6 +268,25 @@
             padding: 0.25rem 0;
         }
         
+        /* Log section */
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.25rem;
+        }
+        
+        .log-title {
+            font-size: 0.6rem;
+            color: #666;
+            text-transform: uppercase;
+        }
+        
+        .log-count {
+            font-size: 0.55rem;
+            color: #555;
+        }
+        
         .log-panel {
             height: 100px;
             overflow-y: auto;
@@ -284,6 +303,7 @@
         .log-entry.info { color: #888; }
         .log-entry.err { color: #f00; }
         .log-entry .ts { color: #333; margin-right: 0.25rem; }
+        .log-entry .hits { color: #088; }
         
         .timer {
             text-align: center;
@@ -332,7 +352,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Audio Signal Test v6</h1>
+        <h1>Audio Signal Test v7</h1>
         
         <!-- TX Settings -->
         <div class="section tx">
@@ -345,7 +365,7 @@
             </div>
             <div class="row">
                 <label>Ignore ±</label>
-                <input type="number" id="tx-ignore" value="150" min="0" max="2000" step="50" style="width:50px;">
+                <input type="number" id="tx-ignore" value="4" min="0" max="2000" step="1" style="width:50px;">
                 <span class="hz">Hz</span>
                 <span class="range-display" id="tx-range-display"></span>
             </div>
@@ -362,15 +382,21 @@
             </div>
             <div class="row">
                 <label>Range ±</label>
-                <input type="number" id="rx-range" value="200" min="50" max="2000" step="50" style="width:50px;">
+                <input type="number" id="rx-range" value="4" min="1" max="2000" step="1" style="width:50px;">
                 <span class="hz">Hz</span>
                 <span class="range-display" id="rx-range-display"></span>
             </div>
             <div class="row">
                 <label>Window</label>
-                <input type="number" id="rx-window" value="250" min="50" max="2000" step="50" style="width:50px;">
+                <input type="number" id="rx-window" value="250" min="10" max="2000" step="10" style="width:50px;">
                 <span class="hz">ms</span>
                 <span class="range-display">debounce</span>
+            </div>
+            <div class="row">
+                <label>Poll</label>
+                <input type="number" id="poll-interval" value="70" min="10" max="500" step="10" style="width:50px;">
+                <span class="hz">ms</span>
+                <span class="range-display" id="poll-display">~14/sec</span>
             </div>
         </div>
         
@@ -390,7 +416,7 @@
                 <span class="graph-title">Spectrum</span>
                 <div class="graph-controls">
                     <button class="zoom-btn" onclick="zoomGraph(-1)">−</button>
-                    <span class="zoom-label" id="zoom-label">8k</span>
+                    <span class="zoom-label" id="zoom-label">30k</span>
                     <button class="zoom-btn" onclick="zoomGraph(1)">+</button>
                 </div>
             </div>
@@ -403,6 +429,11 @@
         
         <div class="timer" id="timer">00:10</div>
         
+        <!-- Log with counter -->
+        <div class="log-header">
+            <span class="log-title">Log</span>
+            <span class="log-count" id="log-count">0 entries</span>
+        </div>
         <div class="log-panel" id="log"></div>
         
         <div class="button-row">
@@ -426,31 +457,38 @@
         
         // Graph zoom levels
         const ZOOM_LEVELS = [8000, 12000, 16000, 20000, 24000, 30000];
-        let zoomIndex = 0;
-        let graphMaxFreq = ZOOM_LEVELS[0];
+        let zoomIndex = 5; // Default to 30k
+        let graphMaxFreq = ZOOM_LEVELS[zoomIndex];
         
         // Flash effect state
-        let flashQueue = []; // Array of {startTime, duration: 200, fadeTime: 500}
+        let flashQueue = [];
         const FLASH_DURATION = 200;
         const FLASH_FADE = 500;
         
         // State
         let audioCtx, analyser, oscillator, gainNode, micStream;
-        let detectInterval, testInterval, graphAnimationId;
+        let detectInterval, testInterval;
         let isInit = false;
         let isRunning = false;
         let isSending = false;
         let isOnAir = false;
         
         let txFreq = 1800;
-        let txIgnore = 150;
+        let txIgnore = 4;
         let rxFreq = 2400;
-        let rxRange = 200;
+        let rxRange = 4;
         let rxWindow = 250;
+        let pollInterval = 70;
         let pulseDuration = 350;
         let timeLeft = 10;
         let lastDetectTime = 0;
         let lastDetectFreq = 0;
+        
+        // Hit counter during debounce
+        let rxHitCount = 0;
+        
+        // Log entry counter
+        let logEntryCount = 0;
         
         // Graph
         let graphCanvas, graphCtx;
@@ -465,11 +503,14 @@
         const elRxInput = $('rx-input');
         const elRxRange = $('rx-range');
         const elRxWindow = $('rx-window');
+        const elPollInterval = $('poll-interval');
+        const elPollDisplay = $('poll-display');
         const elTxRangeDisp = $('tx-range-display');
         const elRxRangeDisp = $('rx-range-display');
         const elInfo = $('detection-info');
         const elTimer = $('timer');
         const elLog = $('log');
+        const elLogCount = $('log-count');
         const elProgress = $('progress');
         const elBtnInit = $('btn-init');
         const elBtnTest = $('btn-test');
@@ -495,6 +536,13 @@
             el.innerHTML = `<span class="ts">[${ts}]</span>${msg}`;
             elLog.appendChild(el);
             elLog.scrollTop = elLog.scrollHeight;
+            
+            logEntryCount++;
+            updateLogCount();
+        }
+        
+        function updateLogCount() {
+            elLogCount.textContent = `${logEntryCount} entries`;
         }
         
         function updateTimer() {
@@ -518,30 +566,25 @@
             elZoomLabel.textContent = graphMaxFreq >= 1000 ? `${graphMaxFreq / 1000}k` : graphMaxFreq;
         }
         
-        // Flash effect - trigger on successful RX
+        // Flash effect
         function triggerFlash() {
-            flashQueue.push({
-                startTime: performance.now()
-            });
+            flashQueue.push({ startTime: performance.now() });
         }
         
         function calculateFlashIntensity() {
             const now = performance.now();
             let totalIntensity = 0;
             
-            // Process queue and remove expired flashes
             flashQueue = flashQueue.filter(flash => {
                 const elapsed = now - flash.startTime;
                 const totalTime = FLASH_DURATION + FLASH_FADE;
                 
-                if (elapsed > totalTime) return false; // Remove expired
+                if (elapsed > totalTime) return false;
                 
                 let intensity;
                 if (elapsed < FLASH_DURATION) {
-                    // Full intensity during initial flash
                     intensity = 0.5;
                 } else {
-                    // Fade out
                     const fadeElapsed = elapsed - FLASH_DURATION;
                     intensity = 0.5 * (1 - (fadeElapsed / FLASH_FADE));
                 }
@@ -550,7 +593,7 @@
                 return true;
             });
             
-            return Math.min(totalIntensity, 1); // Cap at 1.0
+            return Math.min(totalIntensity, 1);
         }
         
         // Frequency updates
@@ -581,12 +624,24 @@
         }
         
         function updateRxRange(v) {
-            rxRange = parseInt(v) || 50;
+            rxRange = parseInt(v) || 1;
             elRxRangeDisp.textContent = `Listen: ${rxFreq - rxRange}–${rxFreq + rxRange}`;
         }
         
         function updateRxWindow(v) {
             rxWindow = parseInt(v) || 250;
+        }
+        
+        function updatePollInterval(v) {
+            pollInterval = clamp(parseInt(v) || 70, 10, 500);
+            elPollInterval.value = pollInterval;
+            elPollDisplay.textContent = `~${Math.round(1000 / pollInterval)}/sec`;
+            
+            // Restart detection with new interval if running
+            if (isInit && detectInterval) {
+                clearInterval(detectInterval);
+                startDetection();
+            }
         }
         
         function updatePulseDuration(v) {
@@ -602,6 +657,7 @@
         elRxInput.onchange = () => updateRx(parseInt(elRxInput.value) || FREQ_MIN);
         elRxRange.onchange = () => updateRxRange(elRxRange.value);
         elRxWindow.onchange = () => updateRxWindow(elRxWindow.value);
+        elPollInterval.onchange = () => updatePollInterval(elPollInterval.value);
         elPulseDuration.onchange = () => updatePulseDuration(elPulseDuration.value);
         
         // ON AIR Toggle
@@ -616,6 +672,7 @@
                 log('════════════════', 'info');
                 log('ON AIR', 'rx');
                 log(`TX: ${txFreq}Hz → RX: ${rxFreq}Hz`, 'info');
+                log(`Poll: ${pollInterval}ms | Window: ${rxWindow}ms`, 'info');
             } else {
                 log('OFF AIR', 'info');
                 log('════════════════', 'info');
@@ -651,12 +708,9 @@
             const width = graphCanvas.width / window.devicePixelRatio;
             const height = graphCanvas.height / window.devicePixelRatio;
             
-            // Calculate flash intensity for background
             const flashIntensity = calculateFlashIntensity();
             
-            // Draw background with flash effect
             if (flashIntensity > 0) {
-                // Cyan flash: rgba(0, 255, 255, intensity * 0.5)
                 const r = Math.round(0 * flashIntensity);
                 const g = Math.round(80 * flashIntensity);
                 const b = Math.round(80 * flashIntensity);
@@ -678,7 +732,6 @@
             
             const barWidth = width / maxBin;
             
-            // Draw frequency bars
             for (let i = 0; i < maxBin; i++) {
                 const v = frequencyData[i] / 255;
                 const barHeight = v * height;
@@ -698,7 +751,6 @@
                 graphCtx.fillRect(i * barWidth, height - barHeight, Math.max(barWidth - 1, 1), barHeight);
             }
             
-            // Draw frequency markers
             graphCtx.fillStyle = '#444';
             graphCtx.font = '9px Courier New';
             const markerStep = graphMaxFreq <= 8000 ? 2000 : graphMaxFreq <= 16000 ? 4000 : 6000;
@@ -752,7 +804,6 @@
                 setupGraph();
                 startDetection();
                 
-                // Start graph animation
                 requestAnimationFrame(drawGraph);
                 
                 isInit = true;
@@ -808,13 +859,19 @@
                 
                 elInfo.textContent = `Peak: ${peakFreq}Hz | Pwr: ${maxP} | SNR: ${snr.toFixed(0)}`;
                 
+                // Check ranges
+                const inIgnore = peakFreq >= (txFreq - txIgnore) && peakFreq <= (txFreq + txIgnore);
+                const inTarget = peakFreq >= (rxFreq - rxRange) && peakFreq <= (rxFreq + rxRange);
+                
                 // Signal detected?
                 if (snr > DETECT_THRESHOLD && maxP > POWER_THRESHOLD) {
+                    // Count hits in target range (even during debounce)
+                    if (inTarget && !inIgnore) {
+                        rxHitCount++;
+                    }
+                    
                     const now = Date.now();
                     const isNew = (now - lastDetectTime > rxWindow) || (Math.abs(peakFreq - lastDetectFreq) > 150);
-                    
-                    const inIgnore = peakFreq >= (txFreq - txIgnore) && peakFreq <= (txFreq + txIgnore);
-                    const inTarget = peakFreq >= (rxFreq - rxRange) && peakFreq <= (rxFreq + rxRange);
                     
                     if (isNew) {
                         lastDetectTime = now;
@@ -823,14 +880,18 @@
                         if (inIgnore) {
                             log(`IGN: ${peakFreq}Hz (own TX)`, 'tx');
                         } else if (inTarget) {
-                            log(`RX: ${peakFreq}Hz ✓`, 'rx');
+                            log(`RX: ${peakFreq}Hz ✓ <span class="hits">(×${rxHitCount})</span>`, 'rx');
                             triggerFlash();
+                            rxHitCount = 0;
                         } else {
                             log(`OUT: ${peakFreq}Hz`, 'info');
                         }
                     }
+                } else {
+                    // No signal - could reset hit count if stale
+                    // Optional: reset if no detection for a while
                 }
-            }, 70);
+            }, pollInterval);
         }
         
         // Transmit
@@ -897,6 +958,9 @@
             elInfo.textContent = '—';
             elLog.innerHTML = '';
             flashQueue = [];
+            rxHitCount = 0;
+            logEntryCount = 0;
+            updateLogCount();
             log('Reset', 'info');
             if (isInit) log(`TX: ${txFreq}Hz → RX: ${rxFreq}Hz`, 'info');
         }
@@ -906,9 +970,10 @@
             updateTx(txFreq);
             updateRx(rxFreq);
             updateZoomLabel();
+            updatePollInterval(pollInterval);
             setupGraph();
             requestAnimationFrame(drawGraph);
-            log('Audio Signal Test v6', 'info');
+            log('Audio Signal Test v7', 'info');
             log('───────────────────', 'info');
             log('Set TX freq (green)', 'info');
             log('Set RX target (cyan)', 'info');
