@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio Signal Test v9</title>
+    <title>Audio Signal Test v10</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -16,7 +16,7 @@
         }
         
         .container {
-            max-width: 520px;
+            max-width: 540px;
             margin: 0 auto;
             border: 1px solid #fff;
             padding: 1.25rem;
@@ -318,6 +318,29 @@
             text-transform: uppercase;
         }
         
+        .graph-legend {
+            display: flex;
+            gap: 0.5rem;
+            font-size: 0.5rem;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+        }
+        
+        .legend-color {
+            width: 10px;
+            height: 3px;
+        }
+        
+        .legend-color.tx { background: #0f0; }
+        .legend-color.rx { background: #0ff; }
+        
+        .legend-text.tx { color: #0a0; }
+        .legend-text.rx { color: #0aa; }
+        
         .graph-controls {
             display: flex;
             align-items: center;
@@ -391,7 +414,7 @@
             color: #888;
         }
         
-        /* Log section */
+        /* Log sections */
         .log-header {
             display: flex;
             justify-content: space-between;
@@ -411,13 +434,13 @@
         }
         
         .log-panel {
-            height: 90px;
+            height: 70px;
             overflow-y: auto;
             background: #050505;
             padding: 0.4rem;
             font-size: 0.6rem;
             border: 1px solid #222;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.5rem;
         }
         
         .log-entry { margin-bottom: 0.15rem; color: #555; }
@@ -429,6 +452,140 @@
         .log-entry .ts { color: #333; margin-right: 0.25rem; }
         .log-entry .pattern { color: #ff0; }
         .log-entry .ascii { color: #0ff; font-weight: bold; }
+        
+        /* Bit Detection Log */
+        .bit-log-section {
+            margin-bottom: 0.75rem;
+        }
+        
+        .bit-log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.25rem;
+        }
+        
+        .bit-log-title {
+            font-size: 0.6rem;
+            color: #f0f;
+            text-transform: uppercase;
+        }
+        
+        .bit-log-status {
+            font-size: 0.55rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            background: #1a0a1a;
+            border: 1px solid #333;
+            color: #666;
+        }
+        
+        .bit-log-status.active {
+            background: #0a1a0a;
+            border-color: #0f0;
+            color: #0f0;
+            animation: status-pulse 0.5s ease-out;
+        }
+        
+        @keyframes status-pulse {
+            0% { box-shadow: 0 0 10px rgba(0, 255, 0, 0.8); }
+            100% { box-shadow: none; }
+        }
+        
+        .bit-log-panel {
+            height: 80px;
+            overflow-y: auto;
+            background: #0a0510;
+            padding: 0.4rem;
+            font-size: 0.55rem;
+            border: 1px solid #306;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .bit-log-entry {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            margin-bottom: 0.2rem;
+            padding: 0.15rem 0;
+            border-bottom: 1px solid #1a0a1a;
+        }
+        
+        .bit-log-entry:last-child {
+            border-bottom: none;
+        }
+        
+        .bit-log-entry.all-match {
+            background: rgba(0, 255, 0, 0.1);
+            border-color: #0a0;
+        }
+        
+        .bit-log-ts {
+            color: #606;
+            font-size: 0.5rem;
+            min-width: 70px;
+        }
+        
+        .bit-log-bits {
+            display: flex;
+            gap: 1px;
+        }
+        
+        .bit-indicator {
+            width: 14px;
+            height: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.5rem;
+            font-weight: bold;
+            border-radius: 2px;
+            background: #1a0a1a;
+            color: #444;
+            border: 1px solid #333;
+        }
+        
+        .bit-indicator.hit {
+            background: #0aa;
+            color: #000;
+            border-color: #0ff;
+        }
+        
+        .bit-indicator.expected {
+            border-color: #f0f;
+        }
+        
+        .bit-indicator.hit.expected {
+            background: #0f0;
+            border-color: #0f0;
+        }
+        
+        .bit-indicator.miss.expected {
+            background: #800;
+            border-color: #f00;
+            color: #fff;
+        }
+        
+        .bit-log-result {
+            font-size: 0.5rem;
+            margin-left: auto;
+            padding: 0.1rem 0.3rem;
+            border-radius: 2px;
+        }
+        
+        .bit-log-result.match {
+            background: #0a0;
+            color: #000;
+        }
+        
+        .bit-log-result.partial {
+            background: #660;
+            color: #ff0;
+        }
+        
+        .bit-log-result.none {
+            color: #444;
+        }
         
         .timer {
             text-align: center;
@@ -477,7 +634,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Audio Signal Test v9</h1>
+        <h1>Audio Signal Test v10</h1>
         
         <!-- TX Settings -->
         <div class="section tx">
@@ -571,6 +728,16 @@
         <div class="graph-section">
             <div class="graph-header">
                 <span class="graph-title">Spectrum</span>
+                <div class="graph-legend">
+                    <div class="legend-item">
+                        <div class="legend-color tx"></div>
+                        <span class="legend-text tx">TX</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color rx"></div>
+                        <span class="legend-text rx">RX</span>
+                    </div>
+                </div>
                 <div class="graph-controls">
                     <button class="zoom-btn" onclick="zoomGraph(-1)">−</button>
                     <span class="zoom-label" id="zoom-label">4k</span>
@@ -590,12 +757,21 @@
         
         <div class="timer" id="timer">00:10</div>
         
-        <!-- Log with counter -->
+        <!-- Main Log -->
         <div class="log-header">
-            <span class="log-title">Log</span>
+            <span class="log-title">Event Log</span>
             <span class="log-count" id="log-count">0 entries</span>
         </div>
         <div class="log-panel" id="log"></div>
+        
+        <!-- Bit Detection Log -->
+        <div class="bit-log-section">
+            <div class="bit-log-header">
+                <span class="bit-log-title">Bit Detection Log</span>
+                <span class="bit-log-status" id="bit-log-status">IDLE</span>
+            </div>
+            <div class="bit-log-panel" id="bit-log"></div>
+        </div>
         
         <div class="button-row">
             <button class="main-btn btn-init" id="btn-init" onclick="init()">⚡ INIT</button>
@@ -614,10 +790,11 @@
         const SLIDER_MAX = 30000;
         const FFT_SIZE = 8192;
         const NUM_BITS = 8;
+        const MAX_BIT_LOG_ENTRIES = 100;
         
-        // Graph zoom levels (focused for binary signals)
+        // Graph zoom levels
         const ZOOM_LEVELS = [500, 1000, 2000, 4000, 8000, 12000, 20000, 30000];
-        let zoomIndex = 3; // Default to 4k
+        let zoomIndex = 3;
         let graphMaxFreq = ZOOM_LEVELS[zoomIndex];
         
         // Flash effect state
@@ -632,8 +809,8 @@
         
         // State
         let audioCtx, analyser, micStream;
-        let oscillators = []; // Array of oscillators for multi-tone
-        let gainNodes = [];   // Array of gain nodes
+        let oscillators = [];
+        let gainNodes = [];
         let detectInterval, testInterval;
         let isInit = false;
         let isRunning = false;
@@ -660,8 +837,11 @@
         let lastDetectTime = 0;
         let lastDetectedPattern = '';
         
-        // Log entry counter
+        // Log counters
         let logEntryCount = 0;
+        
+        // Bit Detection Array Log
+        let bitDetectionLog = [];
         
         // Graph
         let graphCanvas, graphCtx;
@@ -695,6 +875,8 @@
         const elTimer = $('timer');
         const elLog = $('log');
         const elLogCount = $('log-count');
+        const elBitLog = $('bit-log');
+        const elBitLogStatus = $('bit-log-status');
         const elProgress = $('progress');
         const elBtnInit = $('btn-init');
         const elBtnTest = $('btn-test');
@@ -705,12 +887,10 @@
         
         // ASCII conversion helpers
         function binaryToAscii(binaryString) {
-            const charCode = parseInt(binaryString, 2);
-            return charCode;
+            return parseInt(binaryString, 2);
         }
         
         function getAsciiDisplay(charCode) {
-            // Control characters and special cases
             const controlChars = {
                 0: 'NUL', 1: 'SOH', 2: 'STX', 3: 'ETX', 4: 'EOT', 5: 'ENQ', 6: 'ACK', 7: 'BEL',
                 8: 'BS', 9: 'TAB', 10: 'LF', 11: 'VT', 12: 'FF', 13: 'CR', 14: 'SO', 15: 'SI',
@@ -731,7 +911,6 @@
         }
         
         function getAsciiChar(charCode) {
-            // Return the actual character for display in graph
             const controlChars = {
                 0: '∅', 1: '①', 2: '②', 3: '③', 4: '④', 5: '⑤', 6: '⑥', 7: '⑦',
                 8: '⌫', 9: '⇥', 10: '↵', 11: '⇕', 12: '⇟', 13: '↩', 14: '⎋', 15: '⏎',
@@ -807,6 +986,111 @@
             return freqs;
         }
         
+        // Bit Detection Log functions
+        function addBitLogEntry(bits, timestamp) {
+            const entry = {
+                bits: [...bits],
+                timestamp: timestamp,
+                expected: [...rxToggles]
+            };
+            
+            bitDetectionLog.push(entry);
+            
+            // Trim to max entries
+            if (bitDetectionLog.length > MAX_BIT_LOG_ENTRIES) {
+                bitDetectionLog.shift();
+            }
+            
+            renderBitLogEntry(entry);
+            checkBitLogMatch(entry);
+        }
+        
+        function renderBitLogEntry(entry) {
+            const now = new Date(entry.timestamp);
+            const ts = now.toLocaleTimeString('en-US', {
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            }) + '.' + now.getMilliseconds().toString().padStart(3, '0');
+            
+            // Check if all expected bits match
+            let allExpectedMatch = true;
+            let anyHit = false;
+            let matchCount = 0;
+            
+            for (let i = 0; i < NUM_BITS; i++) {
+                if (entry.bits[i]) anyHit = true;
+                if (entry.expected[i]) {
+                    if (entry.bits[i]) {
+                        matchCount++;
+                    } else {
+                        allExpectedMatch = false;
+                    }
+                } else {
+                    // Expected 0, got 1 is also a mismatch for full match
+                    if (entry.bits[i]) {
+                        allExpectedMatch = false;
+                    }
+                }
+            }
+            
+            const expectedCount = entry.expected.filter(e => e).length;
+            const isFullMatch = allExpectedMatch && expectedCount > 0 && 
+                               togglesToString(entry.bits) === togglesToString(entry.expected);
+            
+            const el = document.createElement('div');
+            el.className = `bit-log-entry${isFullMatch ? ' all-match' : ''}`;
+            
+            let bitsHtml = '<div class="bit-log-bits">';
+            for (let i = 0; i < NUM_BITS; i++) {
+                const isHit = entry.bits[i];
+                const isExpected = entry.expected[i];
+                let classes = 'bit-indicator';
+                
+                if (isHit) classes += ' hit';
+                if (isExpected) classes += ' expected';
+                if (!isHit && isExpected) classes += ' miss';
+                
+                bitsHtml += `<div class="${classes}">${i + 1}</div>`;
+            }
+            bitsHtml += '</div>';
+            
+            let resultHtml = '';
+            if (isFullMatch) {
+                resultHtml = '<span class="bit-log-result match">✓ MATCH</span>';
+            } else if (anyHit) {
+                resultHtml = `<span class="bit-log-result partial">${matchCount}/${expectedCount}</span>`;
+            } else {
+                resultHtml = '<span class="bit-log-result none">—</span>';
+            }
+            
+            el.innerHTML = `<span class="bit-log-ts">${ts}</span>${bitsHtml}${resultHtml}`;
+            elBitLog.appendChild(el);
+            elBitLog.scrollTop = elBitLog.scrollHeight;
+        }
+        
+        function checkBitLogMatch(entry) {
+            const isFullMatch = togglesToString(entry.bits) === togglesToString(entry.expected) &&
+                               entry.expected.some(e => e);
+            
+            if (isFullMatch) {
+                elBitLogStatus.textContent = 'MATCH!';
+                elBitLogStatus.classList.add('active');
+                setTimeout(() => {
+                    elBitLogStatus.classList.remove('active');
+                    elBitLogStatus.textContent = 'LISTENING';
+                }, 500);
+            }
+        }
+        
+        function clearBitLog() {
+            bitDetectionLog = [];
+            elBitLog.innerHTML = '';
+            elBitLogStatus.textContent = 'IDLE';
+            elBitLogStatus.classList.remove('active');
+        }
+        
         // Graph zoom
         function zoomGraph(dir) {
             zoomIndex = clamp(zoomIndex + dir, 0, ZOOM_LEVELS.length - 1);
@@ -818,7 +1102,7 @@
             elZoomLabel.textContent = graphMaxFreq >= 1000 ? `${graphMaxFreq / 1000}k` : graphMaxFreq;
         }
         
-        // Flash effect
+        // Flash effects
         function triggerFlash() {
             flashQueue.push({ startTime: performance.now() });
         }
@@ -864,10 +1148,8 @@
                 
                 let opacity;
                 if (elapsed < CHAR_FLASH_DURATION) {
-                    // Fade in
                     opacity = Math.min(1, elapsed / 100);
                 } else {
-                    // Fade out
                     const fadeElapsed = elapsed - CHAR_FLASH_DURATION;
                     opacity = 1 - (fadeElapsed / CHAR_FLASH_FADE);
                 }
@@ -1033,11 +1315,13 @@
             elBtnAir.textContent = isOnAir ? 'ON AIR' : 'OFF AIR';
             
             if (isOnAir) {
+                elBitLogStatus.textContent = 'LISTENING';
                 log('════════════════', 'info');
                 log('ON AIR', 'rx');
                 log(`TX: ${togglesToString(txToggles)} @ ${txBaseFreq}Hz +${txStep}Hz (±${txTolerance}Hz)`, 'info');
                 log(`RX: ${togglesToString(rxToggles)} @ ${rxBaseFreq}Hz +${rxStep}Hz (±${rxTolerance}Hz)`, 'info');
             } else {
+                elBitLogStatus.textContent = 'IDLE';
                 log('OFF AIR', 'info');
                 log('════════════════', 'info');
                 elInfo.textContent = '—';
@@ -1078,52 +1362,78 @@
             const flashIntensity = calculateFlashIntensity();
             const charFlash = getCharFlashState();
             
+            // Background with flash
             if (flashIntensity > 0) {
-                const r = Math.round(0 * flashIntensity);
                 const g = Math.round(80 * flashIntensity);
                 const b = Math.round(80 * flashIntensity);
-                graphCtx.fillStyle = `rgb(${r + 5}, ${g + 5}, ${b + 5})`;
+                graphCtx.fillStyle = `rgb(5, ${g + 5}, ${b + 5})`;
             } else {
                 graphCtx.fillStyle = '#050505';
             }
             graphCtx.fillRect(0, 0, width, height);
             
-            // Draw RX expected frequency bands with ± tolerance (20% transparent)
+            const txFreqs = getAllFreqs(txBaseFreq, txStep);
             const rxFreqs = getAllFreqs(rxBaseFreq, rxStep);
+            
+            // Draw TX frequency bands (GREEN) - draw first so RX overlays
+            for (let i = 0; i < NUM_BITS; i++) {
+                if (!txToggles[i]) continue;
+                
+                const freq = txFreqs[i];
+                if (freq - txTolerance > graphMaxFreq) continue;
+                
+                const bandLeft = Math.max(0, ((freq - txTolerance) / graphMaxFreq) * width);
+                const bandRight = Math.min(width, ((freq + txTolerance) / graphMaxFreq) * width);
+                const bandWidth = bandRight - bandLeft;
+                
+                // Green band for TX
+                graphCtx.fillStyle = 'rgba(0, 255, 0, 0.15)';
+                graphCtx.fillRect(bandLeft, 0, bandWidth, height);
+                
+                // Green center line
+                const centerX = (freq / graphMaxFreq) * width;
+                graphCtx.strokeStyle = 'rgba(0, 255, 0, 0.6)';
+                graphCtx.lineWidth = 2;
+                graphCtx.beginPath();
+                graphCtx.moveTo(centerX, 0);
+                graphCtx.lineTo(centerX, height);
+                graphCtx.stroke();
+                graphCtx.lineWidth = 1;
+            }
+            
+            // Draw RX frequency bands (BLUE/CYAN)
             for (let i = 0; i < NUM_BITS; i++) {
                 const freq = rxFreqs[i];
                 if (freq - rxTolerance > graphMaxFreq) continue;
                 
-                // Calculate band width based on tolerance
                 const bandLeft = Math.max(0, ((freq - rxTolerance) / graphMaxFreq) * width);
                 const bandRight = Math.min(width, ((freq + rxTolerance) / graphMaxFreq) * width);
                 const bandWidth = bandRight - bandLeft;
                 
                 if (rxToggles[i]) {
-                    // Expected ON - cyan
+                    // Cyan band for expected RX
                     graphCtx.fillStyle = 'rgba(0, 255, 255, 0.2)';
                 } else {
-                    // Expected OFF - dim
-                    graphCtx.fillStyle = 'rgba(100, 100, 100, 0.1)';
+                    // Dim band for non-expected
+                    graphCtx.fillStyle = 'rgba(100, 100, 100, 0.08)';
                 }
                 graphCtx.fillRect(bandLeft, 0, bandWidth, height);
                 
-                // Draw center line for the exact frequency
+                // Blue center line
                 const centerX = (freq / graphMaxFreq) * width;
-                graphCtx.strokeStyle = rxToggles[i] ? 'rgba(0, 255, 255, 0.4)' : 'rgba(100, 100, 100, 0.2)';
+                graphCtx.strokeStyle = rxToggles[i] ? 'rgba(0, 255, 255, 0.5)' : 'rgba(100, 100, 100, 0.2)';
                 graphCtx.beginPath();
                 graphCtx.moveTo(centerX, 0);
                 graphCtx.lineTo(centerX, height);
                 graphCtx.stroke();
                 
-                // Draw bit number at top
+                // Bit number at top
                 graphCtx.fillStyle = rxToggles[i] ? 'rgba(0, 255, 255, 0.6)' : 'rgba(100, 100, 100, 0.4)';
                 graphCtx.font = '8px Courier New';
                 graphCtx.fillText(i + 1, centerX - 3, 10);
             }
             
             if (!isOnAir || !analyser) {
-                // Draw character flash even when not on air
                 if (charFlash.char && charFlash.opacity > 0) {
                     drawCharacterFlash(width, height, charFlash);
                 }
@@ -1135,27 +1445,21 @@
             
             const binW = audioCtx.sampleRate / analyser.fftSize;
             const maxBin = Math.min(Math.ceil(graphMaxFreq / binW), frequencyData.length);
-            
             const barWidth = width / maxBin;
-            
-            // Pre-calculate TX frequency ranges for highlighting
-            const txFreqs = getAllFreqs(txBaseFreq, txStep);
             
             for (let i = 0; i < maxBin; i++) {
                 const v = frequencyData[i] / 255;
                 const barHeight = v * height;
                 const freq = i * binW;
                 
-                // Check if this frequency falls within any TX or RX tolerance band
+                // Check if frequency is in TX or RX bands
                 let isTxFreq = false;
                 let isRxFreq = false;
                 
                 for (let j = 0; j < NUM_BITS; j++) {
-                    // Check TX bands (for ignore highlighting during send)
                     if (txToggles[j] && Math.abs(freq - txFreqs[j]) <= txTolerance) {
                         isTxFreq = true;
                     }
-                    // Check RX bands
                     if (Math.abs(freq - rxFreqs[j]) <= rxTolerance) {
                         isRxFreq = true;
                     }
@@ -1172,7 +1476,7 @@
                 graphCtx.fillRect(i * barWidth, height - barHeight, Math.max(barWidth - 1, 1), barHeight);
             }
             
-            // Draw threshold line
+            // Threshold line
             const threshY = height - (rxThreshold / 255) * height;
             graphCtx.strokeStyle = 'rgba(255, 255, 0, 0.3)';
             graphCtx.setLineDash([3, 3]);
@@ -1192,7 +1496,7 @@
                 graphCtx.fillText(label, x - 10, height - 2);
             }
             
-            // Draw character flash overlay
+            // Character flash
             if (charFlash.char && charFlash.opacity > 0) {
                 drawCharacterFlash(width, height, charFlash);
             }
@@ -1201,23 +1505,14 @@
         }
         
         function drawCharacterFlash(width, height, charFlash) {
-            const opacity = charFlash.opacity;
-            
-            // Draw character in center of graph
             graphCtx.save();
             graphCtx.font = 'bold 48px Courier New';
             graphCtx.textAlign = 'center';
             graphCtx.textBaseline = 'middle';
-            
-            // Glow effect
-            graphCtx.shadowColor = `rgba(0, 255, 255, ${opacity})`;
+            graphCtx.shadowColor = `rgba(0, 255, 255, ${charFlash.opacity})`;
             graphCtx.shadowBlur = 20;
-            
-            // Main character
-            graphCtx.fillStyle = `rgba(0, 255, 255, ${opacity})`;
+            graphCtx.fillStyle = `rgba(0, 255, 255, ${charFlash.opacity})`;
             graphCtx.fillText(charFlash.char, width / 2, height / 2);
-            
-            // Reset shadow
             graphCtx.shadowBlur = 0;
             graphCtx.restore();
         }
@@ -1250,7 +1545,6 @@
                 
                 frequencyData = new Uint8Array(analyser.frequencyBinCount);
                 
-                // Create oscillators and gain nodes for each bit
                 for (let i = 0; i < NUM_BITS; i++) {
                     const gain = audioCtx.createGain();
                     gain.gain.value = 0;
@@ -1267,7 +1561,6 @@
                 
                 setupGraph();
                 startDetection();
-                
                 requestAnimationFrame(drawGraph);
                 
                 isInit = true;
@@ -1285,7 +1578,7 @@
             }
         }
         
-        // Detection with ± tolerance bands
+        // Detection
         function startDetection() {
             const bufLen = analyser.frequencyBinCount;
             const data = new Uint8Array(bufLen);
@@ -1301,42 +1594,44 @@
                 
                 analyser.getByteFrequencyData(data);
                 
-                // Detect pattern at RX frequencies with tolerance
                 const rxFreqs = getAllFreqs(rxBaseFreq, rxStep);
                 const detectedPattern = [];
+                const detectedBits = [];
                 const powers = [];
                 
                 for (let i = 0; i < NUM_BITS; i++) {
                     const targetFreq = rxFreqs[i];
-                    
-                    // Calculate bin range for this frequency ± tolerance
                     const lowFreq = targetFreq - rxTolerance;
                     const highFreq = targetFreq + rxTolerance;
                     const startBin = Math.max(0, Math.floor(lowFreq / binW));
                     const endBin = Math.min(bufLen - 1, Math.ceil(highFreq / binW));
                     
-                    // Find max power within the tolerance band
                     let maxPower = 0;
                     for (let b = startBin; b <= endBin; b++) {
                         if (data[b] > maxPower) maxPower = data[b];
                     }
                     
                     powers.push(maxPower);
-                    detectedPattern.push(maxPower >= rxThreshold ? 1 : 0);
+                    const isHit = maxPower >= rxThreshold;
+                    detectedPattern.push(isHit ? 1 : 0);
+                    detectedBits.push(isHit);
                 }
                 
                 const detectedString = togglesToString(detectedPattern);
                 const expectedString = togglesToString(rxToggles);
                 const maxPower = Math.max(...powers);
                 
-                // Get ASCII info for detected pattern
                 const detectedCharCode = binaryToAscii(detectedString);
                 const detectedAsciiDisplay = getAsciiDisplay(detectedCharCode);
                 
                 elInfo.textContent = `Powers: [${powers.join(', ')}] | Max: ${maxPower}`;
                 elDetectedPattern.textContent = `${detectedString} ${detectedAsciiDisplay}`;
                 
-                // Check if any signal detected (at least one bit high)
+                // Add to bit detection log (every poll step)
+                const timestamp = Date.now();
+                addBitLogEntry(detectedBits, timestamp);
+                
+                // Check for signal (at least one bit high)
                 const hasSignal = detectedPattern.some(b => b === 1);
                 
                 if (hasSignal) {
@@ -1365,12 +1660,11 @@
             }, pollInterval);
         }
         
-        // Transmit multi-tone
+        // Transmit
         function sendTone(dur) {
             if (!gainNodes.length) return;
             isSending = true;
             
-            // Update oscillator frequencies and turn on active ones
             for (let i = 0; i < NUM_BITS; i++) {
                 oscillators[i].frequency.setValueAtTime(txBaseFreq + (i * txStep), audioCtx.currentTime);
                 
@@ -1382,7 +1676,6 @@
             }
             
             setTimeout(() => {
-                // Turn off all oscillators
                 for (let i = 0; i < NUM_BITS; i++) {
                     gainNodes[i].gain.setValueAtTime(0, audioCtx.currentTime);
                 }
@@ -1453,6 +1746,7 @@
             elMatchStatus.classList.remove('match');
             elMatchStatus.classList.add('no-match');
             updateLogCount();
+            clearBitLog();
             log('Reset', 'info');
             if (isInit) {
                 log(`TX: ${togglesToString(txToggles)} @ ${txBaseFreq}Hz (±${txTolerance}Hz)`, 'info');
@@ -1470,16 +1764,14 @@
             updatePollInterval(pollInterval);
             setupGraph();
             requestAnimationFrame(drawGraph);
-            log('Audio Signal Test v9', 'info');
+            log('Audio Signal Test v10', 'info');
             log('───────────────────', 'info');
             log('Binary Signal Mode', 'info');
-            log('8-bit = ASCII character', 'info');
-            log('Set TX pattern (green)', 'info');
-            log('Set RX expected (cyan)', 'info');
+            log('Bit Detection Log tracks', 'info');
+            log('each poll step individually', 'info');
             log('INIT → ON AIR → PULSE', 'info');
         });
         
-        // Handle resize
         window.addEventListener('resize', () => {
             if (graphCanvas) setupGraph();
         });
