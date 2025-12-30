@@ -481,6 +481,12 @@
                 <span class="hz">Hz</span>
                 <span class="range-display" id="tx-range-display"></span>
             </div>
+            <div class="row">
+                <label>Ignore ±</label>
+                <input type="number" id="tx-tolerance" value="4" min="1" max="100" step="1" style="width:50px;">
+                <span class="hz">Hz</span>
+                <span class="range-display">per bit band</span>
+            </div>
             <div class="binary-row">
                 <span class="binary-label">Binary</span>
                 <div class="toggle-group" id="tx-toggles"></div>
@@ -503,6 +509,12 @@
                 <input type="number" id="rx-step" value="10" min="1" max="500" step="1" style="width:50px;">
                 <span class="hz">Hz</span>
                 <span class="range-display" id="rx-range-display"></span>
+            </div>
+            <div class="row">
+                <label>Detect ±</label>
+                <input type="number" id="rx-tolerance" value="4" min="1" max="100" step="1" style="width:50px;">
+                <span class="hz">Hz</span>
+                <span class="range-display">per bit band</span>
             </div>
             <div class="row">
                 <label>Thresh</label>
@@ -611,11 +623,13 @@
         // TX settings
         let txBaseFreq = 1800;
         let txStep = 10;
+        let txTolerance = 4;
         let txToggles = [0, 0, 0, 0, 0, 0, 0, 0];
         
         // RX settings
         let rxBaseFreq = 1800;
         let rxStep = 10;
+        let rxTolerance = 4;
         let rxThreshold = 40;
         let rxWindow = 300;
         let pollInterval = 50;
@@ -638,9 +652,11 @@
         const elTxSlider = $('tx-slider');
         const elTxInput = $('tx-input');
         const elTxStep = $('tx-step');
+        const elTxTolerance = $('tx-tolerance');
         const elRxSlider = $('rx-slider');
         const elRxInput = $('rx-input');
         const elRxStep = $('rx-step');
+        const elRxTolerance = $('rx-tolerance');
         const elRxThresh = $('rx-thresh');
         const elRxWindow = $('rx-window');
         const elPollInterval = $('poll-interval');
@@ -794,7 +810,8 @@
             elTxRangeDisp.textContent = `${txBaseFreq}–${maxFreq} Hz`;
             
             if (activeFreqs.length > 0) {
-                elTxFreqInfo.textContent = `Active: ${activeFreqs.join(', ')} Hz`;
+                const freqRanges = activeFreqs.map(f => `${f}±${txTolerance}`);
+                elTxFreqInfo.textContent = `Active: ${freqRanges.join(', ')} Hz`;
             } else {
                 elTxFreqInfo.textContent = 'No frequencies selected';
             }
@@ -807,7 +824,8 @@
             elRxRangeDisp.textContent = `${rxBaseFreq}–${maxFreq} Hz`;
             
             if (activeFreqs.length > 0) {
-                elRxFreqInfo.textContent = `Expecting: ${activeFreqs.join(', ')} Hz`;
+                const freqRanges = activeFreqs.map(f => `${f}±${rxTolerance}`);
+                elRxFreqInfo.textContent = `Expecting: ${freqRanges.join(', ')} Hz`;
             } else {
                 elRxFreqInfo.textContent = 'No pattern set';
             }
@@ -828,6 +846,12 @@
             updateTxDisplay();
         }
         
+        function updateTxTolerance(v) {
+            txTolerance = clamp(parseInt(v) || 4, 1, 100);
+            elTxTolerance.value = txTolerance;
+            updateTxDisplay();
+        }
+        
         function updateRxBaseFreq(freq) {
             rxBaseFreq = clamp(Math.round(freq), FREQ_MIN, FREQ_MAX);
             elRxInput.value = rxBaseFreq;
@@ -840,6 +864,12 @@
         function updateRxStep(v) {
             rxStep = clamp(parseInt(v) || 10, 1, 500);
             elRxStep.value = rxStep;
+            updateRxDisplay();
+        }
+        
+        function updateRxTolerance(v) {
+            rxTolerance = clamp(parseInt(v) || 4, 1, 100);
+            elRxTolerance.value = rxTolerance;
             updateRxDisplay();
         }
         
@@ -872,9 +902,11 @@
         elTxSlider.oninput = () => updateTxBaseFreq(parseInt(elTxSlider.value));
         elTxInput.onchange = () => updateTxBaseFreq(parseInt(elTxInput.value) || FREQ_MIN);
         elTxStep.onchange = () => updateTxStep(elTxStep.value);
+        elTxTolerance.onchange = () => updateTxTolerance(elTxTolerance.value);
         elRxSlider.oninput = () => updateRxBaseFreq(parseInt(elRxSlider.value));
         elRxInput.onchange = () => updateRxBaseFreq(parseInt(elRxInput.value) || FREQ_MIN);
         elRxStep.onchange = () => updateRxStep(elRxStep.value);
+        elRxTolerance.onchange = () => updateRxTolerance(elRxTolerance.value);
         elRxThresh.onchange = () => updateRxThreshold(elRxThresh.value);
         elRxWindow.onchange = () => updateRxWindow(elRxWindow.value);
         elPollInterval.onchange = () => updatePollInterval(elPollInterval.value);
@@ -891,8 +923,8 @@
             if (isOnAir) {
                 log('════════════════', 'info');
                 log('ON AIR', 'rx');
-                log(`TX: ${togglesToString(txToggles)} @ ${txBaseFreq}Hz +${txStep}Hz`, 'info');
-                log(`RX: ${togglesToString(rxToggles)} @ ${rxBaseFreq}Hz +${rxStep}Hz`, 'info');
+                log(`TX: ${togglesToString(txToggles)} @ ${txBaseFreq}Hz +${txStep}Hz (±${txTolerance}Hz)`, 'info');
+                log(`RX: ${togglesToString(rxToggles)} @ ${rxBaseFreq}Hz +${rxStep}Hz (±${rxTolerance}Hz)`, 'info');
             } else {
                 log('OFF AIR', 'info');
                 log('════════════════', 'info');
@@ -943,14 +975,16 @@
             }
             graphCtx.fillRect(0, 0, width, height);
             
-            // Draw RX expected frequency markers (20% transparent)
+            // Draw RX expected frequency bands with ± tolerance (20% transparent)
             const rxFreqs = getAllFreqs(rxBaseFreq, rxStep);
             for (let i = 0; i < NUM_BITS; i++) {
                 const freq = rxFreqs[i];
-                if (freq > graphMaxFreq) continue;
+                if (freq - rxTolerance > graphMaxFreq) continue;
                 
-                const x = (freq / graphMaxFreq) * width;
-                const markerWidth = Math.max((rxStep / graphMaxFreq) * width * 0.8, 3);
+                // Calculate band width based on tolerance
+                const bandLeft = Math.max(0, ((freq - rxTolerance) / graphMaxFreq) * width);
+                const bandRight = Math.min(width, ((freq + rxTolerance) / graphMaxFreq) * width);
+                const bandWidth = bandRight - bandLeft;
                 
                 if (rxToggles[i]) {
                     // Expected ON - cyan
@@ -959,12 +993,20 @@
                     // Expected OFF - dim
                     graphCtx.fillStyle = 'rgba(100, 100, 100, 0.1)';
                 }
-                graphCtx.fillRect(x - markerWidth / 2, 0, markerWidth, height);
+                graphCtx.fillRect(bandLeft, 0, bandWidth, height);
+                
+                // Draw center line for the exact frequency
+                const centerX = (freq / graphMaxFreq) * width;
+                graphCtx.strokeStyle = rxToggles[i] ? 'rgba(0, 255, 255, 0.4)' : 'rgba(100, 100, 100, 0.2)';
+                graphCtx.beginPath();
+                graphCtx.moveTo(centerX, 0);
+                graphCtx.lineTo(centerX, height);
+                graphCtx.stroke();
                 
                 // Draw bit number at top
-                graphCtx.fillStyle = rxToggles[i] ? 'rgba(0, 255, 255, 0.5)' : 'rgba(100, 100, 100, 0.3)';
+                graphCtx.fillStyle = rxToggles[i] ? 'rgba(0, 255, 255, 0.6)' : 'rgba(100, 100, 100, 0.4)';
                 graphCtx.font = '8px Courier New';
-                graphCtx.fillText(i + 1, x - 3, 10);
+                graphCtx.fillText(i + 1, centerX - 3, 10);
             }
             
             if (!isOnAir || !analyser) {
@@ -979,24 +1021,25 @@
             
             const barWidth = width / maxBin;
             
+            // Pre-calculate TX frequency ranges for highlighting
+            const txFreqs = getAllFreqs(txBaseFreq, txStep);
+            
             for (let i = 0; i < maxBin; i++) {
                 const v = frequencyData[i] / 255;
                 const barHeight = v * height;
-                
                 const freq = i * binW;
                 
-                // Check if this frequency is in any of the TX or RX bins
+                // Check if this frequency falls within any TX or RX tolerance band
                 let isTxFreq = false;
                 let isRxFreq = false;
                 
-                const txFreqs = getAllFreqs(txBaseFreq, txStep);
-                const halfStep = txStep / 2;
-                
                 for (let j = 0; j < NUM_BITS; j++) {
-                    if (Math.abs(freq - txFreqs[j]) < halfStep && txToggles[j]) {
+                    // Check TX bands (for ignore highlighting during send)
+                    if (txToggles[j] && Math.abs(freq - txFreqs[j]) <= txTolerance) {
                         isTxFreq = true;
                     }
-                    if (Math.abs(freq - rxFreqs[j]) < halfStep) {
+                    // Check RX bands
+                    if (Math.abs(freq - rxFreqs[j]) <= rxTolerance) {
                         isRxFreq = true;
                     }
                 }
@@ -1098,7 +1141,7 @@
             }
         }
         
-        // Detection
+        // Detection with ± tolerance bands
         function startDetection() {
             const bufLen = analyser.frequencyBinCount;
             const data = new Uint8Array(bufLen);
@@ -1114,18 +1157,23 @@
                 
                 analyser.getByteFrequencyData(data);
                 
-                // Detect pattern at RX frequencies
+                // Detect pattern at RX frequencies with tolerance
                 const rxFreqs = getAllFreqs(rxBaseFreq, rxStep);
                 const detectedPattern = [];
                 const powers = [];
                 
                 for (let i = 0; i < NUM_BITS; i++) {
                     const targetFreq = rxFreqs[i];
-                    const targetBin = Math.round(targetFreq / binW);
                     
-                    // Check a few bins around the target for the strongest signal
+                    // Calculate bin range for this frequency ± tolerance
+                    const lowFreq = targetFreq - rxTolerance;
+                    const highFreq = targetFreq + rxTolerance;
+                    const startBin = Math.max(0, Math.floor(lowFreq / binW));
+                    const endBin = Math.min(bufLen - 1, Math.ceil(highFreq / binW));
+                    
+                    // Find max power within the tolerance band
                     let maxPower = 0;
-                    for (let b = Math.max(0, targetBin - 2); b <= Math.min(bufLen - 1, targetBin + 2); b++) {
+                    for (let b = startBin; b <= endBin; b++) {
                         if (data[b] > maxPower) maxPower = data[b];
                     }
                     
@@ -1253,8 +1301,8 @@
             updateLogCount();
             log('Reset', 'info');
             if (isInit) {
-                log(`TX: ${togglesToString(txToggles)} @ ${txBaseFreq}Hz`, 'info');
-                log(`RX: ${togglesToString(rxToggles)} @ ${rxBaseFreq}Hz`, 'info');
+                log(`TX: ${togglesToString(txToggles)} @ ${txBaseFreq}Hz (±${txTolerance}Hz)`, 'info');
+                log(`RX: ${togglesToString(rxToggles)} @ ${rxBaseFreq}Hz (±${rxTolerance}Hz)`, 'info');
             }
         }
         
@@ -1271,6 +1319,7 @@
             log('Audio Signal Test v8', 'info');
             log('───────────────────', 'info');
             log('Binary Signal Mode', 'info');
+            log('Each bit has ±tolerance band', 'info');
             log('Set TX pattern (green)', 'info');
             log('Set RX expected (cyan)', 'info');
             log('INIT → ON AIR → PULSE', 'info');
