@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio Signal Test v8</title>
+    <title>Audio Signal Test v9</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -196,6 +196,18 @@
         .section.tx .binary-string { color: #0a0; }
         .section.rx .binary-string { color: #0aa; }
         
+        .ascii-char {
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-left: 0.3rem;
+            padding: 0.1rem 0.3rem;
+            background: #1a1a1a;
+            border-radius: 2px;
+        }
+        
+        .section.tx .ascii-char { color: #0f0; border: 1px solid #0a0; }
+        .section.rx .ascii-char { color: #0ff; border: 1px solid #0aa; }
+        
         .freq-info {
             font-size: 0.55rem;
             color: #444;
@@ -348,7 +360,7 @@
         
         #graph {
             width: 100%;
-            height: 90px;
+            height: 100px;
             display: block;
         }
         
@@ -416,6 +428,7 @@
         .log-entry.match { color: #0f0; font-weight: bold; }
         .log-entry .ts { color: #333; margin-right: 0.25rem; }
         .log-entry .pattern { color: #ff0; }
+        .log-entry .ascii { color: #0ff; font-weight: bold; }
         
         .timer {
             text-align: center;
@@ -464,7 +477,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Audio Signal Test v8</h1>
+        <h1>Audio Signal Test v9</h1>
         
         <!-- TX Settings -->
         <div class="section tx">
@@ -491,6 +504,7 @@
                 <span class="binary-label">Binary</span>
                 <div class="toggle-group" id="tx-toggles"></div>
                 <span class="binary-string" id="tx-binary">00000000</span>
+                <span class="ascii-char" id="tx-ascii">(NUL)</span>
             </div>
             <div class="freq-info" id="tx-freq-info"></div>
         </div>
@@ -538,6 +552,7 @@
                 <span class="binary-label">Expect</span>
                 <div class="toggle-group" id="rx-toggles"></div>
                 <span class="binary-string" id="rx-binary">00000000</span>
+                <span class="ascii-char" id="rx-ascii">(NUL)</span>
             </div>
             <div class="freq-info" id="rx-freq-info"></div>
         </div>
@@ -547,7 +562,7 @@
             <button class="air-btn" id="btn-air" onclick="toggleAir()">OFF AIR</button>
             <div class="pulse-group">
                 <button class="pulse-btn" id="btn-pulse" onclick="manualPulse()" disabled>PULSE</button>
-                <input type="number" id="pulse-duration" class="pulse-input" value="350" min="50" max="5000" step="50">
+                <input type="number" id="pulse-duration" class="pulse-input" value="350" min="5" max="5000" step="5">
                 <span class="pulse-label">ms</span>
             </div>
         </div>
@@ -610,6 +625,11 @@
         const FLASH_DURATION = 200;
         const FLASH_FADE = 500;
         
+        // Character flash state
+        let charFlashQueue = [];
+        const CHAR_FLASH_DURATION = 300;
+        const CHAR_FLASH_FADE = 700;
+        
         // State
         let audioCtx, analyser, micStream;
         let oscillators = []; // Array of oscillators for multi-tone
@@ -665,6 +685,8 @@
         const elRxRangeDisp = $('rx-range-display');
         const elTxBinary = $('tx-binary');
         const elRxBinary = $('rx-binary');
+        const elTxAscii = $('tx-ascii');
+        const elRxAscii = $('rx-ascii');
         const elTxFreqInfo = $('tx-freq-info');
         const elRxFreqInfo = $('rx-freq-info');
         const elInfo = $('detection-info');
@@ -680,6 +702,52 @@
         const elBtnPulse = $('btn-pulse');
         const elPulseDuration = $('pulse-duration');
         const elZoomLabel = $('zoom-label');
+        
+        // ASCII conversion helpers
+        function binaryToAscii(binaryString) {
+            const charCode = parseInt(binaryString, 2);
+            return charCode;
+        }
+        
+        function getAsciiDisplay(charCode) {
+            // Control characters and special cases
+            const controlChars = {
+                0: 'NUL', 1: 'SOH', 2: 'STX', 3: 'ETX', 4: 'EOT', 5: 'ENQ', 6: 'ACK', 7: 'BEL',
+                8: 'BS', 9: 'TAB', 10: 'LF', 11: 'VT', 12: 'FF', 13: 'CR', 14: 'SO', 15: 'SI',
+                16: 'DLE', 17: 'DC1', 18: 'DC2', 19: 'DC3', 20: 'DC4', 21: 'NAK', 22: 'SYN', 23: 'ETB',
+                24: 'CAN', 25: 'EM', 26: 'SUB', 27: 'ESC', 28: 'FS', 29: 'GS', 30: 'RS', 31: 'US',
+                32: 'SPC', 127: 'DEL'
+            };
+            
+            if (controlChars[charCode] !== undefined) {
+                return `(${controlChars[charCode]})`;
+            } else if (charCode >= 33 && charCode <= 126) {
+                return `'${String.fromCharCode(charCode)}'`;
+            } else if (charCode > 127 && charCode <= 255) {
+                return `(x${charCode.toString(16).toUpperCase()})`;
+            } else {
+                return `(${charCode})`;
+            }
+        }
+        
+        function getAsciiChar(charCode) {
+            // Return the actual character for display in graph
+            const controlChars = {
+                0: '∅', 1: '①', 2: '②', 3: '③', 4: '④', 5: '⑤', 6: '⑥', 7: '⑦',
+                8: '⌫', 9: '⇥', 10: '↵', 11: '⇕', 12: '⇟', 13: '↩', 14: '⎋', 15: '⏎',
+                32: '␣', 127: '⌦'
+            };
+            
+            if (controlChars[charCode] !== undefined) {
+                return controlChars[charCode];
+            } else if (charCode >= 33 && charCode <= 126) {
+                return String.fromCharCode(charCode);
+            } else if (charCode > 127) {
+                return '◆';
+            } else {
+                return '?';
+            }
+        }
         
         // Helpers
         function log(msg, type = '') {
@@ -755,6 +823,10 @@
             flashQueue.push({ startTime: performance.now() });
         }
         
+        function triggerCharFlash(char) {
+            charFlashQueue.push({ startTime: performance.now(), char: char });
+        }
+        
         function calculateFlashIntensity() {
             const now = performance.now();
             let totalIntensity = 0;
@@ -778,6 +850,36 @@
             });
             
             return Math.min(totalIntensity, 1);
+        }
+        
+        function getCharFlashState() {
+            const now = performance.now();
+            let result = { char: null, opacity: 0 };
+            
+            charFlashQueue = charFlashQueue.filter(flash => {
+                const elapsed = now - flash.startTime;
+                const totalTime = CHAR_FLASH_DURATION + CHAR_FLASH_FADE;
+                
+                if (elapsed > totalTime) return false;
+                
+                let opacity;
+                if (elapsed < CHAR_FLASH_DURATION) {
+                    // Fade in
+                    opacity = Math.min(1, elapsed / 100);
+                } else {
+                    // Fade out
+                    const fadeElapsed = elapsed - CHAR_FLASH_DURATION;
+                    opacity = 1 - (fadeElapsed / CHAR_FLASH_FADE);
+                }
+                
+                if (opacity > result.opacity) {
+                    result = { char: flash.char, opacity: opacity };
+                }
+                
+                return true;
+            });
+            
+            return result;
         }
         
         // Create toggle buttons
@@ -804,7 +906,12 @@
         
         // Frequency updates
         function updateTxDisplay() {
-            elTxBinary.textContent = togglesToString(txToggles);
+            const binaryStr = togglesToString(txToggles);
+            elTxBinary.textContent = binaryStr;
+            
+            const charCode = binaryToAscii(binaryStr);
+            elTxAscii.textContent = getAsciiDisplay(charCode);
+            
             const activeFreqs = getActiveFreqs(txBaseFreq, txStep, txToggles);
             const maxFreq = txBaseFreq + ((NUM_BITS - 1) * txStep);
             elTxRangeDisp.textContent = `${txBaseFreq}–${maxFreq} Hz`;
@@ -818,7 +925,12 @@
         }
         
         function updateRxDisplay() {
-            elRxBinary.textContent = togglesToString(rxToggles);
+            const binaryStr = togglesToString(rxToggles);
+            elRxBinary.textContent = binaryStr;
+            
+            const charCode = binaryToAscii(binaryStr);
+            elRxAscii.textContent = getAsciiDisplay(charCode);
+            
             const activeFreqs = getActiveFreqs(rxBaseFreq, rxStep, rxToggles);
             const maxFreq = rxBaseFreq + ((NUM_BITS - 1) * rxStep);
             elRxRangeDisp.textContent = `${rxBaseFreq}–${maxFreq} Hz`;
@@ -894,7 +1006,7 @@
         }
         
         function updatePulseDuration(v) {
-            pulseDuration = clamp(parseInt(v) || 350, 50, 5000);
+            pulseDuration = clamp(parseInt(v) || 350, 5, 5000);
             elPulseDuration.value = pulseDuration;
         }
         
@@ -964,6 +1076,7 @@
             const height = graphCanvas.height / window.devicePixelRatio;
             
             const flashIntensity = calculateFlashIntensity();
+            const charFlash = getCharFlashState();
             
             if (flashIntensity > 0) {
                 const r = Math.round(0 * flashIntensity);
@@ -1010,6 +1123,10 @@
             }
             
             if (!isOnAir || !analyser) {
+                // Draw character flash even when not on air
+                if (charFlash.char && charFlash.opacity > 0) {
+                    drawCharacterFlash(width, height, charFlash);
+                }
                 requestAnimationFrame(drawGraph);
                 return;
             }
@@ -1075,7 +1192,34 @@
                 graphCtx.fillText(label, x - 10, height - 2);
             }
             
+            // Draw character flash overlay
+            if (charFlash.char && charFlash.opacity > 0) {
+                drawCharacterFlash(width, height, charFlash);
+            }
+            
             requestAnimationFrame(drawGraph);
+        }
+        
+        function drawCharacterFlash(width, height, charFlash) {
+            const opacity = charFlash.opacity;
+            
+            // Draw character in center of graph
+            graphCtx.save();
+            graphCtx.font = 'bold 48px Courier New';
+            graphCtx.textAlign = 'center';
+            graphCtx.textBaseline = 'middle';
+            
+            // Glow effect
+            graphCtx.shadowColor = `rgba(0, 255, 255, ${opacity})`;
+            graphCtx.shadowBlur = 20;
+            
+            // Main character
+            graphCtx.fillStyle = `rgba(0, 255, 255, ${opacity})`;
+            graphCtx.fillText(charFlash.char, width / 2, height / 2);
+            
+            // Reset shadow
+            graphCtx.shadowBlur = 0;
+            graphCtx.restore();
         }
         
         // Init
@@ -1185,8 +1329,12 @@
                 const expectedString = togglesToString(rxToggles);
                 const maxPower = Math.max(...powers);
                 
+                // Get ASCII info for detected pattern
+                const detectedCharCode = binaryToAscii(detectedString);
+                const detectedAsciiDisplay = getAsciiDisplay(detectedCharCode);
+                
                 elInfo.textContent = `Powers: [${powers.join(', ')}] | Max: ${maxPower}`;
-                elDetectedPattern.textContent = detectedString;
+                elDetectedPattern.textContent = `${detectedString} ${detectedAsciiDisplay}`;
                 
                 // Check if any signal detected (at least one bit high)
                 const hasSignal = detectedPattern.some(b => b === 1);
@@ -1205,10 +1353,12 @@
                         elMatchStatus.classList.toggle('no-match', !isMatch);
                         
                         if (isMatch) {
-                            log(`✓ MATCH: <span class="pattern">${detectedString}</span>`, 'match');
+                            const asciiChar = getAsciiChar(detectedCharCode);
+                            log(`✓ MATCH: <span class="pattern">${detectedString}</span> <span class="ascii">${detectedAsciiDisplay}</span>`, 'match');
                             triggerFlash();
+                            triggerCharFlash(asciiChar);
                         } else {
-                            log(`RX: <span class="pattern">${detectedString}</span> (expected ${expectedString})`, 'rx');
+                            log(`RX: <span class="pattern">${detectedString}</span> ${detectedAsciiDisplay} (expected ${expectedString})`, 'rx');
                         }
                     }
                 }
@@ -1242,7 +1392,10 @@
         
         function sendSignal() {
             const activeCount = txToggles.filter(t => t).length;
-            log(`TX: ${togglesToString(txToggles)} (${activeCount} tones, ${pulseDuration}ms)`, 'tx');
+            const binaryStr = togglesToString(txToggles);
+            const charCode = binaryToAscii(binaryStr);
+            const asciiDisplay = getAsciiDisplay(charCode);
+            log(`TX: ${binaryStr} ${asciiDisplay} (${activeCount} tones, ${pulseDuration}ms)`, 'tx');
             sendTone(pulseDuration);
         }
         
@@ -1293,6 +1446,7 @@
             elInfo.textContent = '—';
             elLog.innerHTML = '';
             flashQueue = [];
+            charFlashQueue = [];
             logEntryCount = 0;
             lastDetectedPattern = '';
             elDetectedPattern.textContent = '--------';
@@ -1316,10 +1470,10 @@
             updatePollInterval(pollInterval);
             setupGraph();
             requestAnimationFrame(drawGraph);
-            log('Audio Signal Test v8', 'info');
+            log('Audio Signal Test v9', 'info');
             log('───────────────────', 'info');
             log('Binary Signal Mode', 'info');
-            log('Each bit has ±tolerance band', 'info');
+            log('8-bit = ASCII character', 'info');
             log('Set TX pattern (green)', 'info');
             log('Set RX expected (cyan)', 'info');
             log('INIT → ON AIR → PULSE', 'info');
