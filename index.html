@@ -6,443 +6,82 @@
     <title>Audio Signal Test v10</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Courier New', monospace;
-            background: #000;
-            color: #fff;
-            min-height: 100vh;
-            padding: 1rem;
-        }
-        
-        .container {
-            max-width: 540px;
-            margin: 0 auto;
-            border: 1px solid #fff;
-            padding: 1.25rem;
-        }
-        
-        h1 {
-            font-size: 1rem;
-            font-weight: normal;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            margin-bottom: 1rem;
-            text-align: center;
-            border-bottom: 1px solid #333;
-            padding-bottom: 0.5rem;
-        }
-        
-        .section {
-            margin-bottom: 0.75rem;
-            padding: 0.6rem;
-            border: 1px solid #333;
-        }
-        
+        body { font-family: 'Courier New', monospace; background: #000; color: #fff; min-height: 100vh; padding: 1rem; }
+        .container { max-width: 520px; margin: 0 auto; border: 1px solid #fff; padding: 1.25rem; }
+        h1 { font-size: 1rem; font-weight: normal; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 1rem; text-align: center; border-bottom: 1px solid #333; padding-bottom: 0.5rem; }
+        .section { margin-bottom: 0.75rem; padding: 0.6rem; border: 1px solid #333; }
         .section.tx { border-color: #0a0; }
         .section.rx { border-color: #0aa; }
-        
-        .section-title {
-            font-size: 0.65rem;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-bottom: 0.4rem;
-        }
-        
+        .section-title { font-size: 0.65rem; color: #666; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.4rem; }
         .section.tx .section-title { color: #0f0; }
         .section.rx .section-title { color: #0ff; }
-        
-        .row {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.35rem;
-            font-size: 0.7rem;
-        }
-        
+        .row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem; font-size: 0.7rem; }
         .row:last-child { margin-bottom: 0; }
         .row label { color: #888; min-width: 50px; }
-        
-        input[type="range"] {
-            flex: 1;
-            height: 4px;
-            -webkit-appearance: none;
-            background: #333;
-            outline: none;
-        }
-        
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 14px;
-            height: 14px;
-            background: #fff;
-            cursor: pointer;
-            border-radius: 50%;
-        }
-        
+        input[type="range"] { flex: 1; height: 4px; -webkit-appearance: none; background: #333; outline: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: #fff; cursor: pointer; border-radius: 50%; }
         .section.tx input[type="range"]::-webkit-slider-thumb { background: #0f0; }
         .section.rx input[type="range"]::-webkit-slider-thumb { background: #0ff; }
-        
-        input[type="number"] {
-            width: 70px;
-            background: #111;
-            border: 1px solid #444;
-            color: #fff;
-            padding: 0.25rem 0.3rem;
-            font-family: inherit;
-            font-size: 0.7rem;
-            text-align: center;
-        }
-        
-        input[type="number"]:focus {
-            outline: none;
-            border-color: #fff;
-        }
-        
+        input[type="number"] { width: 70px; background: #111; border: 1px solid #444; color: #fff; padding: 0.25rem 0.3rem; font-family: inherit; font-size: 0.7rem; text-align: center; }
+        input[type="number"]:focus { outline: none; border-color: #fff; }
         .hz { font-size: 0.6rem; color: #666; }
-        
-        .range-display {
-            font-size: 0.6rem;
-            color: #666;
-            margin-left: auto;
-        }
-        
+        .range-display { font-size: 0.6rem; color: #666; margin-left: auto; }
         .section.tx .range-display { color: #0a0; }
         .section.rx .range-display { color: #0aa; }
-        
-        /* Binary Toggle Row */
-        .binary-row {
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
-            margin-top: 0.5rem;
-            padding-top: 0.5rem;
-            border-top: 1px solid #222;
-        }
-        
-        .binary-label {
-            font-size: 0.6rem;
-            color: #666;
-            min-width: 45px;
-        }
-        
+        .binary-row { display: flex; align-items: center; gap: 0.3rem; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #222; }
+        .binary-label { font-size: 0.6rem; color: #666; min-width: 45px; }
         .section.tx .binary-label { color: #0a0; }
         .section.rx .binary-label { color: #0aa; }
-        
-        .toggle-group {
-            display: flex;
-            gap: 2px;
-        }
-        
-        .bit-toggle {
-            width: 28px;
-            height: 32px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: #111;
-            border: 1px solid #333;
-            border-radius: 3px;
-            cursor: pointer;
-            transition: all 0.15s;
-            position: relative;
-        }
-        
-        .bit-toggle:hover {
-            border-color: #555;
-        }
-        
-        .bit-toggle.on {
-            background: #0a0;
-            border-color: #0f0;
-        }
-        
-        .section.rx .bit-toggle.on {
-            background: #088;
-            border-color: #0ff;
-        }
-        
-        .bit-toggle .bit-num {
-            font-size: 0.5rem;
-            color: #555;
-            position: absolute;
-            top: 2px;
-        }
-        
-        .bit-toggle.on .bit-num {
-            color: #000;
-        }
-        
-        .bit-toggle .bit-val {
-            font-size: 0.75rem;
-            font-weight: bold;
-            color: #444;
-        }
-        
-        .bit-toggle.on .bit-val {
-            color: #000;
-        }
-        
-        .binary-string {
-            font-size: 0.65rem;
-            color: #555;
-            font-family: inherit;
-            letter-spacing: 0.05em;
-            margin-left: auto;
-        }
-        
+        .toggle-group { display: flex; gap: 2px; }
+        .bit-toggle { width: 28px; height: 32px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #111; border: 1px solid #333; border-radius: 3px; cursor: pointer; transition: all 0.15s; position: relative; }
+        .bit-toggle:hover { border-color: #555; }
+        .bit-toggle.on { background: #0a0; border-color: #0f0; }
+        .section.rx .bit-toggle.on { background: #088; border-color: #0ff; }
+        .bit-toggle .bit-num { font-size: 0.5rem; color: #555; position: absolute; top: 2px; }
+        .bit-toggle.on .bit-num { color: #000; }
+        .bit-toggle .bit-val { font-size: 0.75rem; font-weight: bold; color: #444; }
+        .bit-toggle.on .bit-val { color: #000; }
+        .binary-string { font-size: 0.65rem; color: #555; font-family: inherit; letter-spacing: 0.05em; margin-left: auto; }
         .section.tx .binary-string { color: #0a0; }
         .section.rx .binary-string { color: #0aa; }
-        
-        .ascii-char {
-            font-size: 0.7rem;
-            font-weight: bold;
-            margin-left: 0.3rem;
-            padding: 0.1rem 0.3rem;
-            background: #1a1a1a;
-            border-radius: 2px;
-        }
-        
+        .ascii-char { font-size: 0.7rem; font-weight: bold; margin-left: 0.3rem; padding: 0.1rem 0.3rem; background: #1a1a1a; border-radius: 2px; }
         .section.tx .ascii-char { color: #0f0; border: 1px solid #0a0; }
         .section.rx .ascii-char { color: #0ff; border: 1px solid #0aa; }
-        
-        .freq-info {
-            font-size: 0.55rem;
-            color: #444;
-            margin-top: 0.3rem;
-            text-align: center;
-        }
-        
-        /* ON AIR Toggle */
-        .air-toggle {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 0.5rem;
-            margin: 1rem 0;
-            flex-wrap: wrap;
-        }
-        
-        .air-btn {
-            padding: 0.5rem 1.5rem;
-            font-family: inherit;
-            font-size: 0.75rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            cursor: pointer;
-            border: 2px solid #444;
-            background: #111;
-            color: #666;
-            border-radius: 4px;
-            transition: all 0.2s;
-        }
-        
+        .freq-info { font-size: 0.55rem; color: #444; margin-top: 0.3rem; text-align: center; }
+        .air-toggle { display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin: 1rem 0; flex-wrap: wrap; }
+        .air-btn { padding: 0.5rem 1.5rem; font-family: inherit; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; cursor: pointer; border: 2px solid #444; background: #111; color: #666; border-radius: 4px; transition: all 0.2s; }
         .air-btn:hover { border-color: #666; }
-        
-        .air-btn.on {
-            background: #f00;
-            color: #fff;
-            border-color: #f00;
-            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
-            animation: air-pulse 1.5s infinite;
-        }
-        
-        @keyframes air-pulse {
-            0%, 100% { box-shadow: 0 0 15px rgba(255, 0, 0, 0.5); }
-            50% { box-shadow: 0 0 25px rgba(255, 0, 0, 0.8); }
-        }
-        
-        .pulse-group {
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
-        }
-        
-        .pulse-btn {
-            padding: 0.5rem 0.75rem;
-            font-family: inherit;
-            font-size: 0.75rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            cursor: pointer;
-            border: 2px solid #0a0;
-            background: #111;
-            color: #0f0;
-            border-radius: 4px;
-            transition: all 0.1s;
-        }
-        
+        .air-btn.on { background: #f00; color: #fff; border-color: #f00; box-shadow: 0 0 15px rgba(255, 0, 0, 0.5); animation: air-pulse 1.5s infinite; }
+        @keyframes air-pulse { 0%, 100% { box-shadow: 0 0 15px rgba(255, 0, 0, 0.5); } 50% { box-shadow: 0 0 25px rgba(255, 0, 0, 0.8); } }
+        .pulse-group { display: flex; align-items: center; gap: 0.3rem; }
+        .pulse-btn { padding: 0.5rem 0.75rem; font-family: inherit; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; cursor: pointer; border: 2px solid #0a0; background: #111; color: #0f0; border-radius: 4px; transition: all 0.1s; }
         .pulse-btn:hover { background: #0a0; color: #000; }
         .pulse-btn:active { background: #0f0; }
         .pulse-btn:disabled { border-color: #333; color: #333; cursor: not-allowed; }
         .pulse-btn:disabled:hover { background: #111; color: #333; }
-        
-        .pulse-input {
-            width: 50px;
-            background: #111;
-            border: 1px solid #0a0;
-            color: #0f0;
-            padding: 0.35rem 0.25rem;
-            font-family: inherit;
-            font-size: 0.65rem;
-            text-align: center;
-            border-radius: 3px;
-        }
-        
+        .pulse-input { width: 50px; background: #111; border: 1px solid #0a0; color: #0f0; padding: 0.35rem 0.25rem; font-family: inherit; font-size: 0.65rem; text-align: center; border-radius: 3px; }
         .pulse-input:focus { outline: none; border-color: #0f0; }
-        
-        .pulse-label {
-            font-size: 0.55rem;
-            color: #0a0;
-        }
-        
-        /* Audio Graph */
-        .graph-section {
-            margin-bottom: 0.75rem;
-        }
-        
-        .graph-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.25rem;
-        }
-        
-        .graph-title {
-            font-size: 0.6rem;
-            color: #666;
-            text-transform: uppercase;
-        }
-        
-        .graph-legend {
-            display: flex;
-            gap: 0.5rem;
-            font-size: 0.5rem;
-        }
-        
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 0.2rem;
-        }
-        
-        .legend-color {
-            width: 10px;
-            height: 3px;
-        }
-        
-        .legend-color.tx { background: #0f0; }
-        .legend-color.rx { background: #0ff; }
-        
-        .legend-text.tx { color: #0a0; }
-        .legend-text.rx { color: #0aa; }
-        
-        .graph-controls {
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-        
-        .zoom-btn {
-            width: 22px;
-            height: 22px;
-            font-family: inherit;
-            font-size: 0.85rem;
-            font-weight: bold;
-            background: #111;
-            color: #888;
-            border: 1px solid #444;
-            border-radius: 3px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1;
-        }
-        
+        .pulse-label { font-size: 0.55rem; color: #0a0; }
+        .graph-section { margin-bottom: 0.75rem; }
+        .graph-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; gap: 0.5rem; flex-wrap: wrap; }
+        .graph-title { font-size: 0.6rem; color: #666; text-transform: uppercase; }
+        .graph-controls { display: flex; align-items: center; gap: 0.2rem; }
+        .zoom-btn { width: 20px; height: 20px; font-family: inherit; font-size: 0.8rem; font-weight: bold; background: #111; color: #888; border: 1px solid #444; border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
         .zoom-btn:hover { background: #222; color: #fff; border-color: #666; }
         .zoom-btn:active { background: #333; }
-        
-        .zoom-label {
-            font-size: 0.55rem;
-            color: #555;
-            min-width: 35px;
-            text-align: center;
-        }
-        
-        .graph-container {
-            border: 1px solid #222;
-            background: #050505;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        #graph {
-            width: 100%;
-            height: 100px;
-            display: block;
-        }
-        
-        .detection-info {
-            text-align: center;
-            font-size: 0.6rem;
-            color: #555;
-            min-height: 1.1em;
-            padding: 0.25rem 0;
-        }
-        
-        .match-status {
-            text-align: center;
-            font-size: 0.7rem;
-            padding: 0.3rem;
-            margin-bottom: 0.5rem;
-            border: 1px solid #333;
-            background: #0a0a0a;
-        }
-        
-        .match-status.match {
-            color: #0f0;
-            border-color: #0a0;
-            background: #001a00;
-        }
-        
-        .match-status.no-match {
-            color: #888;
-        }
-        
-        /* Log sections */
-        .log-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.25rem;
-        }
-        
-        .log-title {
-            font-size: 0.6rem;
-            color: #666;
-            text-transform: uppercase;
-        }
-        
-        .log-count {
-            font-size: 0.55rem;
-            color: #555;
-        }
-        
-        .log-panel {
-            height: 70px;
-            overflow-y: auto;
-            background: #050505;
-            padding: 0.4rem;
-            font-size: 0.6rem;
-            border: 1px solid #222;
-            margin-bottom: 0.5rem;
-        }
-        
+        .zoom-input { width: 45px; background: #111; border: 1px solid #333; color: #888; padding: 0.2rem; font-family: inherit; font-size: 0.55rem; text-align: center; border-radius: 2px; }
+        .zoom-input:focus { outline: none; border-color: #666; color: #fff; }
+        .zoom-sep { color: #333; font-size: 0.5rem; }
+        .graph-container { border: 1px solid #222; background: #050505; position: relative; overflow: hidden; }
+        #graph { width: 100%; height: 100px; display: block; }
+        .detection-info { text-align: center; font-size: 0.6rem; color: #555; min-height: 1.1em; padding: 0.25rem 0; }
+        .match-status { text-align: center; font-size: 0.7rem; padding: 0.3rem; margin-bottom: 0.5rem; border: 1px solid #333; background: #0a0a0a; }
+        .match-status.match { color: #0f0; border-color: #0a0; background: #001a00; }
+        .match-status.no-match { color: #888; }
+        .log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; }
+        .log-title { font-size: 0.6rem; color: #666; text-transform: uppercase; }
+        .log-count { font-size: 0.55rem; color: #555; }
+        .log-panel { height: 90px; overflow-y: auto; background: #050505; padding: 0.4rem; font-size: 0.6rem; border: 1px solid #222; margin-bottom: 0.75rem; }
         .log-entry { margin-bottom: 0.15rem; color: #555; }
         .log-entry.rx { color: #0ff; }
         .log-entry.tx { color: #0f0; }
@@ -452,191 +91,24 @@
         .log-entry .ts { color: #333; margin-right: 0.25rem; }
         .log-entry .pattern { color: #ff0; }
         .log-entry .ascii { color: #0ff; font-weight: bold; }
-        
-        /* Bit Detection Log */
-        .bit-log-section {
-            margin-bottom: 0.75rem;
-        }
-        
-        .bit-log-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.25rem;
-        }
-        
-        .bit-log-title {
-            font-size: 0.6rem;
-            color: #f0f;
-            text-transform: uppercase;
-        }
-        
-        .bit-log-status {
-            font-size: 0.55rem;
-            padding: 0.15rem 0.4rem;
-            border-radius: 3px;
-            background: #1a0a1a;
-            border: 1px solid #333;
-            color: #666;
-        }
-        
-        .bit-log-status.active {
-            background: #0a1a0a;
-            border-color: #0f0;
-            color: #0f0;
-            animation: status-pulse 0.5s ease-out;
-        }
-        
-        @keyframes status-pulse {
-            0% { box-shadow: 0 0 10px rgba(0, 255, 0, 0.8); }
-            100% { box-shadow: none; }
-        }
-        
-        .bit-log-panel {
-            height: 80px;
-            overflow-y: auto;
-            background: #0a0510;
-            padding: 0.4rem;
-            font-size: 0.55rem;
-            border: 1px solid #306;
-            font-family: 'Courier New', monospace;
-        }
-        
-        .bit-log-entry {
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
-            margin-bottom: 0.2rem;
-            padding: 0.15rem 0;
-            border-bottom: 1px solid #1a0a1a;
-        }
-        
-        .bit-log-entry:last-child {
-            border-bottom: none;
-        }
-        
-        .bit-log-entry.all-match {
-            background: rgba(0, 255, 0, 0.1);
-            border-color: #0a0;
-        }
-        
-        .bit-log-ts {
-            color: #606;
-            font-size: 0.5rem;
-            min-width: 70px;
-        }
-        
-        .bit-log-bits {
-            display: flex;
-            gap: 1px;
-        }
-        
-        .bit-indicator {
-            width: 14px;
-            height: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.5rem;
-            font-weight: bold;
-            border-radius: 2px;
-            background: #1a0a1a;
-            color: #444;
-            border: 1px solid #333;
-        }
-        
-        .bit-indicator.hit {
-            background: #0aa;
-            color: #000;
-            border-color: #0ff;
-        }
-        
-        .bit-indicator.expected {
-            border-color: #f0f;
-        }
-        
-        .bit-indicator.hit.expected {
-            background: #0f0;
-            border-color: #0f0;
-        }
-        
-        .bit-indicator.miss.expected {
-            background: #800;
-            border-color: #f00;
-            color: #fff;
-        }
-        
-        .bit-log-result {
-            font-size: 0.5rem;
-            margin-left: auto;
-            padding: 0.1rem 0.3rem;
-            border-radius: 2px;
-        }
-        
-        .bit-log-result.match {
-            background: #0a0;
-            color: #000;
-        }
-        
-        .bit-log-result.partial {
-            background: #660;
-            color: #ff0;
-        }
-        
-        .bit-log-result.none {
-            color: #444;
-        }
-        
-        .timer {
-            text-align: center;
-            font-size: 1.3rem;
-            font-weight: bold;
-            margin: 0.3rem 0;
-        }
-        
+        .timer { text-align: center; font-size: 1.3rem; font-weight: bold; margin: 0.3rem 0; }
         .timer.active { animation: pulse 1s infinite; }
         @keyframes pulse { 50% { opacity: 0.4; } }
-        
         .button-row { display: flex; gap: 0.5rem; }
-        
-        button.main-btn {
-            flex: 1;
-            padding: 0.6rem;
-            font-family: inherit;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            cursor: pointer;
-            border: none;
-            transition: all 0.15s;
-        }
-        
+        button.main-btn { flex: 1; padding: 0.6rem; font-family: inherit; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; cursor: pointer; border: none; transition: all 0.15s; }
         .btn-init { background: #fff; color: #000; }
         .btn-test { background: #0f0; color: #000; }
         .btn-reset { background: transparent; color: #fff; border: 1px solid #555 !important; }
-        
         button.main-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
         button.main-btn:hover:not(:disabled) { opacity: 0.8; }
-        
-        .progress {
-            height: 2px;
-            background: #222;
-            margin-top: 0.75rem;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background: #0f0;
-            width: 0%;
-            transition: width 0.1s;
-        }
+        .progress { height: 2px; background: #222; margin-top: 0.75rem; }
+        .progress-fill { height: 100%; background: #0f0; width: 0%; transition: width 0.1s; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Audio Signal Test v10</h1>
         
-        <!-- TX Settings -->
         <div class="section tx">
             <div class="section-title">▲ Transmit</div>
             <div class="row">
@@ -655,7 +127,7 @@
                 <label>Ignore ±</label>
                 <input type="number" id="tx-tolerance" value="4" min="1" max="100" step="1" style="width:50px;">
                 <span class="hz">Hz</span>
-                <span class="range-display">per bit band</span>
+                <span class="range-display">per bit</span>
             </div>
             <div class="binary-row">
                 <span class="binary-label">Binary</span>
@@ -666,7 +138,6 @@
             <div class="freq-info" id="tx-freq-info"></div>
         </div>
         
-        <!-- RX Settings -->
         <div class="section rx">
             <div class="section-title">▼ Receive Pattern</div>
             <div class="row">
@@ -685,13 +156,13 @@
                 <label>Detect ±</label>
                 <input type="number" id="rx-tolerance" value="4" min="1" max="100" step="1" style="width:50px;">
                 <span class="hz">Hz</span>
-                <span class="range-display">per bit band</span>
+                <span class="range-display">per bit</span>
             </div>
             <div class="row">
                 <label>Thresh</label>
                 <input type="number" id="rx-thresh" value="40" min="5" max="200" step="5" style="width:50px;">
                 <span class="hz">pwr</span>
-                <span class="range-display">detection level</span>
+                <span class="range-display">detection</span>
             </div>
             <div class="row">
                 <label>Window</label>
@@ -714,7 +185,6 @@
             <div class="freq-info" id="rx-freq-info"></div>
         </div>
         
-        <!-- ON AIR Toggle + Pulse -->
         <div class="air-toggle">
             <button class="air-btn" id="btn-air" onclick="toggleAir()">OFF AIR</button>
             <div class="pulse-group">
@@ -724,24 +194,21 @@
             </div>
         </div>
         
-        <!-- Audio Graph -->
         <div class="graph-section">
             <div class="graph-header">
                 <span class="graph-title">Spectrum</span>
-                <div class="graph-legend">
-                    <div class="legend-item">
-                        <div class="legend-color tx"></div>
-                        <span class="legend-text tx">TX</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color rx"></div>
-                        <span class="legend-text rx">RX</span>
-                    </div>
-                </div>
                 <div class="graph-controls">
                     <button class="zoom-btn" onclick="zoomGraph(-1)">−</button>
-                    <span class="zoom-label" id="zoom-label">4k</span>
+                    <input type="number" id="hz-min" class="zoom-input" value="0" min="0" max="30000" step="100">
+                    <span class="zoom-sep">–</span>
+                    <input type="number" id="hz-max" class="zoom-input" value="4000" min="0" max="30000" step="100">
+                    <span class="zoom-sep">Hz</span>
                     <button class="zoom-btn" onclick="zoomGraph(1)">+</button>
+                    <span class="zoom-sep">│</span>
+                    <input type="number" id="pwr-min" class="zoom-input" value="0" min="0" max="255" step="5">
+                    <span class="zoom-sep">–</span>
+                    <input type="number" id="pwr-max" class="zoom-input" value="255" min="0" max="255" step="5">
+                    <span class="zoom-sep">pwr</span>
                 </div>
             </div>
             <div class="graph-container">
@@ -750,799 +217,323 @@
         </div>
         
         <div class="detection-info" id="detection-info">—</div>
-        
-        <div class="match-status no-match" id="match-status">
-            Detected: <span id="detected-pattern">--------</span>
-        </div>
-        
+        <div class="match-status no-match" id="match-status">Detected: <span id="detected-pattern">--------</span></div>
         <div class="timer" id="timer">00:10</div>
         
-        <!-- Main Log -->
         <div class="log-header">
-            <span class="log-title">Event Log</span>
+            <span class="log-title">Log</span>
             <span class="log-count" id="log-count">0 entries</span>
         </div>
         <div class="log-panel" id="log"></div>
-        
-        <!-- Bit Detection Log -->
-        <div class="bit-log-section">
-            <div class="bit-log-header">
-                <span class="bit-log-title">Bit Detection Log</span>
-                <span class="bit-log-status" id="bit-log-status">IDLE</span>
-            </div>
-            <div class="bit-log-panel" id="bit-log"></div>
-        </div>
         
         <div class="button-row">
             <button class="main-btn btn-init" id="btn-init" onclick="init()">⚡ INIT</button>
             <button class="main-btn btn-test" id="btn-test" onclick="startTest()" style="display:none;">▶ TEST</button>
             <button class="main-btn btn-reset" onclick="resetAll()">↻</button>
         </div>
-        
         <div class="progress"><div class="progress-fill" id="progress"></div></div>
     </div>
 
     <script>
-        // Config
-        const FREQ_MIN = 1;
-        const FREQ_MAX = 30000;
-        const SLIDER_MIN = 20;
-        const SLIDER_MAX = 30000;
-        const FFT_SIZE = 8192;
-        const NUM_BITS = 8;
-        const MAX_BIT_LOG_ENTRIES = 100;
-        
-        // Graph zoom levels
+        const FFT_SIZE = 8192, NUM_BITS = 8;
         const ZOOM_LEVELS = [500, 1000, 2000, 4000, 8000, 12000, 20000, 30000];
         let zoomIndex = 3;
-        let graphMaxFreq = ZOOM_LEVELS[zoomIndex];
         
-        // Flash effect state
-        let flashQueue = [];
-        const FLASH_DURATION = 200;
-        const FLASH_FADE = 500;
-        
-        // Character flash state
-        let charFlashQueue = [];
-        const CHAR_FLASH_DURATION = 300;
-        const CHAR_FLASH_FADE = 700;
-        
-        // State
-        let audioCtx, analyser, micStream;
-        let oscillators = [];
-        let gainNodes = [];
-        let detectInterval, testInterval;
-        let isInit = false;
-        let isRunning = false;
-        let isSending = false;
-        let isOnAir = false;
-        
-        // TX settings
-        let txBaseFreq = 1800;
-        let txStep = 10;
-        let txTolerance = 4;
-        let txToggles = [0, 0, 0, 0, 0, 0, 0, 0];
-        
-        // RX settings
-        let rxBaseFreq = 1800;
-        let rxStep = 10;
-        let rxTolerance = 4;
-        let rxThreshold = 40;
-        let rxWindow = 300;
-        let pollInterval = 50;
-        let rxToggles = [0, 0, 0, 0, 0, 0, 0, 0];
-        
-        let pulseDuration = 350;
-        let timeLeft = 10;
-        let lastDetectTime = 0;
-        let lastDetectedPattern = '';
-        
-        // Log counters
-        let logEntryCount = 0;
-        
-        // Bit Detection Array Log
-        let bitDetectionLog = [];
-        
-        // Graph
+        let hzMin = 0, hzMax = 4000, pwrMin = 0, pwrMax = 255;
+        let flashQueue = [], charFlashQueue = [];
+        let audioCtx, analyser, micStream, oscillators = [], gainNodes = [];
+        let detectInterval, testInterval, frequencyData;
+        let isInit = false, isRunning = false, isSending = false, isOnAir = false;
+        let txBaseFreq = 1800, txStep = 10, txTolerance = 4, txToggles = [0,0,0,0,0,0,0,0];
+        let rxBaseFreq = 1800, rxStep = 10, rxTolerance = 4, rxThreshold = 40, rxWindow = 300, pollInterval = 50, rxToggles = [0,0,0,0,0,0,0,0];
+        let pulseDuration = 350, timeLeft = 10, lastDetectTime = 0, lastDetectedPattern = '', logEntryCount = 0;
         let graphCanvas, graphCtx;
-        let frequencyData;
         
-        // DOM
         const $ = id => document.getElementById(id);
-        const elTxSlider = $('tx-slider');
-        const elTxInput = $('tx-input');
-        const elTxStep = $('tx-step');
-        const elTxTolerance = $('tx-tolerance');
-        const elRxSlider = $('rx-slider');
-        const elRxInput = $('rx-input');
-        const elRxStep = $('rx-step');
-        const elRxTolerance = $('rx-tolerance');
-        const elRxThresh = $('rx-thresh');
-        const elRxWindow = $('rx-window');
-        const elPollInterval = $('poll-interval');
-        const elPollDisplay = $('poll-display');
-        const elTxRangeDisp = $('tx-range-display');
-        const elRxRangeDisp = $('rx-range-display');
-        const elTxBinary = $('tx-binary');
-        const elRxBinary = $('rx-binary');
-        const elTxAscii = $('tx-ascii');
-        const elRxAscii = $('rx-ascii');
-        const elTxFreqInfo = $('tx-freq-info');
-        const elRxFreqInfo = $('rx-freq-info');
-        const elInfo = $('detection-info');
-        const elMatchStatus = $('match-status');
-        const elDetectedPattern = $('detected-pattern');
-        const elTimer = $('timer');
-        const elLog = $('log');
-        const elLogCount = $('log-count');
-        const elBitLog = $('bit-log');
-        const elBitLogStatus = $('bit-log-status');
-        const elProgress = $('progress');
-        const elBtnInit = $('btn-init');
-        const elBtnTest = $('btn-test');
-        const elBtnAir = $('btn-air');
-        const elBtnPulse = $('btn-pulse');
-        const elPulseDuration = $('pulse-duration');
-        const elZoomLabel = $('zoom-label');
+        const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+        const togglesToString = t => t.map(x => x ? '1' : '0').join('');
+        const getAllFreqs = (base, step) => Array.from({length: NUM_BITS}, (_, i) => base + i * step);
+        const getActiveFreqs = (base, step, toggles) => getAllFreqs(base, step).filter((_, i) => toggles[i]);
         
-        // ASCII conversion helpers
-        function binaryToAscii(binaryString) {
-            return parseInt(binaryString, 2);
-        }
+        const binaryToAscii = b => parseInt(b, 2);
+        const ctrlChars = {0:'NUL',1:'SOH',2:'STX',3:'ETX',4:'EOT',5:'ENQ',6:'ACK',7:'BEL',8:'BS',9:'TAB',10:'LF',11:'VT',12:'FF',13:'CR',14:'SO',15:'SI',16:'DLE',17:'DC1',18:'DC2',19:'DC3',20:'DC4',21:'NAK',22:'SYN',23:'ETB',24:'CAN',25:'EM',26:'SUB',27:'ESC',28:'FS',29:'GS',30:'RS',31:'US',32:'SPC',127:'DEL'};
+        const getAsciiDisplay = c => ctrlChars[c] !== undefined ? `(${ctrlChars[c]})` : (c >= 33 && c <= 126) ? `'${String.fromCharCode(c)}'` : `(x${c.toString(16).toUpperCase()})`;
+        const charSymbols = {0:'∅',8:'⌫',9:'⇥',10:'↵',13:'↩',32:'␣',127:'⌦'};
+        const getAsciiChar = c => charSymbols[c] || (c >= 33 && c <= 126 ? String.fromCharCode(c) : '?');
         
-        function getAsciiDisplay(charCode) {
-            const controlChars = {
-                0: 'NUL', 1: 'SOH', 2: 'STX', 3: 'ETX', 4: 'EOT', 5: 'ENQ', 6: 'ACK', 7: 'BEL',
-                8: 'BS', 9: 'TAB', 10: 'LF', 11: 'VT', 12: 'FF', 13: 'CR', 14: 'SO', 15: 'SI',
-                16: 'DLE', 17: 'DC1', 18: 'DC2', 19: 'DC3', 20: 'DC4', 21: 'NAK', 22: 'SYN', 23: 'ETB',
-                24: 'CAN', 25: 'EM', 26: 'SUB', 27: 'ESC', 28: 'FS', 29: 'GS', 30: 'RS', 31: 'US',
-                32: 'SPC', 127: 'DEL'
-            };
-            
-            if (controlChars[charCode] !== undefined) {
-                return `(${controlChars[charCode]})`;
-            } else if (charCode >= 33 && charCode <= 126) {
-                return `'${String.fromCharCode(charCode)}'`;
-            } else if (charCode > 127 && charCode <= 255) {
-                return `(x${charCode.toString(16).toUpperCase()})`;
-            } else {
-                return `(${charCode})`;
-            }
-        }
-        
-        function getAsciiChar(charCode) {
-            const controlChars = {
-                0: '∅', 1: '①', 2: '②', 3: '③', 4: '④', 5: '⑤', 6: '⑥', 7: '⑦',
-                8: '⌫', 9: '⇥', 10: '↵', 11: '⇕', 12: '⇟', 13: '↩', 14: '⎋', 15: '⏎',
-                32: '␣', 127: '⌦'
-            };
-            
-            if (controlChars[charCode] !== undefined) {
-                return controlChars[charCode];
-            } else if (charCode >= 33 && charCode <= 126) {
-                return String.fromCharCode(charCode);
-            } else if (charCode > 127) {
-                return '◆';
-            } else {
-                return '?';
-            }
-        }
-        
-        // Helpers
         function log(msg, type = '') {
             if (!isOnAir && type !== 'info' && isInit) return;
-            
             const now = new Date();
-            const ts = now.toLocaleTimeString('en-US', {
-                hour12: false,
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            }) + '.' + now.getMilliseconds().toString().padStart(3, '0');
-            
+            const ts = now.toLocaleTimeString('en-US', {hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'}) + '.' + now.getMilliseconds().toString().padStart(3,'0');
             const el = document.createElement('div');
             el.className = `log-entry ${type}`;
             el.innerHTML = `<span class="ts">[${ts}]</span>${msg}`;
-            elLog.appendChild(el);
-            elLog.scrollTop = elLog.scrollHeight;
-            
-            logEntryCount++;
-            updateLogCount();
-        }
-        
-        function updateLogCount() {
-            elLogCount.textContent = `${logEntryCount} entries`;
+            $('log').appendChild(el);
+            $('log').scrollTop = $('log').scrollHeight;
+            $('log-count').textContent = `${++logEntryCount} entries`;
         }
         
         function updateTimer() {
-            const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-            const s = (timeLeft % 60).toString().padStart(2, '0');
-            elTimer.textContent = `${m}:${s}`;
+            $('timer').textContent = `${Math.floor(timeLeft/60).toString().padStart(2,'0')}:${(timeLeft%60).toString().padStart(2,'0')}`;
         }
         
-        function clamp(v, min, max) {
-            return Math.max(min, Math.min(max, v));
-        }
-        
-        function togglesToString(toggles) {
-            return toggles.map(t => t ? '1' : '0').join('');
-        }
-        
-        function getActiveFreqs(baseFreq, step, toggles) {
-            const freqs = [];
-            for (let i = 0; i < NUM_BITS; i++) {
-                if (toggles[i]) {
-                    freqs.push(baseFreq + (i * step));
-                }
-            }
-            return freqs;
-        }
-        
-        function getAllFreqs(baseFreq, step) {
-            const freqs = [];
-            for (let i = 0; i < NUM_BITS; i++) {
-                freqs.push(baseFreq + (i * step));
-            }
-            return freqs;
-        }
-        
-        // Bit Detection Log functions
-        function addBitLogEntry(bits, timestamp) {
-            const entry = {
-                bits: [...bits],
-                timestamp: timestamp,
-                expected: [...rxToggles]
-            };
-            
-            bitDetectionLog.push(entry);
-            
-            // Trim to max entries
-            if (bitDetectionLog.length > MAX_BIT_LOG_ENTRIES) {
-                bitDetectionLog.shift();
-            }
-            
-            renderBitLogEntry(entry);
-            checkBitLogMatch(entry);
-        }
-        
-        function renderBitLogEntry(entry) {
-            const now = new Date(entry.timestamp);
-            const ts = now.toLocaleTimeString('en-US', {
-                hour12: false,
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            }) + '.' + now.getMilliseconds().toString().padStart(3, '0');
-            
-            // Check if all expected bits match
-            let allExpectedMatch = true;
-            let anyHit = false;
-            let matchCount = 0;
-            
-            for (let i = 0; i < NUM_BITS; i++) {
-                if (entry.bits[i]) anyHit = true;
-                if (entry.expected[i]) {
-                    if (entry.bits[i]) {
-                        matchCount++;
-                    } else {
-                        allExpectedMatch = false;
-                    }
-                } else {
-                    // Expected 0, got 1 is also a mismatch for full match
-                    if (entry.bits[i]) {
-                        allExpectedMatch = false;
-                    }
-                }
-            }
-            
-            const expectedCount = entry.expected.filter(e => e).length;
-            const isFullMatch = allExpectedMatch && expectedCount > 0 && 
-                               togglesToString(entry.bits) === togglesToString(entry.expected);
-            
-            const el = document.createElement('div');
-            el.className = `bit-log-entry${isFullMatch ? ' all-match' : ''}`;
-            
-            let bitsHtml = '<div class="bit-log-bits">';
-            for (let i = 0; i < NUM_BITS; i++) {
-                const isHit = entry.bits[i];
-                const isExpected = entry.expected[i];
-                let classes = 'bit-indicator';
-                
-                if (isHit) classes += ' hit';
-                if (isExpected) classes += ' expected';
-                if (!isHit && isExpected) classes += ' miss';
-                
-                bitsHtml += `<div class="${classes}">${i + 1}</div>`;
-            }
-            bitsHtml += '</div>';
-            
-            let resultHtml = '';
-            if (isFullMatch) {
-                resultHtml = '<span class="bit-log-result match">✓ MATCH</span>';
-            } else if (anyHit) {
-                resultHtml = `<span class="bit-log-result partial">${matchCount}/${expectedCount}</span>`;
-            } else {
-                resultHtml = '<span class="bit-log-result none">—</span>';
-            }
-            
-            el.innerHTML = `<span class="bit-log-ts">${ts}</span>${bitsHtml}${resultHtml}`;
-            elBitLog.appendChild(el);
-            elBitLog.scrollTop = elBitLog.scrollHeight;
-        }
-        
-        function checkBitLogMatch(entry) {
-            const isFullMatch = togglesToString(entry.bits) === togglesToString(entry.expected) &&
-                               entry.expected.some(e => e);
-            
-            if (isFullMatch) {
-                elBitLogStatus.textContent = 'MATCH!';
-                elBitLogStatus.classList.add('active');
-                setTimeout(() => {
-                    elBitLogStatus.classList.remove('active');
-                    elBitLogStatus.textContent = 'LISTENING';
-                }, 500);
-            }
-        }
-        
-        function clearBitLog() {
-            bitDetectionLog = [];
-            elBitLog.innerHTML = '';
-            elBitLogStatus.textContent = 'IDLE';
-            elBitLogStatus.classList.remove('active');
-        }
-        
-        // Graph zoom
         function zoomGraph(dir) {
             zoomIndex = clamp(zoomIndex + dir, 0, ZOOM_LEVELS.length - 1);
-            graphMaxFreq = ZOOM_LEVELS[zoomIndex];
-            updateZoomLabel();
+            hzMax = ZOOM_LEVELS[zoomIndex];
+            hzMin = 0;
+            updateZoomInputs();
         }
         
-        function updateZoomLabel() {
-            elZoomLabel.textContent = graphMaxFreq >= 1000 ? `${graphMaxFreq / 1000}k` : graphMaxFreq;
+        function updateZoomInputs() {
+            $('hz-min').value = hzMin;
+            $('hz-max').value = hzMax;
+            $('pwr-min').value = pwrMin;
+            $('pwr-max').value = pwrMax;
         }
         
-        // Flash effects
-        function triggerFlash() {
-            flashQueue.push({ startTime: performance.now() });
+        function readZoomInputs() {
+            hzMin = clamp(parseInt($('hz-min').value) || 0, 0, 30000);
+            hzMax = clamp(parseInt($('hz-max').value) || 4000, hzMin + 100, 30000);
+            pwrMin = clamp(parseInt($('pwr-min').value) || 0, 0, 255);
+            pwrMax = clamp(parseInt($('pwr-max').value) || 255, pwrMin + 10, 255);
+            updateZoomInputs();
         }
         
-        function triggerCharFlash(char) {
-            charFlashQueue.push({ startTime: performance.now(), char: char });
-        }
+        $('hz-min').onchange = $('hz-max').onchange = $('pwr-min').onchange = $('pwr-max').onchange = readZoomInputs;
+        
+        function triggerFlash() { flashQueue.push({ startTime: performance.now() }); }
+        function triggerCharFlash(char) { charFlashQueue.push({ startTime: performance.now(), char }); }
         
         function calculateFlashIntensity() {
             const now = performance.now();
-            let totalIntensity = 0;
-            
-            flashQueue = flashQueue.filter(flash => {
-                const elapsed = now - flash.startTime;
-                const totalTime = FLASH_DURATION + FLASH_FADE;
-                
-                if (elapsed > totalTime) return false;
-                
-                let intensity;
-                if (elapsed < FLASH_DURATION) {
-                    intensity = 0.5;
-                } else {
-                    const fadeElapsed = elapsed - FLASH_DURATION;
-                    intensity = 0.5 * (1 - (fadeElapsed / FLASH_FADE));
-                }
-                
-                totalIntensity += intensity;
+            let intensity = 0;
+            flashQueue = flashQueue.filter(f => {
+                const elapsed = now - f.startTime;
+                if (elapsed > 700) return false;
+                intensity += elapsed < 200 ? 0.5 : 0.5 * (1 - (elapsed - 200) / 500);
                 return true;
             });
-            
-            return Math.min(totalIntensity, 1);
+            return Math.min(intensity, 1);
         }
         
         function getCharFlashState() {
             const now = performance.now();
             let result = { char: null, opacity: 0 };
-            
-            charFlashQueue = charFlashQueue.filter(flash => {
-                const elapsed = now - flash.startTime;
-                const totalTime = CHAR_FLASH_DURATION + CHAR_FLASH_FADE;
-                
-                if (elapsed > totalTime) return false;
-                
-                let opacity;
-                if (elapsed < CHAR_FLASH_DURATION) {
-                    opacity = Math.min(1, elapsed / 100);
-                } else {
-                    const fadeElapsed = elapsed - CHAR_FLASH_DURATION;
-                    opacity = 1 - (fadeElapsed / CHAR_FLASH_FADE);
-                }
-                
-                if (opacity > result.opacity) {
-                    result = { char: flash.char, opacity: opacity };
-                }
-                
+            charFlashQueue = charFlashQueue.filter(f => {
+                const elapsed = now - f.startTime;
+                if (elapsed > 1000) return false;
+                const opacity = elapsed < 300 ? Math.min(1, elapsed / 100) : 1 - (elapsed - 300) / 700;
+                if (opacity > result.opacity) result = { char: f.char, opacity };
                 return true;
             });
-            
             return result;
         }
         
-        // Create toggle buttons
-        function createToggles(containerId, toggleArray, updateCallback, isTx) {
+        function createToggles(containerId, toggleArray, updateCallback) {
             const container = $(containerId);
             container.innerHTML = '';
-            
             for (let i = 0; i < NUM_BITS; i++) {
                 const btn = document.createElement('div');
                 btn.className = 'bit-toggle' + (toggleArray[i] ? ' on' : '');
                 btn.innerHTML = `<span class="bit-num">${i + 1}</span><span class="bit-val">${toggleArray[i]}</span>`;
-                btn.dataset.index = i;
-                
                 btn.onclick = () => {
                     toggleArray[i] = toggleArray[i] ? 0 : 1;
                     btn.classList.toggle('on', toggleArray[i]);
                     btn.querySelector('.bit-val').textContent = toggleArray[i];
                     updateCallback();
                 };
-                
                 container.appendChild(btn);
             }
         }
         
-        // Frequency updates
         function updateTxDisplay() {
-            const binaryStr = togglesToString(txToggles);
-            elTxBinary.textContent = binaryStr;
-            
-            const charCode = binaryToAscii(binaryStr);
-            elTxAscii.textContent = getAsciiDisplay(charCode);
-            
-            const activeFreqs = getActiveFreqs(txBaseFreq, txStep, txToggles);
-            const maxFreq = txBaseFreq + ((NUM_BITS - 1) * txStep);
-            elTxRangeDisp.textContent = `${txBaseFreq}–${maxFreq} Hz`;
-            
-            if (activeFreqs.length > 0) {
-                const freqRanges = activeFreqs.map(f => `${f}±${txTolerance}`);
-                elTxFreqInfo.textContent = `Active: ${freqRanges.join(', ')} Hz`;
-            } else {
-                elTxFreqInfo.textContent = 'No frequencies selected';
-            }
+            const b = togglesToString(txToggles);
+            $('tx-binary').textContent = b;
+            $('tx-ascii').textContent = getAsciiDisplay(binaryToAscii(b));
+            $('tx-range-display').textContent = `${txBaseFreq}–${txBaseFreq + 7*txStep} Hz`;
+            const active = getActiveFreqs(txBaseFreq, txStep, txToggles);
+            $('tx-freq-info').textContent = active.length ? `Active: ${active.map(f => `${f}±${txTolerance}`).join(', ')} Hz` : 'No frequencies selected';
         }
         
         function updateRxDisplay() {
-            const binaryStr = togglesToString(rxToggles);
-            elRxBinary.textContent = binaryStr;
-            
-            const charCode = binaryToAscii(binaryStr);
-            elRxAscii.textContent = getAsciiDisplay(charCode);
-            
-            const activeFreqs = getActiveFreqs(rxBaseFreq, rxStep, rxToggles);
-            const maxFreq = rxBaseFreq + ((NUM_BITS - 1) * rxStep);
-            elRxRangeDisp.textContent = `${rxBaseFreq}–${maxFreq} Hz`;
-            
-            if (activeFreqs.length > 0) {
-                const freqRanges = activeFreqs.map(f => `${f}±${rxTolerance}`);
-                elRxFreqInfo.textContent = `Expecting: ${freqRanges.join(', ')} Hz`;
-            } else {
-                elRxFreqInfo.textContent = 'No pattern set';
-            }
+            const b = togglesToString(rxToggles);
+            $('rx-binary').textContent = b;
+            $('rx-ascii').textContent = getAsciiDisplay(binaryToAscii(b));
+            $('rx-range-display').textContent = `${rxBaseFreq}–${rxBaseFreq + 7*rxStep} Hz`;
+            const active = getActiveFreqs(rxBaseFreq, rxStep, rxToggles);
+            $('rx-freq-info').textContent = active.length ? `Expecting: ${active.map(f => `${f}±${rxTolerance}`).join(', ')} Hz` : 'No pattern set';
         }
         
-        function updateTxBaseFreq(freq) {
-            txBaseFreq = clamp(Math.round(freq), FREQ_MIN, FREQ_MAX);
-            elTxInput.value = txBaseFreq;
-            if (txBaseFreq >= SLIDER_MIN && txBaseFreq <= SLIDER_MAX) {
-                elTxSlider.value = txBaseFreq;
-            }
-            updateTxDisplay();
-        }
+        const updateTxBaseFreq = f => { txBaseFreq = clamp(Math.round(f), 1, 30000); $('tx-input').value = txBaseFreq; $('tx-slider').value = clamp(txBaseFreq, 20, 30000); updateTxDisplay(); };
+        const updateRxBaseFreq = f => { rxBaseFreq = clamp(Math.round(f), 1, 30000); $('rx-input').value = rxBaseFreq; $('rx-slider').value = clamp(rxBaseFreq, 20, 30000); updateRxDisplay(); };
         
-        function updateTxStep(v) {
-            txStep = clamp(parseInt(v) || 10, 1, 500);
-            elTxStep.value = txStep;
-            updateTxDisplay();
-        }
+        $('tx-slider').oninput = () => updateTxBaseFreq(+$('tx-slider').value);
+        $('tx-input').onchange = () => updateTxBaseFreq(+$('tx-input').value || 1);
+        $('tx-step').onchange = () => { txStep = clamp(+$('tx-step').value || 10, 1, 500); updateTxDisplay(); };
+        $('tx-tolerance').onchange = () => { txTolerance = clamp(+$('tx-tolerance').value || 4, 1, 100); updateTxDisplay(); };
+        $('rx-slider').oninput = () => updateRxBaseFreq(+$('rx-slider').value);
+        $('rx-input').onchange = () => updateRxBaseFreq(+$('rx-input').value || 1);
+        $('rx-step').onchange = () => { rxStep = clamp(+$('rx-step').value || 10, 1, 500); updateRxDisplay(); };
+        $('rx-tolerance').onchange = () => { rxTolerance = clamp(+$('rx-tolerance').value || 4, 1, 100); updateRxDisplay(); };
+        $('rx-thresh').onchange = () => { rxThreshold = clamp(+$('rx-thresh').value || 40, 5, 200); };
+        $('rx-window').onchange = () => { rxWindow = +$('rx-window').value || 300; };
+        $('poll-interval').onchange = () => { 
+            pollInterval = clamp(+$('poll-interval').value || 50, 10, 500); 
+            $('poll-display').textContent = `~${Math.round(1000/pollInterval)}/sec`;
+            if (isInit && detectInterval) { clearInterval(detectInterval); startDetection(); }
+        };
+        $('pulse-duration').onchange = () => { pulseDuration = clamp(+$('pulse-duration').value || 350, 5, 5000); };
         
-        function updateTxTolerance(v) {
-            txTolerance = clamp(parseInt(v) || 4, 1, 100);
-            elTxTolerance.value = txTolerance;
-            updateTxDisplay();
-        }
-        
-        function updateRxBaseFreq(freq) {
-            rxBaseFreq = clamp(Math.round(freq), FREQ_MIN, FREQ_MAX);
-            elRxInput.value = rxBaseFreq;
-            if (rxBaseFreq >= SLIDER_MIN && rxBaseFreq <= SLIDER_MAX) {
-                elRxSlider.value = rxBaseFreq;
-            }
-            updateRxDisplay();
-        }
-        
-        function updateRxStep(v) {
-            rxStep = clamp(parseInt(v) || 10, 1, 500);
-            elRxStep.value = rxStep;
-            updateRxDisplay();
-        }
-        
-        function updateRxTolerance(v) {
-            rxTolerance = clamp(parseInt(v) || 4, 1, 100);
-            elRxTolerance.value = rxTolerance;
-            updateRxDisplay();
-        }
-        
-        function updateRxThreshold(v) {
-            rxThreshold = clamp(parseInt(v) || 40, 5, 200);
-            elRxThresh.value = rxThreshold;
-        }
-        
-        function updateRxWindow(v) {
-            rxWindow = parseInt(v) || 300;
-        }
-        
-        function updatePollInterval(v) {
-            pollInterval = clamp(parseInt(v) || 50, 10, 500);
-            elPollInterval.value = pollInterval;
-            elPollDisplay.textContent = `~${Math.round(1000 / pollInterval)}/sec`;
-            
-            if (isInit && detectInterval) {
-                clearInterval(detectInterval);
-                startDetection();
-            }
-        }
-        
-        function updatePulseDuration(v) {
-            pulseDuration = clamp(parseInt(v) || 350, 5, 5000);
-            elPulseDuration.value = pulseDuration;
-        }
-        
-        // Event listeners
-        elTxSlider.oninput = () => updateTxBaseFreq(parseInt(elTxSlider.value));
-        elTxInput.onchange = () => updateTxBaseFreq(parseInt(elTxInput.value) || FREQ_MIN);
-        elTxStep.onchange = () => updateTxStep(elTxStep.value);
-        elTxTolerance.onchange = () => updateTxTolerance(elTxTolerance.value);
-        elRxSlider.oninput = () => updateRxBaseFreq(parseInt(elRxSlider.value));
-        elRxInput.onchange = () => updateRxBaseFreq(parseInt(elRxInput.value) || FREQ_MIN);
-        elRxStep.onchange = () => updateRxStep(elRxStep.value);
-        elRxTolerance.onchange = () => updateRxTolerance(elRxTolerance.value);
-        elRxThresh.onchange = () => updateRxThreshold(elRxThresh.value);
-        elRxWindow.onchange = () => updateRxWindow(elRxWindow.value);
-        elPollInterval.onchange = () => updatePollInterval(elPollInterval.value);
-        elPulseDuration.onchange = () => updatePulseDuration(elPulseDuration.value);
-        
-        // ON AIR Toggle
         function toggleAir() {
             if (!isInit) return;
-            
             isOnAir = !isOnAir;
-            elBtnAir.classList.toggle('on', isOnAir);
-            elBtnAir.textContent = isOnAir ? 'ON AIR' : 'OFF AIR';
-            
+            $('btn-air').classList.toggle('on', isOnAir);
+            $('btn-air').textContent = isOnAir ? 'ON AIR' : 'OFF AIR';
             if (isOnAir) {
-                elBitLogStatus.textContent = 'LISTENING';
                 log('════════════════', 'info');
                 log('ON AIR', 'rx');
                 log(`TX: ${togglesToString(txToggles)} @ ${txBaseFreq}Hz +${txStep}Hz (±${txTolerance}Hz)`, 'info');
                 log(`RX: ${togglesToString(rxToggles)} @ ${rxBaseFreq}Hz +${rxStep}Hz (±${rxTolerance}Hz)`, 'info');
             } else {
-                elBitLogStatus.textContent = 'IDLE';
                 log('OFF AIR', 'info');
-                log('════════════════', 'info');
-                elInfo.textContent = '—';
-                elMatchStatus.classList.remove('match');
-                elMatchStatus.classList.add('no-match');
-                elDetectedPattern.textContent = '--------';
+                $('detection-info').textContent = '—';
+                $('match-status').className = 'match-status no-match';
+                $('detected-pattern').textContent = '--------';
             }
         }
         
-        // Manual Pulse
         function manualPulse() {
             if (!isInit || isSending) return;
-            
-            if (!isOnAir) {
-                toggleAir();
-            }
-            
+            if (!isOnAir) toggleAir();
             sendSignal();
         }
         
-        // Graph setup
         function setupGraph() {
             graphCanvas = $('graph');
             graphCtx = graphCanvas.getContext('2d');
-            
             const rect = graphCanvas.getBoundingClientRect();
-            graphCanvas.width = rect.width * window.devicePixelRatio;
-            graphCanvas.height = rect.height * window.devicePixelRatio;
-            graphCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            graphCanvas.width = rect.width * devicePixelRatio;
+            graphCanvas.height = rect.height * devicePixelRatio;
+            graphCtx.scale(devicePixelRatio, devicePixelRatio);
         }
         
         function drawGraph() {
-            if (!graphCtx) return;
+            if (!graphCtx) { requestAnimationFrame(drawGraph); return; }
             
-            const width = graphCanvas.width / window.devicePixelRatio;
-            const height = graphCanvas.height / window.devicePixelRatio;
-            
+            const w = graphCanvas.width / devicePixelRatio;
+            const h = graphCanvas.height / devicePixelRatio;
             const flashIntensity = calculateFlashIntensity();
             const charFlash = getCharFlashState();
+            const hzRange = hzMax - hzMin;
+            const pwrRange = pwrMax - pwrMin;
             
-            // Background with flash
-            if (flashIntensity > 0) {
-                const g = Math.round(80 * flashIntensity);
-                const b = Math.round(80 * flashIntensity);
-                graphCtx.fillStyle = `rgb(5, ${g + 5}, ${b + 5})`;
-            } else {
-                graphCtx.fillStyle = '#050505';
-            }
-            graphCtx.fillRect(0, 0, width, height);
+            graphCtx.fillStyle = flashIntensity > 0 ? `rgb(${5}, ${5 + 80*flashIntensity}, ${5 + 80*flashIntensity})` : '#050505';
+            graphCtx.fillRect(0, 0, w, h);
             
+            const hzToX = hz => ((hz - hzMin) / hzRange) * w;
+            const pwrToY = pwr => h - ((pwr - pwrMin) / pwrRange) * h;
+            
+            // TX bands (green)
             const txFreqs = getAllFreqs(txBaseFreq, txStep);
-            const rxFreqs = getAllFreqs(rxBaseFreq, rxStep);
-            
-            // Draw TX frequency bands (GREEN) - draw first so RX overlays
             for (let i = 0; i < NUM_BITS; i++) {
-                if (!txToggles[i]) continue;
-                
                 const freq = txFreqs[i];
-                if (freq - txTolerance > graphMaxFreq) continue;
-                
-                const bandLeft = Math.max(0, ((freq - txTolerance) / graphMaxFreq) * width);
-                const bandRight = Math.min(width, ((freq + txTolerance) / graphMaxFreq) * width);
-                const bandWidth = bandRight - bandLeft;
-                
-                // Green band for TX
-                graphCtx.fillStyle = 'rgba(0, 255, 0, 0.15)';
-                graphCtx.fillRect(bandLeft, 0, bandWidth, height);
-                
-                // Green center line
-                const centerX = (freq / graphMaxFreq) * width;
-                graphCtx.strokeStyle = 'rgba(0, 255, 0, 0.6)';
-                graphCtx.lineWidth = 2;
-                graphCtx.beginPath();
-                graphCtx.moveTo(centerX, 0);
-                graphCtx.lineTo(centerX, height);
-                graphCtx.stroke();
-                graphCtx.lineWidth = 1;
+                if (freq + txTolerance < hzMin || freq - txTolerance > hzMax) continue;
+                const x1 = hzToX(freq - txTolerance), x2 = hzToX(freq + txTolerance);
+                graphCtx.fillStyle = txToggles[i] ? 'rgba(0, 255, 0, 0.15)' : 'rgba(0, 255, 0, 0.05)';
+                graphCtx.fillRect(x1, 0, x2 - x1, h);
+                graphCtx.strokeStyle = txToggles[i] ? 'rgba(0, 255, 0, 0.6)' : 'rgba(0, 255, 0, 0.2)';
+                graphCtx.beginPath(); graphCtx.moveTo(hzToX(freq), 0); graphCtx.lineTo(hzToX(freq), h); graphCtx.stroke();
             }
             
-            // Draw RX frequency bands (BLUE/CYAN)
+            // RX bands (blue)
+            const rxFreqs = getAllFreqs(rxBaseFreq, rxStep);
             for (let i = 0; i < NUM_BITS; i++) {
                 const freq = rxFreqs[i];
-                if (freq - rxTolerance > graphMaxFreq) continue;
-                
-                const bandLeft = Math.max(0, ((freq - rxTolerance) / graphMaxFreq) * width);
-                const bandRight = Math.min(width, ((freq + rxTolerance) / graphMaxFreq) * width);
-                const bandWidth = bandRight - bandLeft;
-                
-                if (rxToggles[i]) {
-                    // Cyan band for expected RX
-                    graphCtx.fillStyle = 'rgba(0, 255, 255, 0.2)';
-                } else {
-                    // Dim band for non-expected
-                    graphCtx.fillStyle = 'rgba(100, 100, 100, 0.08)';
-                }
-                graphCtx.fillRect(bandLeft, 0, bandWidth, height);
-                
-                // Blue center line
-                const centerX = (freq / graphMaxFreq) * width;
-                graphCtx.strokeStyle = rxToggles[i] ? 'rgba(0, 255, 255, 0.5)' : 'rgba(100, 100, 100, 0.2)';
-                graphCtx.beginPath();
-                graphCtx.moveTo(centerX, 0);
-                graphCtx.lineTo(centerX, height);
-                graphCtx.stroke();
-                
-                // Bit number at top
-                graphCtx.fillStyle = rxToggles[i] ? 'rgba(0, 255, 255, 0.6)' : 'rgba(100, 100, 100, 0.4)';
+                if (freq + rxTolerance < hzMin || freq - rxTolerance > hzMax) continue;
+                const x1 = hzToX(freq - rxTolerance), x2 = hzToX(freq + rxTolerance);
+                graphCtx.fillStyle = rxToggles[i] ? 'rgba(0, 150, 255, 0.15)' : 'rgba(0, 150, 255, 0.05)';
+                graphCtx.fillRect(x1, 0, x2 - x1, h);
+                graphCtx.strokeStyle = rxToggles[i] ? 'rgba(0, 200, 255, 0.6)' : 'rgba(0, 150, 255, 0.2)';
+                graphCtx.beginPath(); graphCtx.moveTo(hzToX(freq), 0); graphCtx.lineTo(hzToX(freq), h); graphCtx.stroke();
+                graphCtx.fillStyle = rxToggles[i] ? 'rgba(0, 200, 255, 0.7)' : 'rgba(100, 100, 100, 0.4)';
                 graphCtx.font = '8px Courier New';
-                graphCtx.fillText(i + 1, centerX - 3, 10);
+                graphCtx.fillText(i + 1, hzToX(freq) - 3, 10);
             }
             
-            if (!isOnAir || !analyser) {
-                if (charFlash.char && charFlash.opacity > 0) {
-                    drawCharacterFlash(width, height, charFlash);
+            // Spectrum
+            if (isOnAir && analyser) {
+                analyser.getByteFrequencyData(frequencyData);
+                const binW = audioCtx.sampleRate / analyser.fftSize;
+                const startBin = Math.max(0, Math.floor(hzMin / binW));
+                const endBin = Math.min(frequencyData.length, Math.ceil(hzMax / binW));
+                
+                for (let i = startBin; i < endBin; i++) {
+                    const freq = i * binW, pwr = frequencyData[i];
+                    if (pwr < pwrMin) continue;
+                    const x = hzToX(freq);
+                    const barH = ((Math.min(pwr, pwrMax) - pwrMin) / pwrRange) * h;
+                    const v = pwr / 255;
+                    
+                    let inTx = txToggles.some((t, j) => t && Math.abs(freq - txFreqs[j]) <= txTolerance);
+                    let inRx = rxToggles.some((t, j) => t && Math.abs(freq - rxFreqs[j]) <= rxTolerance);
+                    
+                    graphCtx.fillStyle = (inTx && isSending) ? `rgba(0, 255, 0, ${0.4 + v * 0.6})` : 
+                                         inRx ? `rgba(0, 200, 255, ${0.3 + v * 0.7})` : 
+                                         `rgba(100, 100, 100, ${0.2 + v * 0.6})`;
+                    
+                    graphCtx.fillRect(x, h - barH, Math.max(w / (endBin - startBin) - 1, 1), barH);
                 }
-                requestAnimationFrame(drawGraph);
-                return;
             }
             
-            analyser.getByteFrequencyData(frequencyData);
-            
-            const binW = audioCtx.sampleRate / analyser.fftSize;
-            const maxBin = Math.min(Math.ceil(graphMaxFreq / binW), frequencyData.length);
-            const barWidth = width / maxBin;
-            
-            for (let i = 0; i < maxBin; i++) {
-                const v = frequencyData[i] / 255;
-                const barHeight = v * height;
-                const freq = i * binW;
-                
-                // Check if frequency is in TX or RX bands
-                let isTxFreq = false;
-                let isRxFreq = false;
-                
-                for (let j = 0; j < NUM_BITS; j++) {
-                    if (txToggles[j] && Math.abs(freq - txFreqs[j]) <= txTolerance) {
-                        isTxFreq = true;
-                    }
-                    if (Math.abs(freq - rxFreqs[j]) <= rxTolerance) {
-                        isRxFreq = true;
-                    }
-                }
-                
-                if (isTxFreq && isSending) {
-                    graphCtx.fillStyle = `rgba(0, 255, 0, ${0.4 + v * 0.6})`;
-                } else if (isRxFreq) {
-                    graphCtx.fillStyle = `rgba(0, 255, 255, ${0.3 + v * 0.7})`;
-                } else {
-                    graphCtx.fillStyle = `rgba(100, 100, 100, ${0.2 + v * 0.6})`;
-                }
-                
-                graphCtx.fillRect(i * barWidth, height - barHeight, Math.max(barWidth - 1, 1), barHeight);
+            // Threshold
+            if (rxThreshold >= pwrMin && rxThreshold <= pwrMax) {
+                graphCtx.strokeStyle = 'rgba(255, 255, 0, 0.3)';
+                graphCtx.setLineDash([3, 3]);
+                graphCtx.beginPath(); graphCtx.moveTo(0, pwrToY(rxThreshold)); graphCtx.lineTo(w, pwrToY(rxThreshold)); graphCtx.stroke();
+                graphCtx.setLineDash([]);
             }
             
-            // Threshold line
-            const threshY = height - (rxThreshold / 255) * height;
-            graphCtx.strokeStyle = 'rgba(255, 255, 0, 0.3)';
-            graphCtx.setLineDash([3, 3]);
-            graphCtx.beginPath();
-            graphCtx.moveTo(0, threshY);
-            graphCtx.lineTo(width, threshY);
-            graphCtx.stroke();
-            graphCtx.setLineDash([]);
-            
-            // Frequency markers
+            // Freq markers
             graphCtx.fillStyle = '#444';
             graphCtx.font = '9px Courier New';
-            const markerStep = graphMaxFreq <= 1000 ? 200 : graphMaxFreq <= 4000 ? 1000 : graphMaxFreq <= 8000 ? 2000 : 4000;
-            for (let f = markerStep; f <= graphMaxFreq; f += markerStep) {
-                const x = (f / graphMaxFreq) * width;
-                const label = f >= 1000 ? `${f / 1000}k` : f;
-                graphCtx.fillText(label, x - 10, height - 2);
+            const step = hzRange <= 1000 ? 200 : hzRange <= 4000 ? 500 : hzRange <= 10000 ? 2000 : 5000;
+            for (let f = Math.ceil(hzMin / step) * step; f <= hzMax; f += step) {
+                graphCtx.fillText(f >= 1000 ? `${f/1000}k` : f, hzToX(f) - 10, h - 2);
             }
             
-            // Character flash
+            // Char flash
             if (charFlash.char && charFlash.opacity > 0) {
-                drawCharacterFlash(width, height, charFlash);
+                graphCtx.save();
+                graphCtx.font = 'bold 48px Courier New';
+                graphCtx.textAlign = 'center';
+                graphCtx.textBaseline = 'middle';
+                graphCtx.shadowColor = `rgba(0, 255, 255, ${charFlash.opacity})`;
+                graphCtx.shadowBlur = 20;
+                graphCtx.fillStyle = `rgba(0, 255, 255, ${charFlash.opacity})`;
+                graphCtx.fillText(charFlash.char, w / 2, h / 2);
+                graphCtx.restore();
             }
             
             requestAnimationFrame(drawGraph);
         }
         
-        function drawCharacterFlash(width, height, charFlash) {
-            graphCtx.save();
-            graphCtx.font = 'bold 48px Courier New';
-            graphCtx.textAlign = 'center';
-            graphCtx.textBaseline = 'middle';
-            graphCtx.shadowColor = `rgba(0, 255, 255, ${charFlash.opacity})`;
-            graphCtx.shadowBlur = 20;
-            graphCtx.fillStyle = `rgba(0, 255, 255, ${charFlash.opacity})`;
-            graphCtx.fillText(charFlash.char, width / 2, height / 2);
-            graphCtx.shadowBlur = 0;
-            graphCtx.restore();
-        }
-        
-        // Init
         async function init() {
             if (isInit) return;
-            elBtnInit.disabled = true;
+            $('btn-init').disabled = true;
             log('Initializing...', 'info');
             
             try {
-                const AC = window.AudioContext || window.webkitAudioContext;
-                audioCtx = new AC({ sampleRate: 44100 });
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100 });
                 if (audioCtx.state === 'suspended') await audioCtx.resume();
                 log(`AudioContext: ${audioCtx.sampleRate}Hz`, 'info');
                 
-                micStream = await navigator.mediaDevices.getUserMedia({
-                    audio: {
-                        echoCancellation: false,
-                        noiseSuppression: false,
-                        autoGainControl: false
-                    }
-                });
+                micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
                 log('Mic ready ✓', 'rx');
                 
                 analyser = audioCtx.createAnalyser();
                 analyser.fftSize = FFT_SIZE;
                 analyser.smoothingTimeConstant = 0.3;
                 audioCtx.createMediaStreamSource(micStream).connect(analyser);
-                
                 frequencyData = new Uint8Array(analyser.frequencyBinCount);
                 
                 for (let i = 0; i < NUM_BITS; i++) {
@@ -1550,10 +541,9 @@
                     gain.gain.value = 0;
                     gain.connect(audioCtx.destination);
                     gainNodes.push(gain);
-                    
                     const osc = audioCtx.createOscillator();
                     osc.type = 'sine';
-                    osc.frequency.value = txBaseFreq + (i * txStep);
+                    osc.frequency.value = txBaseFreq + i * txStep;
                     osc.connect(gain);
                     osc.start();
                     oscillators.push(osc);
@@ -1564,156 +554,100 @@
                 requestAnimationFrame(drawGraph);
                 
                 isInit = true;
-                elBtnInit.style.display = 'none';
-                elBtnTest.style.display = 'block';
-                elBtnPulse.disabled = false;
+                $('btn-init').style.display = 'none';
+                $('btn-test').style.display = 'block';
+                $('btn-pulse').disabled = false;
                 
                 log('════════════════', 'info');
                 log('READY — Toggle ON AIR to begin', 'rx');
-                log('════════════════', 'info');
-                
             } catch (e) {
                 log(`ERROR: ${e.message}`, 'err');
-                elBtnInit.disabled = false;
+                $('btn-init').disabled = false;
             }
         }
         
-        // Detection
         function startDetection() {
-            const bufLen = analyser.frequencyBinCount;
-            const data = new Uint8Array(bufLen);
             const binW = audioCtx.sampleRate / analyser.fftSize;
+            const data = new Uint8Array(analyser.frequencyBinCount);
             
             detectInterval = setInterval(() => {
                 if (!analyser || !isOnAir) return;
-                
-                if (isSending) {
-                    elInfo.textContent = `TX: ${togglesToString(txToggles)}`;
-                    return;
-                }
+                if (isSending) { $('detection-info').textContent = `TX: ${togglesToString(txToggles)}`; return; }
                 
                 analyser.getByteFrequencyData(data);
-                
                 const rxFreqs = getAllFreqs(rxBaseFreq, rxStep);
-                const detectedPattern = [];
-                const detectedBits = [];
-                const powers = [];
+                const detected = [], powers = [];
                 
                 for (let i = 0; i < NUM_BITS; i++) {
-                    const targetFreq = rxFreqs[i];
-                    const lowFreq = targetFreq - rxTolerance;
-                    const highFreq = targetFreq + rxTolerance;
-                    const startBin = Math.max(0, Math.floor(lowFreq / binW));
-                    const endBin = Math.min(bufLen - 1, Math.ceil(highFreq / binW));
-                    
-                    let maxPower = 0;
-                    for (let b = startBin; b <= endBin; b++) {
-                        if (data[b] > maxPower) maxPower = data[b];
-                    }
-                    
-                    powers.push(maxPower);
-                    const isHit = maxPower >= rxThreshold;
-                    detectedPattern.push(isHit ? 1 : 0);
-                    detectedBits.push(isHit);
+                    const freq = rxFreqs[i];
+                    const lo = Math.max(0, Math.floor((freq - rxTolerance) / binW));
+                    const hi = Math.min(data.length - 1, Math.ceil((freq + rxTolerance) / binW));
+                    let maxP = 0;
+                    for (let b = lo; b <= hi; b++) if (data[b] > maxP) maxP = data[b];
+                    powers.push(maxP);
+                    detected.push(maxP >= rxThreshold ? 1 : 0);
                 }
                 
-                const detectedString = togglesToString(detectedPattern);
-                const expectedString = togglesToString(rxToggles);
-                const maxPower = Math.max(...powers);
+                const detStr = togglesToString(detected);
+                const expStr = togglesToString(rxToggles);
+                const charCode = binaryToAscii(detStr);
                 
-                const detectedCharCode = binaryToAscii(detectedString);
-                const detectedAsciiDisplay = getAsciiDisplay(detectedCharCode);
+                $('detection-info').textContent = `Powers: [${powers.join(', ')}] | Max: ${Math.max(...powers)}`;
+                $('detected-pattern').textContent = `${detStr} ${getAsciiDisplay(charCode)}`;
                 
-                elInfo.textContent = `Powers: [${powers.join(', ')}] | Max: ${maxPower}`;
-                elDetectedPattern.textContent = `${detectedString} ${detectedAsciiDisplay}`;
-                
-                // Add to bit detection log (every poll step)
-                const timestamp = Date.now();
-                addBitLogEntry(detectedBits, timestamp);
-                
-                // Check for signal (at least one bit high)
-                const hasSignal = detectedPattern.some(b => b === 1);
-                
-                if (hasSignal) {
+                if (detected.some(b => b)) {
                     const now = Date.now();
-                    const isNew = (now - lastDetectTime > rxWindow) || (detectedString !== lastDetectedPattern);
-                    
-                    if (isNew) {
+                    if (now - lastDetectTime > rxWindow || detStr !== lastDetectedPattern) {
                         lastDetectTime = now;
-                        lastDetectedPattern = detectedString;
-                        
-                        const isMatch = detectedString === expectedString;
-                        
-                        elMatchStatus.classList.toggle('match', isMatch);
-                        elMatchStatus.classList.toggle('no-match', !isMatch);
+                        lastDetectedPattern = detStr;
+                        const isMatch = detStr === expStr;
+                        $('match-status').className = `match-status ${isMatch ? 'match' : 'no-match'}`;
                         
                         if (isMatch) {
-                            const asciiChar = getAsciiChar(detectedCharCode);
-                            log(`✓ MATCH: <span class="pattern">${detectedString}</span> <span class="ascii">${detectedAsciiDisplay}</span>`, 'match');
+                            log(`✓ MATCH: <span class="pattern">${detStr}</span> <span class="ascii">${getAsciiDisplay(charCode)}</span>`, 'match');
                             triggerFlash();
-                            triggerCharFlash(asciiChar);
+                            triggerCharFlash(getAsciiChar(charCode));
                         } else {
-                            log(`RX: <span class="pattern">${detectedString}</span> ${detectedAsciiDisplay} (expected ${expectedString})`, 'rx');
+                            log(`RX: <span class="pattern">${detStr}</span> ${getAsciiDisplay(charCode)} (expected ${expStr})`, 'rx');
                         }
                     }
                 }
             }, pollInterval);
         }
         
-        // Transmit
         function sendTone(dur) {
             if (!gainNodes.length) return;
             isSending = true;
-            
             for (let i = 0; i < NUM_BITS; i++) {
-                oscillators[i].frequency.setValueAtTime(txBaseFreq + (i * txStep), audioCtx.currentTime);
-                
-                if (txToggles[i]) {
-                    gainNodes[i].gain.setValueAtTime(0.15, audioCtx.currentTime);
-                } else {
-                    gainNodes[i].gain.setValueAtTime(0, audioCtx.currentTime);
-                }
+                oscillators[i].frequency.setValueAtTime(txBaseFreq + i * txStep, audioCtx.currentTime);
+                gainNodes[i].gain.setValueAtTime(txToggles[i] ? 0.15 : 0, audioCtx.currentTime);
             }
-            
             setTimeout(() => {
-                for (let i = 0; i < NUM_BITS; i++) {
-                    gainNodes[i].gain.setValueAtTime(0, audioCtx.currentTime);
-                }
+                gainNodes.forEach(g => g.gain.setValueAtTime(0, audioCtx.currentTime));
                 setTimeout(() => { isSending = false; }, 80);
             }, dur);
         }
         
         function sendSignal() {
-            const activeCount = txToggles.filter(t => t).length;
-            const binaryStr = togglesToString(txToggles);
-            const charCode = binaryToAscii(binaryStr);
-            const asciiDisplay = getAsciiDisplay(charCode);
-            log(`TX: ${binaryStr} ${asciiDisplay} (${activeCount} tones, ${pulseDuration}ms)`, 'tx');
+            const b = togglesToString(txToggles);
+            log(`TX: ${b} ${getAsciiDisplay(binaryToAscii(b))} (${txToggles.filter(t=>t).length} tones, ${pulseDuration}ms)`, 'tx');
             sendTone(pulseDuration);
         }
         
-        // Test
         function startTest() {
             if (!isInit || isRunning) return;
-            
-            if (!isOnAir) {
-                toggleAir();
-            }
-            
+            if (!isOnAir) toggleAir();
             isRunning = true;
             timeLeft = 10;
-            elBtnTest.disabled = true;
-            elTimer.classList.add('active');
-            
+            $('btn-test').disabled = true;
+            $('timer').classList.add('active');
             log('═══ TEST ═══', 'tx');
             sendSignal();
             updateTimer();
-            
             testInterval = setInterval(() => {
                 timeLeft--;
                 updateTimer();
-                elProgress.style.width = `${((10 - timeLeft) / 10) * 100}%`;
-                
+                $('progress').style.width = `${((10 - timeLeft) / 10) * 100}%`;
                 if (timeLeft % 2 === 0 && timeLeft > 0) sendSignal();
                 if (timeLeft <= 0) endTest();
             }, 1000);
@@ -1721,60 +655,51 @@
         
         function endTest() {
             isRunning = false;
-            if (testInterval) clearInterval(testInterval);
-            elTimer.classList.remove('active');
-            elBtnTest.disabled = false;
-            elProgress.style.width = '100%';
+            clearInterval(testInterval);
+            $('timer').classList.remove('active');
+            $('btn-test').disabled = false;
+            $('progress').style.width = '100%';
             log('═══ DONE ═══', 'rx');
         }
         
         function resetAll() {
-            if (testInterval) clearInterval(testInterval);
+            clearInterval(testInterval);
             isRunning = false;
             timeLeft = 10;
             updateTimer();
-            elProgress.style.width = '0%';
-            elTimer.classList.remove('active');
-            elBtnTest.disabled = false;
-            elInfo.textContent = '—';
-            elLog.innerHTML = '';
+            $('progress').style.width = '0%';
+            $('timer').classList.remove('active');
+            $('btn-test').disabled = false;
+            $('detection-info').textContent = '—';
+            $('log').innerHTML = '';
             flashQueue = [];
             charFlashQueue = [];
             logEntryCount = 0;
             lastDetectedPattern = '';
-            elDetectedPattern.textContent = '--------';
-            elMatchStatus.classList.remove('match');
-            elMatchStatus.classList.add('no-match');
-            updateLogCount();
-            clearBitLog();
+            $('detected-pattern').textContent = '--------';
+            $('match-status').className = 'match-status no-match';
+            $('log-count').textContent = '0 entries';
             log('Reset', 'info');
-            if (isInit) {
-                log(`TX: ${togglesToString(txToggles)} @ ${txBaseFreq}Hz (±${txTolerance}Hz)`, 'info');
-                log(`RX: ${togglesToString(rxToggles)} @ ${rxBaseFreq}Hz (±${rxTolerance}Hz)`, 'info');
-            }
+            if (isInit) log(`TX: ${togglesToString(txToggles)} @ ${txBaseFreq}Hz | RX: ${togglesToString(rxToggles)} @ ${rxBaseFreq}Hz`, 'info');
         }
         
-        // Init display
         document.addEventListener('DOMContentLoaded', () => {
-            createToggles('tx-toggles', txToggles, updateTxDisplay, true);
-            createToggles('rx-toggles', rxToggles, updateRxDisplay, false);
+            createToggles('tx-toggles', txToggles, updateTxDisplay);
+            createToggles('rx-toggles', rxToggles, updateRxDisplay);
             updateTxBaseFreq(txBaseFreq);
             updateRxBaseFreq(rxBaseFreq);
-            updateZoomLabel();
-            updatePollInterval(pollInterval);
+            updateZoomInputs();
+            $('poll-display').textContent = `~${Math.round(1000/pollInterval)}/sec`;
             setupGraph();
             requestAnimationFrame(drawGraph);
             log('Audio Signal Test v10', 'info');
             log('───────────────────', 'info');
-            log('Binary Signal Mode', 'info');
-            log('Bit Detection Log tracks', 'info');
-            log('each poll step individually', 'info');
+            log('Green = TX bands', 'info');
+            log('Blue = RX bands', 'info');
             log('INIT → ON AIR → PULSE', 'info');
         });
         
-        window.addEventListener('resize', () => {
-            if (graphCanvas) setupGraph();
-        });
+        window.addEventListener('resize', () => { if (graphCanvas) setupGraph(); });
     </script>
 </body>
 </html>
