@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio Signal Test v16</title>
+    <title>Audio Signal Test v17</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Courier New', monospace; background: #000; color: #fff; min-height: 100vh; padding: 0.75rem; font-size: 12px; }
@@ -21,7 +21,7 @@
         .section.peak .section-title { color: #f0f; }
         .row { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.25rem; font-size: 0.65rem; flex-wrap: wrap; }
         .row:last-child { margin-bottom: 0; }
-        .row label { color: #888; min-width: 42px; flex-shrink: 0; }
+        .row label { color: #888; min-width: 50px; flex-shrink: 0; }
         input[type="range"] { flex: 1; height: 4px; -webkit-appearance: none; background: #333; outline: none; min-width: 60px; }
         input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: #fff; cursor: pointer; border-radius: 50%; }
         .section.tx input[type="range"]::-webkit-slider-thumb { background: #0f0; }
@@ -160,7 +160,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Audio Signal Test v16</h1>
+        <h1>Audio Signal Test v17</h1>
         
         <div class="section tx">
             <div class="section-title">▲ Transmit</div>
@@ -169,15 +169,17 @@
                 <input type="range" id="tx-slider" min="20" max="30000" step="10" value="18000">
                 <input type="number" id="tx-input" value="18000" min="1" max="30000" step="1">
                 <span class="hz">Hz</span>
-                <label style="min-width:30px;">Step</label>
-                <input type="number" id="tx-step" value="50" min="1" max="500" step="1" style="width:40px;">
+            </div>
+            <div class="row">
+                <label>Step</label>
+                <input type="number" id="tx-step" value="50" min="1" max="500" step="1" style="width:50px;">
                 <span class="hz">Hz</span>
+                <span class="range-display" id="tx-range-display"></span>
             </div>
             <div class="row">
                 <label>Tol ±</label>
-                <input type="number" id="tx-tolerance" value="4" min="1" max="100" step="1" style="width:35px;">
-                <span class="hz">Hz</span>
-                <span class="range-display" id="tx-range-display"></span>
+                <input type="number" id="tx-tolerance" value="4" min="1" max="100" step="1" style="width:40px;">
+                <span class="hz">Hz per bit</span>
             </div>
             <div class="binary-row">
                 <span class="binary-label">Binary</span>
@@ -194,25 +196,32 @@
                 <input type="range" id="rx-slider" min="20" max="30000" step="10" value="18000">
                 <input type="number" id="rx-input" value="18000" min="1" max="30000" step="1">
                 <span class="hz">Hz</span>
-                <label style="min-width:30px;">Step</label>
-                <input type="number" id="rx-step" value="50" min="1" max="500" step="1" style="width:40px;">
+            </div>
+            <div class="row">
+                <label>Step</label>
+                <input type="number" id="rx-step" value="50" min="1" max="500" step="1" style="width:50px;">
                 <span class="hz">Hz</span>
+                <span class="range-display" id="rx-range-display"></span>
             </div>
             <div class="row">
                 <label>Tol ±</label>
-                <input type="number" id="rx-tolerance" value="4" min="1" max="100" step="1" style="width:35px;">
-                <span class="hz">Hz</span>
-                <label style="min-width:35px;">Thresh</label>
-                <input type="number" id="rx-thresh" value="40" min="5" max="200" step="5" style="width:35px;">
-                <label style="min-width:30px;">Win</label>
-                <input type="number" id="rx-window" value="300" min="10" max="2000" step="10" style="width:40px;">
-                <span class="hz">ms</span>
+                <input type="number" id="rx-tolerance" value="4" min="1" max="100" step="1" style="width:40px;">
+                <span class="hz">Hz per bit</span>
+            </div>
+            <div class="row">
+                <label>Threshold</label>
+                <input type="number" id="rx-thresh" value="40" min="5" max="200" step="5" style="width:45px;">
+                <span class="hz">power</span>
+            </div>
+            <div class="row">
+                <label>Window</label>
+                <input type="number" id="rx-window" value="300" min="10" max="2000" step="10" style="width:50px;">
+                <span class="hz">ms debounce</span>
             </div>
             <div class="row">
                 <label>Poll</label>
-                <input type="number" id="poll-interval" value="50" min="10" max="500" step="10" style="width:40px;">
+                <input type="number" id="poll-interval" value="50" min="10" max="500" step="10" style="width:45px;">
                 <span class="hz">ms</span>
-                <span class="range-display" id="rx-range-display"></span>
             </div>
             <div class="binary-row">
                 <span class="binary-label">Expect</span>
@@ -252,7 +261,7 @@
                     <input type="text" id="tx-pkt-payload" class="binary-input" value="00110001" maxlength="8" oninput="validatePktField(this, 'tx-pkt-payload-status')">
                     <span id="tx-pkt-payload-status" class="ok">✓</span>
                     <span class="hz">×</span>
-                    <input type="number" id="tx-pkt-repeat" value="3" min="1" max="10" style="width:30px;">
+                    <input type="number" id="tx-pkt-repeat" value="3" min="1" max="10" style="width:28px;">
                 </div>
                 <div class="pkt-row">
                     <label>Checksum</label>
@@ -261,10 +270,12 @@
                 </div>
                 <div class="pkt-row">
                     <label>Pulse</label>
-                    <input type="number" id="tx-pkt-pulse-ms" value="200" min="20" max="2000" style="width:40px;">
+                    <input type="number" id="tx-pkt-pulse-ms" value="200" min="20" max="2000" style="width:45px;">
                     <span class="hz">ms</span>
-                    <label style="min-width:25px;">Gap</label>
-                    <input type="number" id="tx-pkt-gap-ms" value="150" min="20" max="2000" style="width:40px;">
+                </div>
+                <div class="pkt-row">
+                    <label>Gap</label>
+                    <input type="number" id="tx-pkt-gap-ms" value="150" min="20" max="2000" style="width:45px;">
                     <span class="hz">ms</span>
                 </div>
             </div>
@@ -281,12 +292,27 @@
                     <input type="text" id="rx-pkt-payload" class="binary-input" value="00110001" maxlength="8" oninput="validatePktField(this, 'rx-pkt-payload-status')">
                     <span id="rx-pkt-payload-status" class="ok">✓</span>
                     <span class="hz">×</span>
-                    <input type="number" id="rx-pkt-repeat" value="3" min="1" max="10" style="width:30px;">
+                    <input type="number" id="rx-pkt-repeat" value="3" min="1" max="10" style="width:28px;">
                 </div>
                 <div class="pkt-row">
                     <label>Checksum</label>
                     <input type="text" id="rx-pkt-checksum" class="binary-input" value="01010101" maxlength="8" oninput="validatePktField(this, 'rx-pkt-checksum-status')">
                     <span id="rx-pkt-checksum-status" class="ok">✓</span>
+                </div>
+                <div class="pkt-row">
+                    <label>Pulse</label>
+                    <input type="number" id="rx-pkt-pulse-ms" value="200" min="20" max="2000" style="width:45px;">
+                    <span class="hz">ms</span>
+                </div>
+                <div class="pkt-row">
+                    <label>Gap</label>
+                    <input type="number" id="rx-pkt-gap-ms" value="150" min="20" max="2000" style="width:45px;">
+                    <span class="hz">ms</span>
+                </div>
+                <div class="pkt-row">
+                    <label>Tolerance</label>
+                    <input type="number" id="rx-pkt-tolerance-ms" value="20" min="5" max="500" style="width:45px;">
+                    <span class="hz">ms ±</span>
                 </div>
                 <div class="pkt-row">
                     <label>Window</label>
@@ -370,12 +396,12 @@
     <script>
         const FFT_SIZE = 8192, NUM_BITS = 8;
         const ZOOM_LEVELS = [500, 1000, 2000, 4000, 8000, 12000, 20000, 30000];
-        const HISTORY_SIZE = 200;
+        const HISTORY_SIZE = 500;
         
         let zoomIndex = 3;
         let hzMin = 0, hzMax = 4000, pwrMin = 0, pwrMax = 255;
         let zoomTxOn = false, zoomRxOn = false;
-        let flashQueue = [], charFlashQueue = [];
+        let flashQueue = [], charFlashQueue = [], pktFlashQueue = [];
         let audioCtx, analyser, micStream, oscillators = [], gainNodes = [];
         let detectInterval, testInterval, frequencyData;
         let isInit = false, isRunning = false, isSending = false, isOnAir = false;
@@ -390,14 +416,9 @@
         let rxState = { lastPattern: '', lastTime: 0 };
         
         let txEventCount = 0, rxEventCount = 0, pktEventCount = 0;
-        let eventHistory = [];
         
-        // Packet state for RX detection
-        let pktState = {
-            phase: 'idle', // idle, payload, checksum
-            headerTime: 0,
-            payloads: []
-        };
+        // Event history for backlog packet detection
+        let eventHistory = [];
         
         let graphCanvas, graphCtx;
         
@@ -474,10 +495,6 @@
             const now = Date.now();
             const ts = new Date(now).toLocaleTimeString('en-US', {hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'}) + '.' + (now % 1000).toString().padStart(3, '0');
             
-            const event = { time: now, type, pattern, ascii, extra };
-            eventHistory.push(event);
-            if (eventHistory.length > HISTORY_SIZE) eventHistory.shift();
-            
             if (type === 'tx') { txEventCount++; $('tx-count').textContent = `TX:${txEventCount}`; }
             if (type === 'rx') { rxEventCount++; $('rx-count').textContent = `RX:${rxEventCount}`; }
             if (type === 'pkt') { pktEventCount++; $('pkt-count').textContent = `PKT:${pktEventCount}`; }
@@ -489,6 +506,12 @@
             el.innerHTML = `<span class="ts">${ts}</span><span class="tag">${tag}</span><span class="msg">${msg}</span>`;
             $('log').appendChild(el);
             $('log').scrollTop = $('log').scrollHeight;
+        }
+        
+        // Store RX event in history for backlog analysis
+        function recordRxEvent(pattern, time) {
+            eventHistory.push({ pattern, time });
+            if (eventHistory.length > HISTORY_SIZE) eventHistory.shift();
         }
         
         function updateTimer() {
@@ -538,6 +561,7 @@
         
         function triggerFlash() { flashQueue.push({ startTime: performance.now() }); }
         function triggerCharFlash(char) { charFlashQueue.push({ startTime: performance.now(), char }); }
+        function triggerPktFlash(char) { pktFlashQueue.push({ startTime: performance.now(), char }); }
         
         function calculateFlashIntensity() {
             const now = performance.now();
@@ -551,6 +575,18 @@
             return Math.min(intensity, 1);
         }
         
+        function calculatePktFlashIntensity() {
+            const now = performance.now();
+            let intensity = 0;
+            pktFlashQueue = pktFlashQueue.filter(f => {
+                const elapsed = now - f.startTime;
+                if (elapsed > 1000) return false;
+                intensity += elapsed < 300 ? 0.7 : 0.7 * (1 - (elapsed - 300) / 700);
+                return true;
+            });
+            return Math.min(intensity, 1);
+        }
+        
         function getCharFlashState() {
             const now = performance.now();
             let result = { char: null, opacity: 0 };
@@ -558,6 +594,19 @@
                 const elapsed = now - f.startTime;
                 if (elapsed > 1000) return false;
                 const opacity = elapsed < 300 ? Math.min(1, elapsed / 100) : 1 - (elapsed - 300) / 700;
+                if (opacity > result.opacity) result = { char: f.char, opacity };
+                return true;
+            });
+            return result;
+        }
+        
+        function getPktCharFlashState() {
+            const now = performance.now();
+            let result = { char: null, opacity: 0 };
+            pktFlashQueue = pktFlashQueue.filter(f => {
+                const elapsed = now - f.startTime;
+                if (elapsed > 1200) return false;
+                const opacity = elapsed < 400 ? Math.min(1, elapsed / 150) : 1 - (elapsed - 400) / 800;
                 if (opacity > result.opacity) result = { char: f.char, opacity };
                 return true;
             });
@@ -623,7 +672,7 @@
             $('btn-air').textContent = isOnAir ? 'ON AIR' : 'OFF AIR';
             if (isOnAir) {
                 log('info', '', '', '════════ ON AIR ════════');
-                resetPacketState();
+                eventHistory = [];
             } else {
                 log('info', '', '', '════════ OFF AIR ════════');
                 $('detection-info').textContent = '—';
@@ -642,7 +691,7 @@
             sendSignal();
         }
         
-        // TX Packet - uses TX Packet Config
+        // TX Packet
         async function sendPacket() {
             if (!isInit || isSending) return;
             if (!isOnAir) toggleAir();
@@ -659,7 +708,7 @@
                 return;
             }
             
-            log('pkt', '', '', `▶ TX PACKET [H:${header}][P:${payload}×${repeat}][C:${checksum}]`);
+            log('pkt', '', '', `▶ TX PKT [H:${header}][P:${payload}×${repeat}][C:${checksum}]`);
             
             await sendPatternPulse(header, pulseMs, 'H');
             await sleep(gapMs);
@@ -672,7 +721,7 @@
             
             await sendPatternPulse(checksum, pulseMs, 'C');
             
-            log('pkt', '', '', '◼ TX PACKET END');
+            log('pkt', '', '', '◼ TX PKT END');
         }
         
         function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -719,11 +768,23 @@
             const w = graphCanvas.width / devicePixelRatio;
             const h = graphCanvas.height / devicePixelRatio;
             const flashIntensity = calculateFlashIntensity();
+            const pktFlashIntensity = calculatePktFlashIntensity();
             const charFlash = getCharFlashState();
+            const pktCharFlash = getPktCharFlashState();
             const hzRange = hzMax - hzMin;
             const pwrRange = pwrMax - pwrMin;
             
-            graphCtx.fillStyle = flashIntensity > 0 ? `rgb(${5}, ${5 + 80*flashIntensity}, ${5 + 80*flashIntensity})` : '#050505';
+            // Background: cyan flash for pulse match, orange flash for packet
+            let bgR = 5, bgG = 5, bgB = 5;
+            if (pktFlashIntensity > 0) {
+                bgR = 5 + 120 * pktFlashIntensity;
+                bgG = 5 + 60 * pktFlashIntensity;
+                bgB = 5;
+            } else if (flashIntensity > 0) {
+                bgG = 5 + 80 * flashIntensity;
+                bgB = 5 + 80 * flashIntensity;
+            }
+            graphCtx.fillStyle = `rgb(${bgR}, ${bgG}, ${bgB})`;
             graphCtx.fillRect(0, 0, w, h);
             
             const hzToX = hz => ((hz - hzMin) / hzRange) * w;
@@ -812,7 +873,7 @@
                 graphCtx.fillText(f >= 1000 ? `${f/1000}k` : f, hzToX(f) - 8, h - 2);
             }
             
-            // Char flash
+            // Char flash (cyan for pulse match)
             if (charFlash.char && charFlash.opacity > 0) {
                 graphCtx.save();
                 graphCtx.font = 'bold 40px Courier New';
@@ -822,6 +883,19 @@
                 graphCtx.shadowBlur = 20;
                 graphCtx.fillStyle = `rgba(0, 255, 255, ${charFlash.opacity})`;
                 graphCtx.fillText(charFlash.char, w / 2, h / 2);
+                graphCtx.restore();
+            }
+            
+            // Packet char flash (orange)
+            if (pktCharFlash.char && pktCharFlash.opacity > 0) {
+                graphCtx.save();
+                graphCtx.font = 'bold 48px Courier New';
+                graphCtx.textAlign = 'center';
+                graphCtx.textBaseline = 'middle';
+                graphCtx.shadowColor = `rgba(255, 170, 0, ${pktCharFlash.opacity})`;
+                graphCtx.shadowBlur = 25;
+                graphCtx.fillStyle = `rgba(255, 170, 0, ${pktCharFlash.opacity})`;
+                graphCtx.fillText(pktCharFlash.char, w / 2, h / 2);
                 graphCtx.restore();
             }
             
@@ -869,7 +943,6 @@
                 $('btn-pulse').disabled = false;
                 $('btn-packet').disabled = false;
                 
-                // Validate packet fields
                 ['tx-pkt-header', 'tx-pkt-payload', 'tx-pkt-checksum', 'rx-pkt-header', 'rx-pkt-payload', 'rx-pkt-checksum'].forEach(id => {
                     validatePktField($(id), id + '-status');
                 });
@@ -928,6 +1001,9 @@
                         rxState.lastTime = now;
                         rxState.lastPattern = rxDetStr;
                         
+                        // Record in history for packet detection
+                        recordRxEvent(rxDetStr, now);
+                        
                         const expStr = togglesToString(rxToggles);
                         const isMatch = rxDetStr === expStr;
                         $('rx-status').classList.toggle('match', isMatch);
@@ -940,8 +1016,8 @@
                             triggerCharFlash(getAsciiChar(rxDetCharCode));
                         }
                         
-                        // Packet detection - uses RX Packet Config
-                        checkPacketDetection(rxDetStr, now);
+                        // Check for packet completion using backlog
+                        checkPacketFromBacklog(now);
                     }
                 } else {
                     $('rx-status').classList.remove('match');
@@ -949,84 +1025,97 @@
             }, pollInterval);
         }
         
-        // RX Packet Detection - uses RX Packet Config
-        function checkPacketDetection(rxPattern, now) {
+        // Backlog-based packet detection
+        function checkPacketFromBacklog(now) {
             const header = $('rx-pkt-header').value;
-            const payload = $('rx-pkt-payload').value;
+            const expectedPayload = $('rx-pkt-payload').value;
             const checksum = $('rx-pkt-checksum').value;
             const expectedRepeat = parseInt($('rx-pkt-repeat').value) || 3;
-            const pktWindow = parseInt($('rx-pkt-window-ms').value) || 5000;
+            const pulseMs = parseInt($('rx-pkt-pulse-ms').value) || 200;
+            const gapMs = parseInt($('rx-pkt-gap-ms').value) || 150;
+            const toleranceMs = parseInt($('rx-pkt-tolerance-ms').value) || 20;
+            const windowMs = parseInt($('rx-pkt-window-ms').value) || 5000;
             
-            if (!isValidBinary(header) || !isValidBinary(payload) || !isValidBinary(checksum)) return;
+            if (!isValidBinary(header) || !isValidBinary(expectedPayload) || !isValidBinary(checksum)) return;
             
-            // State machine
-            if (pktState.phase === 'idle') {
-                if (rxPattern === header) {
-                    pktState.phase = 'payload';
-                    pktState.headerTime = now;
-                    pktState.payloads = [];
-                    $('pkt-detected-pattern').textContent = 'HEADER ✓';
-                    log('pkt', header, getAsciiDisplay(binaryToAscii(header)), '← RX Header');
-                }
-            } else if (pktState.phase === 'payload') {
-                if (now - pktState.headerTime > pktWindow) {
-                    log('pkt', '', '', '✗ Packet timeout');
-                    resetPacketState();
-                    return;
-                }
+            // Find most recent checksum in history
+            const recentEvents = eventHistory.filter(e => now - e.time <= windowMs);
+            
+            // Look for checksum matches
+            for (let ci = recentEvents.length - 1; ci >= 0; ci--) {
+                const checksumEvent = recentEvents[ci];
+                if (checksumEvent.pattern !== checksum) continue;
                 
-                // Check if this is the checksum (packet complete early or exact repeat count)
-                if (rxPattern === checksum && pktState.payloads.length >= 1) {
-                    finalizePacket(now);
-                    return;
-                }
-                
-                // Collect payload
-                pktState.payloads.push(rxPattern);
-                $('pkt-detected-pattern').textContent = `PAYLOAD ${pktState.payloads.length}/${expectedRepeat}`;
-                
-                if (pktState.payloads.length >= expectedRepeat) {
-                    pktState.phase = 'checksum';
-                }
-            } else if (pktState.phase === 'checksum') {
-                if (now - pktState.headerTime > pktWindow) {
-                    log('pkt', '', '', '✗ Packet timeout (checksum)');
-                    resetPacketState();
-                    return;
-                }
-                
-                if (rxPattern === checksum) {
-                    finalizePacket(now);
+                // Look for a header before this checksum
+                for (let hi = ci - 1; hi >= 0; hi--) {
+                    const headerEvent = recentEvents[hi];
+                    if (headerEvent.pattern !== header) continue;
+                    
+                    const headerTime = headerEvent.time;
+                    const checksumTime = checksumEvent.time;
+                    
+                    // Calculate expected timing
+                    // Header -> gap -> P1 -> gap -> P2 -> ... -> gap -> Checksum
+                    // P[i] expected at: headerTime + pulseMs + gapMs + i * (pulseMs + gapMs)
+                    // Checksum expected at: headerTime + pulseMs + gapMs + expectedRepeat * (pulseMs + gapMs)
+                    
+                    const expectedChecksumTime = headerTime + pulseMs + gapMs + expectedRepeat * (pulseMs + gapMs);
+                    const checksumTimeDiff = Math.abs(checksumTime - expectedChecksumTime);
+                    
+                    // Check if checksum timing is within reasonable range (use larger tolerance for checksum)
+                    if (checksumTimeDiff > toleranceMs * 3 + expectedRepeat * toleranceMs) continue;
+                    
+                    // Find payloads between header and checksum
+                    const payloads = [];
+                    for (let pi = hi + 1; pi < ci; pi++) {
+                        const payloadEvent = recentEvents[pi];
+                        // Check if this event falls within expected payload timing slots
+                        for (let slot = 0; slot < expectedRepeat; slot++) {
+                            const expectedPayloadTime = headerTime + pulseMs + gapMs + slot * (pulseMs + gapMs);
+                            const timeDiff = Math.abs(payloadEvent.time - expectedPayloadTime);
+                            if (timeDiff <= toleranceMs) {
+                                payloads.push({ slot, pattern: payloadEvent.pattern, time: payloadEvent.time });
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Need at least 1 payload
+                    if (payloads.length === 0) continue;
+                    
+                    // Compute average payload via majority voting
+                    const avgPayload = computeAveragePayload(payloads.map(p => p.pattern));
+                    
+                    // Mark these events as consumed (prevent re-triggering)
+                    // Remove from history
+                    const usedIndices = new Set([hi, ci, ...payloads.map(p => recentEvents.indexOf(recentEvents.find(e => e.time === p.time)))]);
+                    eventHistory = eventHistory.filter((e, i) => {
+                        const idx = recentEvents.indexOf(e);
+                        return idx === -1 || !usedIndices.has(idx);
+                    });
+                    
+                    // Report packet
+                    const avgPayloadChar = binaryToAscii(avgPayload);
+                    $('pkt-detected-pattern').textContent = `✓ ${avgPayload} ${getAsciiDisplay(avgPayloadChar)}`;
+                    $('pkt-status').classList.add('pkt-ok');
+                    
+                    log('pkt', '', '', `✓✓ RX PKT [H:${header}][P:${avgPayload}×${payloads.length}][C:${checksum}]`);
+                    log('pkt', avgPayload, getAsciiDisplay(avgPayloadChar), `← Payload (${payloads.length} samples)`);
+                    
+                    triggerPktFlash(getAsciiChar(avgPayloadChar));
+                    
+                    setTimeout(() => {
+                        $('pkt-detected-pattern').textContent = 'waiting...';
+                        $('pkt-status').classList.remove('pkt-ok');
+                    }, 2000);
+                    
+                    return; // Found a valid packet
                 }
             }
-        }
-        
-        function finalizePacket(now) {
-            const payload = $('rx-pkt-payload').value;
-            const checksum = $('rx-pkt-checksum').value;
-            const header = $('rx-pkt-header').value;
-            const expectedRepeat = parseInt($('rx-pkt-repeat').value) || 3;
-            
-            const avgPayload = computeAveragePayload(pktState.payloads);
-            const payloadMatch = avgPayload === payload;
-            
-            log('pkt', checksum, getAsciiDisplay(binaryToAscii(checksum)), '← RX Checksum');
-            
-            if (payloadMatch) {
-                $('pkt-detected-pattern').textContent = `✓ ${avgPayload} ${getAsciiDisplay(binaryToAscii(avgPayload))}`;
-                $('pkt-status').classList.add('pkt-ok');
-                log('pkt', '', '', `✓✓ RX PACKET VALID [H:${header}][P:${avgPayload}×${pktState.payloads.length}][C:${checksum}]`);
-                triggerFlash();
-                triggerCharFlash(getAsciiChar(binaryToAscii(avgPayload)));
-            } else {
-                $('pkt-detected-pattern').textContent = `✗ ${avgPayload}`;
-                log('pkt', '', '', `✗ RX PACKET MISMATCH: payload ${avgPayload} ≠ expected ${payload}`);
-            }
-            
-            setTimeout(resetPacketState, 1500);
         }
         
         function computeAveragePayload(payloads) {
+            if (payloads.length === 0) return '00000000';
             const result = [];
             for (let i = 0; i < NUM_BITS; i++) {
                 let ones = 0;
@@ -1036,12 +1125,6 @@
                 result.push(ones > payloads.length / 2 ? '1' : '0');
             }
             return result.join('');
-        }
-        
-        function resetPacketState() {
-            pktState = { phase: 'idle', headerTime: 0, payloads: [] };
-            $('pkt-detected-pattern').textContent = 'waiting...';
-            $('pkt-status').classList.remove('pkt-ok');
         }
         
         function sendSignal() {
@@ -1089,16 +1172,18 @@
             $('log').innerHTML = '';
             flashQueue = [];
             charFlashQueue = [];
+            pktFlashQueue = [];
             txEventCount = rxEventCount = pktEventCount = 0;
             eventHistory = [];
             rxState = { lastPattern: '', lastTime: 0 };
             txState = { active: false, pattern: '00000000', startTime: 0 };
             lastDetectionData = { powers: [], flankMaxLevels: [], peakValid: [] };
-            resetPacketState();
             $('tx-active-pattern').textContent = '--------';
             $('rx-detected-pattern').textContent = '--------';
+            $('pkt-detected-pattern').textContent = 'waiting...';
             $('tx-status').classList.remove('active');
             $('rx-status').classList.remove('match');
+            $('pkt-status').classList.remove('pkt-ok');
             $('tx-count').textContent = 'TX:0';
             $('rx-count').textContent = 'RX:0';
             $('pkt-count').textContent = 'PKT:0';
@@ -1114,9 +1199,9 @@
             $('peak-points-info').textContent = getPeakPointsInfo();
             setupGraph();
             requestAnimationFrame(drawGraph);
-            log('info', '', '', 'Audio Signal Test v16');
+            log('info', '', '', 'Audio Signal Test v17');
             log('info', '', '', '─────────────────────');
-            log('info', '', '', '📤📥 Split TX/RX Packets');
+            log('info', '', '', '📦 Timing-validated packets');
         });
         
         window.addEventListener('resize', () => { if (graphCanvas) setupGraph(); });
