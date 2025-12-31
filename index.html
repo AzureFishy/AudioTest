@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio Signal Test v13</title>
+    <title>Audio Signal Test v14</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Courier New', monospace; background: #000; color: #fff; min-height: 100vh; padding: 1rem; }
@@ -82,23 +82,36 @@
         .graph-container { border: 1px solid #222; background: #050505; position: relative; overflow: hidden; }
         #graph { width: 100%; height: 120px; display: block; }
         .detection-info { text-align: center; font-size: 0.55rem; color: #555; min-height: 2.2em; padding: 0.25rem 0; line-height: 1.4; }
-        .match-status { text-align: center; font-size: 0.7rem; padding: 0.3rem; margin-bottom: 0.5rem; border: 1px solid #333; background: #0a0a0a; }
-        .match-status.match { color: #0f0; border-color: #0a0; background: #001a00; }
-        .match-status.no-match { color: #888; }
+        .status-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+        .status-box { flex: 1; text-align: center; font-size: 0.65rem; padding: 0.3rem; border: 1px solid #333; background: #0a0a0a; }
+        .status-box.tx-status { border-color: #0a0; }
+        .status-box.rx-status { border-color: #0aa; }
+        .status-box .label { font-size: 0.5rem; color: #666; text-transform: uppercase; }
+        .status-box.tx-status .label { color: #0a0; }
+        .status-box.rx-status .label { color: #0aa; }
+        .status-box .pattern { font-weight: bold; color: #888; }
+        .status-box.tx-status .pattern { color: #0f0; }
+        .status-box.rx-status .pattern { color: #0ff; }
+        .status-box.match { background: #001a00; }
+        .status-box.active { background: #0a0a00; }
         .log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; }
         .log-title { font-size: 0.6rem; color: #666; text-transform: uppercase; }
-        .log-count { font-size: 0.55rem; color: #555; }
-        .log-panel { height: 80px; overflow-y: auto; background: #050505; padding: 0.4rem; font-size: 0.6rem; border: 1px solid #222; margin-bottom: 0.75rem; }
-        .log-entry { margin-bottom: 0.15rem; color: #555; }
-        .log-entry.rx { color: #0ff; }
-        .log-entry.tx { color: #0f0; }
-        .log-entry.info { color: #888; }
-        .log-entry.err { color: #f00; }
-        .log-entry.match { color: #0f0; font-weight: bold; }
-        .log-entry.mismatch { color: #f80; }
-        .log-entry .ts { color: #333; margin-right: 0.25rem; }
-        .log-entry .pattern { color: #ff0; }
-        .log-entry .ascii { color: #0ff; font-weight: bold; }
+        .log-stats { font-size: 0.5rem; color: #555; display: flex; gap: 0.5rem; }
+        .log-panel { height: 100px; overflow-y: auto; background: #050505; padding: 0.4rem; font-size: 0.55rem; border: 1px solid #222; margin-bottom: 0.75rem; }
+        .log-entry { margin-bottom: 0.2rem; color: #555; display: flex; gap: 0.3rem; align-items: flex-start; }
+        .log-entry .ts { color: #333; min-width: 70px; flex-shrink: 0; }
+        .log-entry .tag { font-weight: bold; min-width: 28px; flex-shrink: 0; }
+        .log-entry .msg { flex: 1; }
+        .log-entry.rx .tag { color: #0ff; }
+        .log-entry.rx .msg { color: #0aa; }
+        .log-entry.tx .tag { color: #0f0; }
+        .log-entry.tx .msg { color: #0a0; }
+        .log-entry.match .tag { color: #ff0; }
+        .log-entry.match .msg { color: #ff0; font-weight: bold; }
+        .log-entry.info .tag { color: #888; }
+        .log-entry.info .msg { color: #666; }
+        .log-entry.err .tag { color: #f00; }
+        .log-entry.err .msg { color: #f00; }
         .timer { text-align: center; font-size: 1.3rem; font-weight: bold; margin: 0.3rem 0; }
         .timer.active { animation: pulse 1s infinite; }
         @keyframes pulse { 50% { opacity: 0.4; } }
@@ -121,7 +134,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Audio Signal Test v13</h1>
+        <h1>Audio Signal Test v14</h1>
         
         <div class="section tx">
             <div class="section-title">▲ Transmit</div>
@@ -141,7 +154,6 @@
                 <label>Ignore ±</label>
                 <input type="number" id="tx-tolerance" value="4" min="1" max="100" step="1" style="width:50px;">
                 <span class="hz">Hz</span>
-                <span class="range-display">per bit</span>
             </div>
             <div class="binary-row">
                 <span class="binary-label">Binary</span>
@@ -153,7 +165,7 @@
         </div>
         
         <div class="section rx">
-            <div class="section-title">▼ Receive Pattern</div>
+            <div class="section-title">▼ Receive</div>
             <div class="row">
                 <label>Base</label>
                 <input type="range" id="rx-slider" min="20" max="30000" step="10" value="18000">
@@ -170,19 +182,14 @@
                 <label>Detect ±</label>
                 <input type="number" id="rx-tolerance" value="4" min="1" max="100" step="1" style="width:50px;">
                 <span class="hz">Hz</span>
-                <span class="range-display">per bit</span>
             </div>
             <div class="row">
                 <label>Thresh</label>
                 <input type="number" id="rx-thresh" value="40" min="5" max="200" step="5" style="width:50px;">
                 <span class="hz">pwr</span>
-                <span class="range-display">detection</span>
-            </div>
-            <div class="row">
-                <label>Window</label>
+                <label style="min-width:40px;">Window</label>
                 <input type="number" id="rx-window" value="300" min="10" max="2000" step="10" style="width:50px;">
                 <span class="hz">ms</span>
-                <span class="range-display">debounce</span>
             </div>
             <div class="row">
                 <label>Poll</label>
@@ -205,21 +212,14 @@
                 <label>Points</label>
                 <div class="stepper">
                     <button class="stepper-btn" onclick="adjustPeakPoints(-1)">−</button>
-                    <span class="stepper-val" id="peak-points-val">2</span>
+                    <span class="stepper-val" id="peak-points-val">1</span>
                     <button class="stepper-btn" onclick="adjustPeakPoints(1)">+</button>
                 </div>
-                <span class="range-display" id="peak-points-info">±25%, ±50%</span>
-            </div>
-            <div class="row">
-                <label>Ratio</label>
-                <input type="number" id="peak-ratio" class="peak-input" value="1.3" min="1.0" max="3.0" step="0.1">
+                <span class="range-display" id="peak-points-info">±50%</span>
+                <label style="min-width:40px;">Ratio</label>
+                <input type="number" id="peak-ratio" class="peak-input" value="1.0" min="1.0" max="3.0" step="0.1" style="width:45px;">
                 <span class="hz">×</span>
-                <span class="range-display">center ÷ ratio = flank max</span>
-            </div>
-            <div class="row">
-                <label>Enabled</label>
-                <button class="zoom-toggle" id="peak-enabled" onclick="togglePeakDetection()" style="border-color:#a0a;">OFF</button>
-                <span class="range-display" id="peak-status">Peak detection disabled</span>
+                <button class="zoom-toggle" id="peak-enabled" onclick="togglePeakDetection()" style="border-color:#a0a;background:#a0a;color:#000;">ON</button>
             </div>
         </div>
         
@@ -258,12 +258,27 @@
         </div>
         
         <div class="detection-info" id="detection-info">—</div>
-        <div class="match-status no-match" id="match-status">Detected: <span id="detected-pattern">--------</span></div>
+        
+        <div class="status-row">
+            <div class="status-box tx-status" id="tx-status">
+                <div class="label">TX Active</div>
+                <div class="pattern" id="tx-active-pattern">--------</div>
+            </div>
+            <div class="status-box rx-status" id="rx-status">
+                <div class="label">RX Detected</div>
+                <div class="pattern" id="rx-detected-pattern">--------</div>
+            </div>
+        </div>
+        
         <div class="timer" id="timer">00:10</div>
         
         <div class="log-header">
-            <span class="log-title">Log</span>
-            <span class="log-count" id="log-count">0 entries</span>
+            <span class="log-title">Event Log</span>
+            <div class="log-stats">
+                <span id="tx-count">TX: 0</span>
+                <span id="rx-count">RX: 0</span>
+                <span id="match-count">Match: 0</span>
+            </div>
         </div>
         <div class="log-panel" id="log"></div>
         
@@ -278,8 +293,9 @@
     <script>
         const FFT_SIZE = 8192, NUM_BITS = 8;
         const ZOOM_LEVELS = [500, 1000, 2000, 4000, 8000, 12000, 20000, 30000];
-        let zoomIndex = 3;
+        const HISTORY_SIZE = 100; // Keep last 100 events for backlogging
         
+        let zoomIndex = 3;
         let hzMin = 0, hzMax = 4000, pwrMin = 0, pwrMax = 255;
         let zoomTxOn = false, zoomRxOn = false;
         let flashQueue = [], charFlashQueue = [];
@@ -288,10 +304,21 @@
         let isInit = false, isRunning = false, isSending = false, isOnAir = false;
         let txBaseFreq = 18000, txStep = 50, txTolerance = 4, txToggles = [0,0,0,0,0,0,0,0];
         let rxBaseFreq = 18000, rxStep = 50, rxTolerance = 4, rxThreshold = 40, rxWindow = 300, pollInterval = 50, rxToggles = [0,0,0,0,0,0,0,0];
-        let pulseDuration = 350, timeLeft = 10, lastDetectTime = 0, lastDetectedPattern = '', logEntryCount = 0;
+        let pulseDuration = 350, timeLeft = 10;
         
-        let peakPoints = 2, peakRatio = 1.3, peakEnabled = false;
+        // V14: Defaults - 1-point, ratio 1.0, enabled
+        let peakPoints = 1, peakRatio = 1.0, peakEnabled = true;
         let lastDetectionData = { powers: [], flankMaxLevels: [], peakValid: [] };
+        
+        // V14: Separate tracking for TX and RX
+        let txState = { active: false, pattern: '00000000', startTime: 0 };
+        let rxState = { lastPattern: '', lastTime: 0 };
+        
+        // V14: Event counters
+        let txEventCount = 0, rxEventCount = 0, matchEventCount = 0;
+        
+        // V14: Event history for backlogging
+        let eventHistory = [];
         
         let graphCanvas, graphCtx;
         
@@ -321,7 +348,6 @@
             peakPoints = clamp(peakPoints + dir, 1, 3);
             $('peak-points-val').textContent = peakPoints;
             $('peak-points-info').textContent = getPeakPointsInfo();
-            if (peakEnabled) $('peak-status').textContent = `${peakPoints}-point peak detection active`;
         }
         
         function togglePeakDetection() {
@@ -330,7 +356,6 @@
             btn.textContent = peakEnabled ? 'ON' : 'OFF';
             btn.style.background = peakEnabled ? '#a0a' : '#111';
             btn.style.color = peakEnabled ? '#000' : '#555';
-            $('peak-status').textContent = peakEnabled ? `${peakPoints}-point peak detection active` : 'Peak detection disabled';
         }
         
         function checkPeak(centerPwr, freq, stepHz, binW, data) {
@@ -344,7 +369,6 @@
                     const checkFreq = freq + (side * stepHz * distances[i]);
                     const checkBin = Math.round(checkFreq / binW);
                     const checkPwr = data[clamp(checkBin, 0, data.length - 1)] || 0;
-                    
                     if (i === 0) {
                         if (checkPwr >= flankMaxLevel) return { valid: false, flankMaxLevel };
                     } else {
@@ -356,16 +380,32 @@
             return { valid: true, flankMaxLevel };
         }
         
-        function log(msg, type = '') {
-            if (!isOnAir && type !== 'info' && isInit) return;
-            const now = new Date();
-            const ts = now.toLocaleTimeString('en-US', {hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'}) + '.' + now.getMilliseconds().toString().padStart(3,'0');
+        // V14: Enhanced logging with event history
+        function log(type, pattern, ascii, extra = '') {
+            const now = Date.now();
+            const ts = new Date(now).toLocaleTimeString('en-US', {hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'}) + 
+                       '.' + (now % 1000).toString().padStart(3, '0');
+            
+            // Create event object for history
+            const event = { time: now, type, pattern, ascii, extra };
+            eventHistory.push(event);
+            if (eventHistory.length > HISTORY_SIZE) eventHistory.shift();
+            
+            // Update counters
+            if (type === 'tx') { txEventCount++; $('tx-count').textContent = `TX: ${txEventCount}`; }
+            if (type === 'rx') { rxEventCount++; $('rx-count').textContent = `RX: ${rxEventCount}`; }
+            if (type === 'match') { matchEventCount++; $('match-count').textContent = `Match: ${matchEventCount}`; }
+            
+            // Create log entry
             const el = document.createElement('div');
             el.className = `log-entry ${type}`;
-            el.innerHTML = `<span class="ts">[${ts}]</span>${msg}`;
+            
+            const tag = type === 'tx' ? 'TX▲' : type === 'rx' ? 'RX▼' : type === 'match' ? '✓✓' : type === 'info' ? '···' : '!!!';
+            const msg = pattern ? `${pattern} ${ascii}${extra ? ' ' + extra : ''}` : extra;
+            
+            el.innerHTML = `<span class="ts">${ts}</span><span class="tag">${tag}</span><span class="msg">${msg}</span>`;
             $('log').appendChild(el);
             $('log').scrollTop = $('log').scrollHeight;
-            $('log-count').textContent = `${++logEntryCount} entries`;
         }
         
         function updateTimer() {
@@ -390,11 +430,9 @@
         
         function zoomGraph(dir) {
             zoomTxOn = zoomRxOn = false;
-            $('zoom-tx').classList.remove('tx-on');
-            $('zoom-rx').classList.remove('rx-on');
+            $('zoom-tx').classList.remove('tx-on'); $('zoom-rx').classList.remove('rx-on');
             zoomIndex = clamp(zoomIndex + dir, 0, ZOOM_LEVELS.length - 1);
-            hzMax = ZOOM_LEVELS[zoomIndex];
-            hzMin = 0;
+            hzMax = ZOOM_LEVELS[zoomIndex]; hzMin = 0;
             updateZoomInputs();
         }
         
@@ -414,7 +452,7 @@
         }
         
         $('hz-min').onchange = $('hz-max').onchange = $('pwr-min').onchange = $('pwr-max').onchange = readZoomInputs;
-        $('peak-ratio').onchange = () => { peakRatio = clamp(parseFloat($('peak-ratio').value) || 1.3, 1.0, 3.0); $('peak-ratio').value = peakRatio; };
+        $('peak-ratio').onchange = () => { peakRatio = clamp(parseFloat($('peak-ratio').value) || 1.0, 1.0, 3.0); $('peak-ratio').value = peakRatio; };
         
         function triggerFlash() { flashQueue.push({ startTime: performance.now() }); }
         function triggerCharFlash(char) { charFlashQueue.push({ startTime: performance.now(), char }); }
@@ -507,16 +545,16 @@
             $('btn-air').classList.toggle('on', isOnAir);
             $('btn-air').textContent = isOnAir ? 'ON AIR' : 'OFF AIR';
             if (isOnAir) {
-                log('════════════════', 'info');
-                log('ON AIR', 'rx');
-                log(`TX: ${togglesToString(txToggles)} @ ${txBaseFreq}Hz +${txStep}Hz`, 'info');
-                log(`RX: ${togglesToString(rxToggles)} @ ${rxBaseFreq}Hz +${rxStep}Hz`, 'info');
-                if (peakEnabled) log(`Peak: ${peakPoints}-point, ratio ${peakRatio}×`, 'info');
+                log('info', '', '', '════════ ON AIR ════════');
+                log('info', '', '', `TX: ${togglesToString(txToggles)} @ ${txBaseFreq}Hz +${txStep}Hz`);
+                log('info', '', '', `RX: ${togglesToString(rxToggles)} @ ${rxBaseFreq}Hz +${rxStep}Hz`);
             } else {
-                log('OFF AIR', 'info');
+                log('info', '', '', '════════ OFF AIR ════════');
                 $('detection-info').textContent = '—';
-                $('match-status').className = 'match-status no-match';
-                $('detected-pattern').textContent = '--------';
+                $('tx-active-pattern').textContent = '--------';
+                $('rx-detected-pattern').textContent = '--------';
+                $('tx-status').classList.remove('active');
+                $('rx-status').classList.remove('match');
             }
         }
         
@@ -581,7 +619,6 @@
                 graphCtx.font = '8px Courier New';
                 graphCtx.fillText(i + 1, hzToX(freq) - 3, 10);
                 
-                // Peak check markers (magenta)
                 if (peakEnabled) {
                     for (let d = 0; d < peakDistances.length; d++) {
                         const dist = peakDistances[d];
@@ -597,7 +634,6 @@
                         }
                     }
                     
-                    // Peak ratio threshold line (dotted)
                     if (lastDetectionData.flankMaxLevels[i] > 0) {
                         const flankMax = lastDetectionData.flankMaxLevels[i];
                         const threshY = pwrToY(flankMax);
@@ -644,7 +680,7 @@
                 }
             }
             
-            // Threshold line (yellow)
+            // Threshold line
             if (rxThreshold >= pwrMin && rxThreshold <= pwrMax) {
                 const threshY = pwrToY(rxThreshold);
                 graphCtx.strokeStyle = 'rgba(255, 255, 0, 0.3)';
@@ -680,15 +716,15 @@
         async function init() {
             if (isInit) return;
             $('btn-init').disabled = true;
-            log('Initializing...', 'info');
+            log('info', '', '', 'Initializing...');
             
             try {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100 });
                 if (audioCtx.state === 'suspended') await audioCtx.resume();
-                log(`AudioContext: ${audioCtx.sampleRate}Hz`, 'info');
+                log('info', '', '', `AudioContext: ${audioCtx.sampleRate}Hz`);
                 
                 micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
-                log('Mic ready ✓', 'rx');
+                log('info', '', '', 'Microphone ready ✓');
                 
                 analyser = audioCtx.createAnalyser();
                 analyser.fftSize = FFT_SIZE;
@@ -718,10 +754,9 @@
                 $('btn-test').style.display = 'block';
                 $('btn-pulse').disabled = false;
                 
-                log('════════════════', 'info');
-                log('READY — Toggle ON AIR to begin', 'rx');
+                log('info', '', '', '════════ READY ════════');
             } catch (e) {
-                log(`ERROR: ${e.message}`, 'err');
+                log('err', '', '', `ERROR: ${e.message}`);
                 $('btn-init').disabled = false;
             }
         }
@@ -732,14 +767,14 @@
             
             detectInterval = setInterval(() => {
                 if (!analyser || !isOnAir) return;
-                if (isSending) { $('detection-info').textContent = `TX: ${togglesToString(txToggles)}`; return; }
                 
                 analyser.getByteFrequencyData(data);
                 const rxFreqs = getAllFreqs(rxBaseFreq, rxStep);
+                const now = Date.now();
                 
+                // V14: Always detect RX, even during TX
                 const detected = [], powers = [], peakResults = [], flankMaxLevels = [];
                 
-                // Check ALL 8 bit positions - this is critical for exact matching
                 for (let i = 0; i < NUM_BITS; i++) {
                     const freq = rxFreqs[i];
                     const lo = Math.max(0, Math.floor((freq - rxTolerance) / binW));
@@ -751,73 +786,88 @@
                     
                     const aboveThresh = maxP >= rxThreshold;
                     let peakResult = { valid: true, flankMaxLevel: 0 };
-                    if (aboveThresh) {
-                        peakResult = checkPeak(maxP, freq, rxStep, binW, data);
-                    }
+                    if (aboveThresh) peakResult = checkPeak(maxP, freq, rxStep, binW, data);
                     peakResults.push(peakResult.valid);
                     flankMaxLevels.push(aboveThresh ? peakResult.flankMaxLevel : 0);
-                    
-                    // Bit is 1 ONLY if above threshold AND peak valid
                     detected.push((aboveThresh && peakResult.valid) ? 1 : 0);
                 }
                 
                 lastDetectionData = { powers, flankMaxLevels, peakValid: peakResults };
                 
-                const detStr = togglesToString(detected);
-                const expStr = togglesToString(rxToggles);
-                const detCharCode = binaryToAscii(detStr);
-                const expCharCode = binaryToAscii(expStr);
+                const rxDetStr = togglesToString(detected);
+                const rxExpStr = togglesToString(rxToggles);
+                const rxDetCharCode = binaryToAscii(rxDetStr);
+                const rxExpCharCode = binaryToAscii(rxExpStr);
                 
-                const bitStatus = detected.map((d, i) => {
-                    if (powers[i] < rxThreshold) return '-';
-                    if (!peakResults[i]) return '✗';
-                    return '✓';
-                }).join('');
+                // V14: Update TX status display
+                const txPattern = togglesToString(txToggles);
+                const txCharCode = binaryToAscii(txPattern);
+                $('tx-active-pattern').textContent = isSending ? `${txPattern} ${getAsciiDisplay(txCharCode)}` : '--------';
+                $('tx-status').classList.toggle('active', isSending);
                 
-                const peakInfo = peakEnabled ? ` | Peak: ${bitStatus}` : '';
-                $('detection-info').innerHTML = `Pwr: [${powers.join(', ')}]${peakInfo}<br>` +
-                    `Det: ${detStr} ${getAsciiDisplay(detCharCode)} | Exp: ${expStr} ${getAsciiDisplay(expCharCode)}`;
-                $('detected-pattern').textContent = `${detStr} ${getAsciiDisplay(detCharCode)}`;
+                // V14: Update RX status display
+                $('rx-detected-pattern').textContent = `${rxDetStr} ${getAsciiDisplay(rxDetCharCode)}`;
                 
-                // Only trigger match/mismatch when signal detected
+                // Detection info
+                const txInfo = isSending ? `TX: ${txPattern}` : 'TX: idle';
+                $('detection-info').innerHTML = `${txInfo} | RX: ${rxDetStr} | Pwr: [${powers.slice(0,4).join(',')},${powers.slice(4).join(',')}]`;
+                
+                // V14: Check for RX pattern detection (independent of TX)
                 if (detected.some(b => b)) {
-                    const now = Date.now();
-                    if (now - lastDetectTime > rxWindow || detStr !== lastDetectedPattern) {
-                        lastDetectTime = now;
-                        lastDetectedPattern = detStr;
+                    if (now - rxState.lastTime > rxWindow || rxDetStr !== rxState.lastPattern) {
+                        rxState.lastTime = now;
+                        rxState.lastPattern = rxDetStr;
                         
-                        // EXACT 8-bit match required
-                        const isMatch = detStr === expStr;
-                        $('match-status').className = `match-status ${isMatch ? 'match' : 'no-match'}`;
+                        const isMatch = rxDetStr === rxExpStr;
+                        $('rx-status').classList.toggle('match', isMatch);
                         
+                        // Log RX event
+                        const duringTx = isSending ? ' [during TX]' : '';
+                        log('rx', rxDetStr, getAsciiDisplay(rxDetCharCode), duringTx);
+                        
+                        // Log match if applicable
                         if (isMatch) {
-                            log(`✓ MATCH: <span class="pattern">${detStr}</span> <span class="ascii">${getAsciiDisplay(detCharCode)}</span>`, 'match');
+                            log('match', rxDetStr, getAsciiDisplay(rxDetCharCode), `= expected`);
                             triggerFlash();
-                            triggerCharFlash(getAsciiChar(detCharCode));
-                        } else {
-                            log(`✗ MISMATCH: <span class="pattern">${detStr}</span> ${getAsciiDisplay(detCharCode)} ≠ ${expStr} ${getAsciiDisplay(expCharCode)}`, 'mismatch');
+                            triggerCharFlash(getAsciiChar(rxDetCharCode));
                         }
                     }
+                } else {
+                    $('rx-status').classList.remove('match');
                 }
             }, pollInterval);
         }
         
+        // V14: Enhanced TX with logging
         function sendTone(dur) {
             if (!gainNodes.length) return;
+            
+            const pattern = togglesToString(txToggles);
+            const charCode = binaryToAscii(pattern);
+            
+            // Log TX start
+            log('tx', pattern, getAsciiDisplay(charCode), `${dur}ms`);
+            
             isSending = true;
+            txState.active = true;
+            txState.pattern = pattern;
+            txState.startTime = Date.now();
+            
             for (let i = 0; i < NUM_BITS; i++) {
                 oscillators[i].frequency.setValueAtTime(txBaseFreq + i * txStep, audioCtx.currentTime);
                 gainNodes[i].gain.setValueAtTime(txToggles[i] ? 0.15 : 0, audioCtx.currentTime);
             }
+            
             setTimeout(() => {
                 gainNodes.forEach(g => g.gain.setValueAtTime(0, audioCtx.currentTime));
-                setTimeout(() => { isSending = false; }, 80);
+                setTimeout(() => {
+                    isSending = false;
+                    txState.active = false;
+                }, 80);
             }, dur);
         }
         
         function sendSignal() {
-            const b = togglesToString(txToggles);
-            log(`TX: ${b} ${getAsciiDisplay(binaryToAscii(b))} (${txToggles.filter(t=>t).length} tones, ${pulseDuration}ms)`, 'tx');
             sendTone(pulseDuration);
         }
         
@@ -828,7 +878,7 @@
             timeLeft = 10;
             $('btn-test').disabled = true;
             $('timer').classList.add('active');
-            log('═══ TEST ═══', 'tx');
+            log('info', '', '', '═══ TEST START ═══');
             sendSignal();
             updateTimer();
             testInterval = setInterval(() => {
@@ -846,7 +896,7 @@
             $('timer').classList.remove('active');
             $('btn-test').disabled = false;
             $('progress').style.width = '100%';
-            log('═══ DONE ═══', 'rx');
+            log('info', '', '', '═══ TEST END ═══');
         }
         
         function resetAll() {
@@ -861,14 +911,19 @@
             $('log').innerHTML = '';
             flashQueue = [];
             charFlashQueue = [];
-            logEntryCount = 0;
-            lastDetectedPattern = '';
+            txEventCount = rxEventCount = matchEventCount = 0;
+            eventHistory = [];
+            rxState = { lastPattern: '', lastTime: 0 };
+            txState = { active: false, pattern: '00000000', startTime: 0 };
             lastDetectionData = { powers: [], flankMaxLevels: [], peakValid: [] };
-            $('detected-pattern').textContent = '--------';
-            $('match-status').className = 'match-status no-match';
-            $('log-count').textContent = '0 entries';
-            log('Reset', 'info');
-            if (isInit) log(`TX: ${togglesToString(txToggles)} @ ${txBaseFreq}Hz | RX: ${togglesToString(rxToggles)} @ ${rxBaseFreq}Hz`, 'info');
+            $('tx-active-pattern').textContent = '--------';
+            $('rx-detected-pattern').textContent = '--------';
+            $('tx-status').classList.remove('active');
+            $('rx-status').classList.remove('match');
+            $('tx-count').textContent = 'TX: 0';
+            $('rx-count').textContent = 'RX: 0';
+            $('match-count').textContent = 'Match: 0';
+            log('info', '', '', 'Reset');
         }
         
         document.addEventListener('DOMContentLoaded', () => {
@@ -881,12 +936,10 @@
             $('peak-points-info').textContent = getPeakPointsInfo();
             setupGraph();
             requestAnimationFrame(drawGraph);
-            log('Audio Signal Test v13', 'info');
-            log('───────────────────', 'info');
-            log('STRICT PATTERN MATCH', 'info');
-            log('All 8 bits must match', 'info');
-            log('exactly for a hit', 'info');
-            log('INIT → ON AIR → PULSE', 'info');
+            log('info', '', '', 'Audio Signal Test v14');
+            log('info', '', '', '─────────────────────');
+            log('info', '', '', 'TX/RX independent detection');
+            log('info', '', '', 'Event history enabled');
         });
         
         window.addEventListener('resize', () => { if (graphCanvas) setupGraph(); });
