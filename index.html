@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio Signal Test v12</title>
+    <title>Audio Signal Test v13</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Courier New', monospace; background: #000; color: #fff; min-height: 100vh; padding: 1rem; }
@@ -80,8 +80,8 @@
         .zoom-input:focus { outline: none; border-color: #666; color: #fff; }
         .zoom-sep { color: #333; font-size: 0.5rem; }
         .graph-container { border: 1px solid #222; background: #050505; position: relative; overflow: hidden; }
-        #graph { width: 100%; height: 110px; display: block; }
-        .detection-info { text-align: center; font-size: 0.6rem; color: #555; min-height: 1.1em; padding: 0.25rem 0; }
+        #graph { width: 100%; height: 120px; display: block; }
+        .detection-info { text-align: center; font-size: 0.55rem; color: #555; min-height: 2.2em; padding: 0.25rem 0; line-height: 1.4; }
         .match-status { text-align: center; font-size: 0.7rem; padding: 0.3rem; margin-bottom: 0.5rem; border: 1px solid #333; background: #0a0a0a; }
         .match-status.match { color: #0f0; border-color: #0a0; background: #001a00; }
         .match-status.no-match { color: #888; }
@@ -95,6 +95,7 @@
         .log-entry.info { color: #888; }
         .log-entry.err { color: #f00; }
         .log-entry.match { color: #0f0; font-weight: bold; }
+        .log-entry.mismatch { color: #f80; }
         .log-entry .ts { color: #333; margin-right: 0.25rem; }
         .log-entry .pattern { color: #ff0; }
         .log-entry .ascii { color: #0ff; font-weight: bold; }
@@ -120,19 +121,19 @@
 </head>
 <body>
     <div class="container">
-        <h1>Audio Signal Test v12</h1>
+        <h1>Audio Signal Test v13</h1>
         
         <div class="section tx">
             <div class="section-title">▲ Transmit</div>
             <div class="row">
                 <label>Base</label>
-                <input type="range" id="tx-slider" min="20" max="30000" step="10" value="1800">
-                <input type="number" id="tx-input" value="1800" min="1" max="30000" step="1">
+                <input type="range" id="tx-slider" min="20" max="30000" step="10" value="18000">
+                <input type="number" id="tx-input" value="18000" min="1" max="30000" step="1">
                 <span class="hz">Hz</span>
             </div>
             <div class="row">
                 <label>Step</label>
-                <input type="number" id="tx-step" value="100" min="1" max="500" step="1" style="width:50px;">
+                <input type="number" id="tx-step" value="50" min="1" max="500" step="1" style="width:50px;">
                 <span class="hz">Hz</span>
                 <span class="range-display" id="tx-range-display"></span>
             </div>
@@ -155,13 +156,13 @@
             <div class="section-title">▼ Receive Pattern</div>
             <div class="row">
                 <label>Base</label>
-                <input type="range" id="rx-slider" min="20" max="30000" step="10" value="1800">
-                <input type="number" id="rx-input" value="1800" min="1" max="30000" step="1">
+                <input type="range" id="rx-slider" min="20" max="30000" step="10" value="18000">
+                <input type="number" id="rx-input" value="18000" min="1" max="30000" step="1">
                 <span class="hz">Hz</span>
             </div>
             <div class="row">
                 <label>Step</label>
-                <input type="number" id="rx-step" value="100" min="1" max="500" step="1" style="width:50px;">
+                <input type="number" id="rx-step" value="50" min="1" max="500" step="1" style="width:50px;">
                 <span class="hz">Hz</span>
                 <span class="range-display" id="rx-range-display"></span>
             </div>
@@ -213,7 +214,7 @@
                 <label>Ratio</label>
                 <input type="number" id="peak-ratio" class="peak-input" value="1.3" min="1.0" max="3.0" step="0.1">
                 <span class="hz">×</span>
-                <span class="range-display">center vs flank</span>
+                <span class="range-display">center ÷ ratio = flank max</span>
             </div>
             <div class="row">
                 <label>Enabled</label>
@@ -285,14 +286,12 @@
         let audioCtx, analyser, micStream, oscillators = [], gainNodes = [];
         let detectInterval, testInterval, frequencyData;
         let isInit = false, isRunning = false, isSending = false, isOnAir = false;
-        let txBaseFreq = 1800, txStep = 100, txTolerance = 4, txToggles = [0,0,0,0,0,0,0,0];
-        let rxBaseFreq = 1800, rxStep = 100, rxTolerance = 4, rxThreshold = 40, rxWindow = 300, pollInterval = 50, rxToggles = [0,0,0,0,0,0,0,0];
+        let txBaseFreq = 18000, txStep = 50, txTolerance = 4, txToggles = [0,0,0,0,0,0,0,0];
+        let rxBaseFreq = 18000, rxStep = 50, rxTolerance = 4, rxThreshold = 40, rxWindow = 300, pollInterval = 50, rxToggles = [0,0,0,0,0,0,0,0];
         let pulseDuration = 350, timeLeft = 10, lastDetectTime = 0, lastDetectedPattern = '', logEntryCount = 0;
         
-        // Peak detection settings
-        let peakPoints = 2;  // 1, 2, or 3
-        let peakRatio = 1.3;
-        let peakEnabled = false;
+        let peakPoints = 2, peakRatio = 1.3, peakEnabled = false;
+        let lastDetectionData = { powers: [], flankMaxLevels: [], peakValid: [] };
         
         let graphCanvas, graphCtx;
         
@@ -308,7 +307,6 @@
         const charSymbols = {0:'∅',8:'⌫',9:'⇥',10:'↵',13:'↩',32:'␣',127:'⌦'};
         const getAsciiChar = c => charSymbols[c] || (c >= 33 && c <= 126 ? String.fromCharCode(c) : '?');
         
-        // Peak detection check positions based on points setting
         function getPeakCheckDistances() {
             if (peakPoints === 1) return [0.5];
             if (peakPoints === 2) return [0.25, 0.5];
@@ -316,14 +314,14 @@
         }
         
         function getPeakPointsInfo() {
-            const d = getPeakCheckDistances();
-            return '±' + d.map(x => Math.round(x * 100) + '%').join(', ±');
+            return '±' + getPeakCheckDistances().map(x => Math.round(x * 100) + '%').join(', ±');
         }
         
         function adjustPeakPoints(dir) {
             peakPoints = clamp(peakPoints + dir, 1, 3);
             $('peak-points-val').textContent = peakPoints;
             $('peak-points-info').textContent = getPeakPointsInfo();
+            if (peakEnabled) $('peak-status').textContent = `${peakPoints}-point peak detection active`;
         }
         
         function togglePeakDetection() {
@@ -335,13 +333,11 @@
             $('peak-status').textContent = peakEnabled ? `${peakPoints}-point peak detection active` : 'Peak detection disabled';
         }
         
-        // Check if a frequency has a valid peak shape
         function checkPeak(centerPwr, freq, stepHz, binW, data) {
-            if (!peakEnabled) return true; // Skip if disabled
+            const flankMaxLevel = centerPwr / peakRatio;
+            if (!peakEnabled) return { valid: true, flankMaxLevel };
             
             const distances = getPeakCheckDistances();
-            
-            // Check both sides (left = -1, right = +1)
             for (const side of [-1, 1]) {
                 let lastPwr = centerPwr;
                 for (let i = 0; i < distances.length; i++) {
@@ -350,16 +346,14 @@
                     const checkPwr = data[clamp(checkBin, 0, data.length - 1)] || 0;
                     
                     if (i === 0) {
-                        // First flank: center must be higher by ratio
-                        if (centerPwr < checkPwr * peakRatio) return false;
+                        if (checkPwr >= flankMaxLevel) return { valid: false, flankMaxLevel };
                     } else {
-                        // Subsequent: must continue declining (or stay same)
-                        if (checkPwr > lastPwr) return false;
+                        if (checkPwr > lastPwr) return { valid: false, flankMaxLevel };
                     }
                     lastPwr = checkPwr;
                 }
             }
-            return true;
+            return { valid: true, flankMaxLevel };
         }
         
         function log(msg, type = '') {
@@ -378,18 +372,8 @@
             $('timer').textContent = `${Math.floor(timeLeft/60).toString().padStart(2,'0')}:${(timeLeft%60).toString().padStart(2,'0')}`;
         }
         
-        // Zoom functions
-        function getTxRange() {
-            const min = txBaseFreq - txTolerance - txStep;
-            const max = txBaseFreq + (NUM_BITS - 1) * txStep + txTolerance + txStep;
-            return { min, max };
-        }
-        
-        function getRxRange() {
-            const min = rxBaseFreq - rxTolerance - rxStep;
-            const max = rxBaseFreq + (NUM_BITS - 1) * rxStep + rxTolerance + rxStep;
-            return { min, max };
-        }
+        function getTxRange() { return { min: txBaseFreq - txTolerance - txStep, max: txBaseFreq + 7 * txStep + txTolerance + txStep }; }
+        function getRxRange() { return { min: rxBaseFreq - rxTolerance - rxStep, max: rxBaseFreq + 7 * rxStep + rxTolerance + rxStep }; }
         
         function applyZoomToggles() {
             if (!zoomTxOn && !zoomRxOn) return;
@@ -405,7 +389,7 @@
         function toggleZoomRx() { zoomRxOn = !zoomRxOn; $('zoom-rx').classList.toggle('rx-on', zoomRxOn); applyZoomToggles(); }
         
         function zoomGraph(dir) {
-            zoomTxOn = false; zoomRxOn = false;
+            zoomTxOn = zoomRxOn = false;
             $('zoom-tx').classList.remove('tx-on');
             $('zoom-rx').classList.remove('rx-on');
             zoomIndex = clamp(zoomIndex + dir, 0, ZOOM_LEVELS.length - 1);
@@ -415,16 +399,13 @@
         }
         
         function updateZoomInputs() {
-            $('hz-min').value = hzMin;
-            $('hz-max').value = hzMax;
-            $('pwr-min').value = pwrMin;
-            $('pwr-max').value = pwrMax;
+            $('hz-min').value = hzMin; $('hz-max').value = hzMax;
+            $('pwr-min').value = pwrMin; $('pwr-max').value = pwrMax;
         }
         
         function readZoomInputs() {
-            zoomTxOn = false; zoomRxOn = false;
-            $('zoom-tx').classList.remove('tx-on');
-            $('zoom-rx').classList.remove('rx-on');
+            zoomTxOn = zoomRxOn = false;
+            $('zoom-tx').classList.remove('tx-on'); $('zoom-rx').classList.remove('rx-on');
             hzMin = clamp(parseInt($('hz-min').value) || 0, 0, 30000);
             hzMax = clamp(parseInt($('hz-max').value) || 4000, hzMin + 100, 30000);
             pwrMin = clamp(parseInt($('pwr-min').value) || 0, 0, 255);
@@ -486,7 +467,7 @@
             $('tx-ascii').textContent = getAsciiDisplay(binaryToAscii(b));
             $('tx-range-display').textContent = `${txBaseFreq}–${txBaseFreq + 7*txStep} Hz`;
             const active = getActiveFreqs(txBaseFreq, txStep, txToggles);
-            $('tx-freq-info').textContent = active.length ? `Active: ${active.map(f => `${f}±${txTolerance}`).join(', ')} Hz` : 'No frequencies selected';
+            $('tx-freq-info').textContent = active.length ? `Active: ${active.join(', ')} Hz` : 'No frequencies selected';
             if (zoomTxOn) applyZoomToggles();
         }
         
@@ -496,7 +477,7 @@
             $('rx-ascii').textContent = getAsciiDisplay(binaryToAscii(b));
             $('rx-range-display').textContent = `${rxBaseFreq}–${rxBaseFreq + 7*rxStep} Hz`;
             const active = getActiveFreqs(rxBaseFreq, rxStep, rxToggles);
-            $('rx-freq-info').textContent = active.length ? `Expecting: ${active.map(f => `${f}±${rxTolerance}`).join(', ')} Hz` : 'No pattern set';
+            $('rx-freq-info').textContent = active.length ? `Expecting: ${active.join(', ')} Hz` : 'No pattern set';
             if (zoomRxOn) applyZoomToggles();
         }
         
@@ -505,11 +486,11 @@
         
         $('tx-slider').oninput = () => updateTxBaseFreq(+$('tx-slider').value);
         $('tx-input').onchange = () => updateTxBaseFreq(+$('tx-input').value || 1);
-        $('tx-step').onchange = () => { txStep = clamp(+$('tx-step').value || 100, 1, 500); updateTxDisplay(); };
+        $('tx-step').onchange = () => { txStep = clamp(+$('tx-step').value || 50, 1, 500); updateTxDisplay(); };
         $('tx-tolerance').onchange = () => { txTolerance = clamp(+$('tx-tolerance').value || 4, 1, 100); updateTxDisplay(); };
         $('rx-slider').oninput = () => updateRxBaseFreq(+$('rx-slider').value);
         $('rx-input').onchange = () => updateRxBaseFreq(+$('rx-input').value || 1);
-        $('rx-step').onchange = () => { rxStep = clamp(+$('rx-step').value || 100, 1, 500); updateRxDisplay(); };
+        $('rx-step').onchange = () => { rxStep = clamp(+$('rx-step').value || 50, 1, 500); updateRxDisplay(); };
         $('rx-tolerance').onchange = () => { rxTolerance = clamp(+$('rx-tolerance').value || 4, 1, 100); updateRxDisplay(); };
         $('rx-thresh').onchange = () => { rxThreshold = clamp(+$('rx-thresh').value || 40, 5, 200); };
         $('rx-window').onchange = () => { rxWindow = +$('rx-window').value || 300; };
@@ -568,9 +549,13 @@
             graphCtx.fillRect(0, 0, w, h);
             
             const hzToX = hz => ((hz - hzMin) / hzRange) * w;
+            const pwrToY = pwr => h - ((clamp(pwr, pwrMin, pwrMax) - pwrMin) / pwrRange) * h;
+            
+            const txFreqs = getAllFreqs(txBaseFreq, txStep);
+            const rxFreqs = getAllFreqs(rxBaseFreq, rxStep);
+            const peakDistances = getPeakCheckDistances();
             
             // TX bands (green)
-            const txFreqs = getAllFreqs(txBaseFreq, txStep);
             for (let i = 0; i < NUM_BITS; i++) {
                 const freq = txFreqs[i];
                 if (freq + txTolerance < hzMin || freq - txTolerance > hzMax) continue;
@@ -581,10 +566,7 @@
                 graphCtx.beginPath(); graphCtx.moveTo(hzToX(freq), 0); graphCtx.lineTo(hzToX(freq), h); graphCtx.stroke();
             }
             
-            // RX bands (blue) + peak detection markers
-            const rxFreqs = getAllFreqs(rxBaseFreq, rxStep);
-            const peakDistances = getPeakCheckDistances();
-            
+            // RX bands (blue) + peak markers
             for (let i = 0; i < NUM_BITS; i++) {
                 const freq = rxFreqs[i];
                 if (freq + rxTolerance < hzMin || freq - rxTolerance > hzMax) continue;
@@ -595,46 +577,49 @@
                 graphCtx.strokeStyle = rxToggles[i] ? 'rgba(0, 200, 255, 0.4)' : 'rgba(0, 150, 255, 0.12)';
                 graphCtx.beginPath(); graphCtx.moveTo(hzToX(freq), 0); graphCtx.lineTo(hzToX(freq), h); graphCtx.stroke();
                 
-                // Bit number
                 graphCtx.fillStyle = rxToggles[i] ? 'rgba(0, 200, 255, 0.6)' : 'rgba(100, 100, 100, 0.3)';
                 graphCtx.font = '8px Courier New';
                 graphCtx.fillText(i + 1, hzToX(freq) - 3, 10);
                 
-                // Peak detection markers (magenta) - show check positions
-                if (peakEnabled && rxToggles[i]) {
+                // Peak check markers (magenta)
+                if (peakEnabled) {
                     for (let d = 0; d < peakDistances.length; d++) {
                         const dist = peakDistances[d];
-                        const opacity = 0.3 - d * 0.08; // Fade with distance
-                        
-                        // Left marker
-                        const leftX = hzToX(freq - rxStep * dist);
-                        if (leftX >= 0 && leftX <= w) {
-                            graphCtx.strokeStyle = `rgba(255, 0, 255, ${opacity})`;
-                            graphCtx.beginPath();
-                            graphCtx.moveTo(leftX, h * 0.1);
-                            graphCtx.lineTo(leftX, h * 0.9);
-                            graphCtx.stroke();
-                            // Small tick at top
-                            graphCtx.fillStyle = `rgba(255, 0, 255, ${opacity + 0.1})`;
-                            graphCtx.fillRect(leftX - 1, h * 0.05, 3, 6);
+                        const opacity = 0.25 - d * 0.06;
+                        for (const side of [-1, 1]) {
+                            const checkX = hzToX(freq + side * rxStep * dist);
+                            if (checkX >= 0 && checkX <= w) {
+                                graphCtx.strokeStyle = `rgba(255, 0, 255, ${opacity})`;
+                                graphCtx.beginPath(); graphCtx.moveTo(checkX, h * 0.15); graphCtx.lineTo(checkX, h * 0.85); graphCtx.stroke();
+                                graphCtx.fillStyle = `rgba(255, 0, 255, ${opacity + 0.1})`;
+                                graphCtx.fillRect(checkX - 1, h * 0.08, 3, 5);
+                            }
                         }
+                    }
+                    
+                    // Peak ratio threshold line (dotted)
+                    if (lastDetectionData.flankMaxLevels[i] > 0) {
+                        const flankMax = lastDetectionData.flankMaxLevels[i];
+                        const threshY = pwrToY(flankMax);
+                        const bitLeft = hzToX(freq - rxStep * 0.6);
+                        const bitRight = hzToX(freq + rxStep * 0.6);
                         
-                        // Right marker
-                        const rightX = hzToX(freq + rxStep * dist);
-                        if (rightX >= 0 && rightX <= w) {
-                            graphCtx.strokeStyle = `rgba(255, 0, 255, ${opacity})`;
-                            graphCtx.beginPath();
-                            graphCtx.moveTo(rightX, h * 0.1);
-                            graphCtx.lineTo(rightX, h * 0.9);
-                            graphCtx.stroke();
-                            graphCtx.fillStyle = `rgba(255, 0, 255, ${opacity + 0.1})`;
-                            graphCtx.fillRect(rightX - 1, h * 0.05, 3, 6);
-                        }
+                        graphCtx.strokeStyle = lastDetectionData.peakValid[i] ? 'rgba(0, 255, 0, 0.6)' : 'rgba(255, 100, 0, 0.6)';
+                        graphCtx.setLineDash([4, 4]);
+                        graphCtx.beginPath();
+                        graphCtx.moveTo(Math.max(0, bitLeft), threshY);
+                        graphCtx.lineTo(Math.min(w, bitRight), threshY);
+                        graphCtx.stroke();
+                        graphCtx.setLineDash([]);
+                        
+                        graphCtx.fillStyle = lastDetectionData.peakValid[i] ? 'rgba(0, 255, 0, 0.7)' : 'rgba(255, 100, 0, 0.7)';
+                        graphCtx.font = '7px Courier New';
+                        graphCtx.fillText(Math.round(flankMax), hzToX(freq) - 6, threshY - 3);
                     }
                 }
             }
             
-            // Spectrum
+            // Spectrum bars
             if (isOnAir && analyser) {
                 analyser.getByteFrequencyData(frequencyData);
                 const binW = audioCtx.sampleRate / analyser.fftSize;
@@ -649,7 +634,7 @@
                     const v = pwr / 255;
                     
                     let inTx = txToggles.some((t, j) => t && Math.abs(freq - txFreqs[j]) <= txTolerance);
-                    let inRx = rxToggles.some((t, j) => t && Math.abs(freq - rxFreqs[j]) <= rxTolerance);
+                    let inRx = rxFreqs.some((f) => Math.abs(freq - f) <= rxTolerance);
                     
                     graphCtx.fillStyle = (inTx && isSending) ? `rgba(0, 255, 0, ${0.4 + v * 0.6})` : 
                                          inRx ? `rgba(0, 200, 255, ${0.3 + v * 0.7})` : 
@@ -659,9 +644,9 @@
                 }
             }
             
-            // Threshold
+            // Threshold line (yellow)
             if (rxThreshold >= pwrMin && rxThreshold <= pwrMax) {
-                const threshY = h - ((rxThreshold - pwrMin) / pwrRange) * h;
+                const threshY = pwrToY(rxThreshold);
                 graphCtx.strokeStyle = 'rgba(255, 255, 0, 0.3)';
                 graphCtx.setLineDash([3, 3]);
                 graphCtx.beginPath(); graphCtx.moveTo(0, threshY); graphCtx.lineTo(w, threshY); graphCtx.stroke();
@@ -751,50 +736,66 @@
                 
                 analyser.getByteFrequencyData(data);
                 const rxFreqs = getAllFreqs(rxBaseFreq, rxStep);
-                const detected = [], powers = [], peaks = [];
                 
+                const detected = [], powers = [], peakResults = [], flankMaxLevels = [];
+                
+                // Check ALL 8 bit positions - this is critical for exact matching
                 for (let i = 0; i < NUM_BITS; i++) {
                     const freq = rxFreqs[i];
                     const lo = Math.max(0, Math.floor((freq - rxTolerance) / binW));
                     const hi = Math.min(data.length - 1, Math.ceil((freq + rxTolerance) / binW));
                     
-                    // Find max power in tolerance band
                     let maxP = 0;
                     for (let b = lo; b <= hi; b++) if (data[b] > maxP) maxP = data[b];
                     powers.push(maxP);
                     
-                    // Check threshold AND peak shape
                     const aboveThresh = maxP >= rxThreshold;
-                    const isPeak = aboveThresh ? checkPeak(maxP, freq, rxStep, binW, data) : false;
-                    peaks.push(isPeak);
+                    let peakResult = { valid: true, flankMaxLevel: 0 };
+                    if (aboveThresh) {
+                        peakResult = checkPeak(maxP, freq, rxStep, binW, data);
+                    }
+                    peakResults.push(peakResult.valid);
+                    flankMaxLevels.push(aboveThresh ? peakResult.flankMaxLevel : 0);
                     
-                    // Only count as detected if both conditions met
-                    detected.push((aboveThresh && isPeak) ? 1 : 0);
+                    // Bit is 1 ONLY if above threshold AND peak valid
+                    detected.push((aboveThresh && peakResult.valid) ? 1 : 0);
                 }
+                
+                lastDetectionData = { powers, flankMaxLevels, peakValid: peakResults };
                 
                 const detStr = togglesToString(detected);
                 const expStr = togglesToString(rxToggles);
-                const charCode = binaryToAscii(detStr);
+                const detCharCode = binaryToAscii(detStr);
+                const expCharCode = binaryToAscii(expStr);
                 
-                // Show peak status in detection info
-                const peakInfo = peakEnabled ? ` | Peaks: ${peaks.map((p,i) => powers[i] >= rxThreshold ? (p ? '✓' : '✗') : '-').join('')}` : '';
-                $('detection-info').textContent = `Pwr: [${powers.join(', ')}]${peakInfo}`;
-                $('detected-pattern').textContent = `${detStr} ${getAsciiDisplay(charCode)}`;
+                const bitStatus = detected.map((d, i) => {
+                    if (powers[i] < rxThreshold) return '-';
+                    if (!peakResults[i]) return '✗';
+                    return '✓';
+                }).join('');
                 
+                const peakInfo = peakEnabled ? ` | Peak: ${bitStatus}` : '';
+                $('detection-info').innerHTML = `Pwr: [${powers.join(', ')}]${peakInfo}<br>` +
+                    `Det: ${detStr} ${getAsciiDisplay(detCharCode)} | Exp: ${expStr} ${getAsciiDisplay(expCharCode)}`;
+                $('detected-pattern').textContent = `${detStr} ${getAsciiDisplay(detCharCode)}`;
+                
+                // Only trigger match/mismatch when signal detected
                 if (detected.some(b => b)) {
                     const now = Date.now();
                     if (now - lastDetectTime > rxWindow || detStr !== lastDetectedPattern) {
                         lastDetectTime = now;
                         lastDetectedPattern = detStr;
+                        
+                        // EXACT 8-bit match required
                         const isMatch = detStr === expStr;
                         $('match-status').className = `match-status ${isMatch ? 'match' : 'no-match'}`;
                         
                         if (isMatch) {
-                            log(`✓ MATCH: <span class="pattern">${detStr}</span> <span class="ascii">${getAsciiDisplay(charCode)}</span>`, 'match');
+                            log(`✓ MATCH: <span class="pattern">${detStr}</span> <span class="ascii">${getAsciiDisplay(detCharCode)}</span>`, 'match');
                             triggerFlash();
-                            triggerCharFlash(getAsciiChar(charCode));
+                            triggerCharFlash(getAsciiChar(detCharCode));
                         } else {
-                            log(`RX: <span class="pattern">${detStr}</span> ${getAsciiDisplay(charCode)} (expected ${expStr})`, 'rx');
+                            log(`✗ MISMATCH: <span class="pattern">${detStr}</span> ${getAsciiDisplay(detCharCode)} ≠ ${expStr} ${getAsciiDisplay(expCharCode)}`, 'mismatch');
                         }
                     }
                 }
@@ -862,6 +863,7 @@
             charFlashQueue = [];
             logEntryCount = 0;
             lastDetectedPattern = '';
+            lastDetectionData = { powers: [], flankMaxLevels: [], peakValid: [] };
             $('detected-pattern').textContent = '--------';
             $('match-status').className = 'match-status no-match';
             $('log-count').textContent = '0 entries';
@@ -879,11 +881,11 @@
             $('peak-points-info').textContent = getPeakPointsInfo();
             setupGraph();
             requestAnimationFrame(drawGraph);
-            log('Audio Signal Test v12', 'info');
+            log('Audio Signal Test v13', 'info');
             log('───────────────────', 'info');
-            log('Peak Detection Mode', 'info');
-            log('Enable peak checking for', 'info');
-            log('noise-resistant detection', 'info');
+            log('STRICT PATTERN MATCH', 'info');
+            log('All 8 bits must match', 'info');
+            log('exactly for a hit', 'info');
             log('INIT → ON AIR → PULSE', 'info');
         });
         
