@@ -3,24 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio Signal Test v18</title>
+    <title>Audio Signal Test v24</title>
     <style>
+        /* === Base Styles === */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Courier New', monospace; background: #000; color: #fff; min-height: 100vh; padding: 0.75rem; font-size: 12px; }
         .container { max-width: 580px; margin: 0 auto; border: 1px solid #fff; padding: 1rem; }
         h1 { font-size: 0.9rem; font-weight: normal; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 0.75rem; text-align: center; border-bottom: 1px solid #333; padding-bottom: 0.4rem; }
+        
+        /* === Section Styles === */
         .section { margin-bottom: 0.5rem; padding: 0.5rem; border: 1px solid #333; }
         .section.tx { border-color: #0a0; }
         .section.rx { border-color: #0aa; }
-        .section.peak { border-color: #a0a; }
         .section.denoise { border-color: #a80; }
-        .section.tx-pkt { border-color: #0a0; background: rgba(0,50,0,0.15); }
-        .section.rx-pkt { border-color: #0aa; background: rgba(0,50,50,0.15); }
+        .section.patbuf { border-color: #08a; }
         .section-title { font-size: 0.6rem; color: #666; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.3rem; display: flex; justify-content: space-between; align-items: center; }
-        .section.tx .section-title, .section.tx-pkt .section-title { color: #0f0; }
-        .section.rx .section-title, .section.rx-pkt .section-title { color: #0ff; }
-        .section.peak .section-title { color: #f0f; }
+        .section.tx .section-title { color: #0f0; }
+        .section.rx .section-title { color: #0ff; }
         .section.denoise .section-title { color: #fa0; }
+        .section.patbuf .section-title { color: #0af; }
+        
+        /* === Row & Input Styles === */
         .row { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.25rem; font-size: 0.65rem; flex-wrap: wrap; }
         .row:last-child { margin-bottom: 0; }
         .row label { color: #888; min-width: 50px; flex-shrink: 0; }
@@ -29,16 +32,19 @@
         .section.tx input[type="range"]::-webkit-slider-thumb { background: #0f0; }
         .section.rx input[type="range"]::-webkit-slider-thumb { background: #0ff; }
         .section.denoise input[type="range"]::-webkit-slider-thumb { background: #fa0; }
+        .section.patbuf input[type="range"]::-webkit-slider-thumb { background: #0af; }
         input[type="number"], input[type="text"] { background: #111; border: 1px solid #444; color: #fff; padding: 0.2rem 0.25rem; font-family: inherit; font-size: 0.65rem; text-align: center; }
         input[type="number"] { width: 50px; }
-        input[type="text"].binary-input { width: 72px; font-family: inherit; letter-spacing: 1px; }
         input[type="number"]:focus, input[type="text"]:focus { outline: none; border-color: #fff; }
         .hz { font-size: 0.55rem; color: #666; }
         .range-display { font-size: 0.55rem; color: #666; margin-left: auto; }
-        .section.tx .range-display, .section.tx-pkt .range-display { color: #0a0; }
-        .section.rx .range-display, .section.rx-pkt .range-display { color: #0aa; }
+        .section.tx .range-display { color: #0a0; }
+        .section.rx .range-display { color: #0aa; }
         .section.denoise .range-display { color: #a80; }
-        .binary-row { display: flex; align-items: center; gap: 0.25rem; margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px solid #222; }
+        .section.patbuf .range-display { color: #08a; }
+        
+        /* === Binary Toggle Styles === */
+        .binary-row { display: flex; align-items: center; gap: 0.25rem; margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px solid #222; flex-wrap: wrap; }
         .binary-label { font-size: 0.55rem; color: #666; min-width: 40px; }
         .section.tx .binary-label { color: #0a0; }
         .section.rx .binary-label { color: #0aa; }
@@ -51,12 +57,14 @@
         .bit-toggle.on .bit-num { color: #000; }
         .bit-toggle .bit-val { font-size: 0.7rem; font-weight: bold; color: #444; }
         .bit-toggle.on .bit-val { color: #000; }
-        .binary-string { font-size: 0.6rem; color: #555; font-family: inherit; letter-spacing: 0.05em; margin-left: auto; }
+        .binary-string { font-size: 0.6rem; color: #555; font-family: inherit; letter-spacing: 0.05em; margin-left: 0.3rem; }
         .section.tx .binary-string { color: #0a0; }
         .section.rx .binary-string { color: #0aa; }
         .ascii-char { font-size: 0.65rem; font-weight: bold; margin-left: 0.2rem; padding: 0.1rem 0.25rem; background: #1a1a1a; border-radius: 2px; }
         .section.tx .ascii-char { color: #0f0; border: 1px solid #0a0; }
         .section.rx .ascii-char { color: #0ff; border: 1px solid #0aa; }
+        
+        /* === Air & Pulse Controls === */
         .air-toggle { display: flex; justify-content: center; align-items: center; gap: 0.4rem; margin: 0.75rem 0; flex-wrap: wrap; }
         .air-btn { padding: 0.4rem 1.2rem; font-family: inherit; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; cursor: pointer; border: 2px solid #444; background: #111; color: #666; border-radius: 4px; transition: all 0.2s; }
         .air-btn:hover { border-color: #666; }
@@ -68,11 +76,27 @@
         .pulse-btn:active { background: #0f0; }
         .pulse-btn:disabled { border-color: #333; color: #333; cursor: not-allowed; }
         .pulse-btn:disabled:hover { background: #111; color: #333; }
-        .packet-btn { border-color: #080; color: #0f0; }
-        .packet-btn:hover { background: #080; color: #000; }
         .pulse-input { width: 42px; background: #111; border: 1px solid #0a0; color: #0f0; padding: 0.3rem 0.2rem; font-family: inherit; font-size: 0.6rem; text-align: center; border-radius: 3px; }
         .pulse-input:focus { outline: none; border-color: #0f0; }
         .pulse-label { font-size: 0.5rem; color: #0a0; }
+        .pulse-expander { width: 20px; height: 20px; font-family: inherit; font-size: 0.7rem; background: #111; color: #0a0; border: 1px solid #0a0; border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .pulse-expander:hover { background: #0a0; color: #000; }
+        
+        /* === Advanced Pulse Panel === */
+        .adv-pulse { margin: 0.5rem 0; padding: 0.5rem; border: 1px solid #0a0; background: rgba(0, 50, 0, 0.1); display: none; }
+        .adv-pulse.open { display: block; }
+        .adv-pulse-title { font-size: 0.55rem; color: #0a0; text-transform: uppercase; margin-bottom: 0.3rem; }
+        .adv-pulse-row { display: flex; align-items: center; gap: 0.3rem; margin-bottom: 0.25rem; font-size: 0.6rem; flex-wrap: wrap; }
+        .adv-pulse-row label { color: #0a0; min-width: 45px; font-size: 0.55rem; }
+        .adv-pulse-row input[type="text"] { flex: 1; min-width: 120px; text-align: left; padding-left: 0.4rem; border-color: #0a0; color: #0f0; }
+        .adv-pulse-row input[type="number"] { width: 45px; border-color: #0a0; color: #0f0; }
+        .adv-pulse-btn { padding: 0.35rem 0.8rem; font-family: inherit; font-size: 0.65rem; font-weight: bold; text-transform: uppercase; cursor: pointer; border: 2px solid #0a0; background: #111; color: #0f0; border-radius: 4px; }
+        .adv-pulse-btn:hover { background: #0a0; color: #000; }
+        .adv-pulse-btn.running { background: #a00; border-color: #f00; color: #fff; animation: seq-pulse 0.8s infinite; }
+        @keyframes seq-pulse { 50% { opacity: 0.7; } }
+        .adv-pulse-status { font-size: 0.5rem; color: #0a0; margin-left: 0.3rem; }
+        
+        /* === Graph Styles === */
         .graph-section { margin-bottom: 0.5rem; }
         .graph-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem; gap: 0.4rem; flex-wrap: wrap; }
         .graph-title { font-size: 0.55rem; color: #666; text-transform: uppercase; }
@@ -88,82 +112,16 @@
         .zoom-sep { color: #333; font-size: 0.45rem; }
         .graph-container { border: 1px solid #222; background: #050505; position: relative; overflow: hidden; }
         #graph { width: 100%; height: 100px; display: block; }
-        .detection-info { text-align: center; font-size: 0.5rem; color: #555; min-height: 1.8em; padding: 0.2rem 0; line-height: 1.3; }
-        .status-row { display: flex; gap: 0.4rem; margin-bottom: 0.4rem; }
-        .status-box { flex: 1; text-align: center; font-size: 0.6rem; padding: 0.25rem; border: 1px solid #333; background: #0a0a0a; }
-        .status-box.tx-status { border-color: #0a0; }
-        .status-box.rx-status { border-color: #0aa; }
-        .status-box.pkt-status { border-color: #a50; }
-        .status-box .label { font-size: 0.45rem; color: #666; text-transform: uppercase; }
-        .status-box.tx-status .label { color: #0a0; }
-        .status-box.rx-status .label { color: #0aa; }
-        .status-box.pkt-status .label { color: #a50; }
-        .status-box .pattern { font-weight: bold; color: #888; font-size: 0.55rem; }
-        .status-box.tx-status .pattern { color: #0f0; }
-        .status-box.rx-status .pattern { color: #0ff; }
-        .status-box.pkt-status .pattern { color: #fa0; }
-        .status-box.match { background: #001a00; }
-        .status-box.active { background: #0a0a00; }
-        .status-box.pkt-ok { background: #1a0a00; }
-        .log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem; }
-        .log-title { font-size: 0.55rem; color: #666; text-transform: uppercase; }
-        .log-stats { font-size: 0.45rem; color: #555; display: flex; gap: 0.4rem; }
-        .log-panel { height: 80px; overflow-y: auto; background: #050505; padding: 0.3rem; font-size: 0.5rem; border: 1px solid #222; margin-bottom: 0.5rem; }
-        .log-entry { margin-bottom: 0.15rem; color: #555; display: flex; gap: 0.25rem; align-items: flex-start; }
-        .log-entry .ts { color: #333; min-width: 65px; flex-shrink: 0; }
-        .log-entry .tag { font-weight: bold; min-width: 26px; flex-shrink: 0; }
-        .log-entry .msg { flex: 1; word-break: break-all; }
-        .log-entry.rx .tag { color: #0ff; }
-        .log-entry.rx .msg { color: #0aa; }
-        .log-entry.tx .tag { color: #0f0; }
-        .log-entry.tx .msg { color: #0a0; }
-        .log-entry.pkt .tag { color: #fa0; }
-        .log-entry.pkt .msg { color: #a80; }
-        .log-entry.match .tag { color: #ff0; }
-        .log-entry.match .msg { color: #ff0; font-weight: bold; }
-        .log-entry.info .tag { color: #888; }
-        .log-entry.info .msg { color: #666; }
-        .log-entry.err .tag { color: #f00; }
-        .log-entry.err .msg { color: #f00; }
-        .log-entry.denoise .tag { color: #fa0; }
-        .log-entry.denoise .msg { color: #a80; }
-        .timer { text-align: center; font-size: 1.1rem; font-weight: bold; margin: 0.2rem 0; }
-        .timer.active { animation: pulse 1s infinite; }
-        @keyframes pulse { 50% { opacity: 0.4; } }
-        .button-row { display: flex; gap: 0.4rem; }
+        
+        /* === Button Row === */
+        .button-row { display: flex; gap: 0.4rem; margin-top: 0.5rem; }
         button.main-btn { flex: 1; padding: 0.5rem; font-family: inherit; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; cursor: pointer; border: none; transition: all 0.15s; }
         .btn-init { background: #fff; color: #000; }
-        .btn-test { background: #0f0; color: #000; }
         .btn-reset { background: transparent; color: #fff; border: 1px solid #555 !important; }
         button.main-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
         button.main-btn:hover:not(:disabled) { opacity: 0.8; }
-        .progress { height: 2px; background: #222; margin-top: 0.5rem; }
-        .progress-fill { height: 100%; background: #0f0; width: 0%; transition: width 0.1s; }
-        .stepper { display: flex; align-items: center; gap: 0.1rem; }
-        .stepper-btn { width: 16px; height: 16px; font-family: inherit; font-size: 0.65rem; font-weight: bold; background: #111; color: #f0f; border: 1px solid #a0a; border-radius: 2px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .stepper-btn:hover { background: #a0a; color: #000; }
-        .stepper-val { min-width: 16px; text-align: center; font-size: 0.7rem; font-weight: bold; color: #f0f; }
-        .peak-input { width: 40px; background: #111; border: 1px solid #a0a; color: #f0f; padding: 0.2rem; font-family: inherit; font-size: 0.65rem; text-align: center; }
-        .peak-input:focus { outline: none; border-color: #f0f; }
-        .pkt-row { display: flex; align-items: center; gap: 0.3rem; font-size: 0.6rem; margin-bottom: 0.2rem; }
-        .pkt-row label { min-width: 50px; font-size: 0.55rem; }
-        .section.tx-pkt .pkt-row label { color: #0a0; }
-        .section.rx-pkt .pkt-row label { color: #0aa; }
-        .section.tx-pkt .pkt-row input[type="text"] { border-color: #0a0; color: #0f0; }
-        .section.tx-pkt .pkt-row input[type="number"] { border-color: #0a0; color: #0f0; width: 40px; }
-        .section.rx-pkt .pkt-row input[type="text"] { border-color: #0aa; color: #0ff; }
-        .section.rx-pkt .pkt-row input[type="number"] { border-color: #0aa; color: #0ff; width: 40px; }
-        .pkt-row .ascii-display { font-size: 0.6rem; min-width: 35px; }
-        .section.tx-pkt .ascii-display { color: #0f0; }
-        .section.rx-pkt .ascii-display { color: #0ff; }
-        .pkt-row .warn { color: #f00; font-size: 0.7rem; }
-        .pkt-row .ok { font-size: 0.6rem; }
-        .section.tx-pkt .ok { color: #0f0; }
-        .section.rx-pkt .ok { color: #0ff; }
-        .pkt-panels { display: flex; gap: 0.5rem; }
-        .pkt-panels .section { flex: 1; }
         
-        /* De-noise styles */
+        /* === De-noise Styles === */
         .denoise-controls { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
         .denoise-btn { padding: 0.3rem 0.5rem; font-family: inherit; font-size: 0.6rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; border: 2px solid #a80; background: #111; color: #fa0; border-radius: 4px; transition: all 0.15s; }
         .denoise-btn:hover { background: #a80; color: #000; }
@@ -173,18 +131,6 @@
         @keyframes listen-pulse { 50% { opacity: 0.6; } }
         .denoise-input { width: 45px; background: #111; border: 1px solid #a80; color: #fa0; padding: 0.2rem; font-family: inherit; font-size: 0.6rem; text-align: center; border-radius: 3px; }
         .denoise-input:focus { outline: none; border-color: #fa0; }
-        .noise-profiles { margin-top: 0.4rem; max-height: 120px; overflow-y: auto; }
-        .noise-profile { display: flex; align-items: center; gap: 0.3rem; padding: 0.3rem; margin-bottom: 0.25rem; background: #0a0a0a; border: 1px solid #333; border-radius: 3px; }
-        .noise-profile:hover { border-color: #a80; }
-        .noise-profile-canvas { width: 60px; height: 24px; border: 1px solid #444; background: #050505; flex-shrink: 0; }
-        .noise-profile-info { flex: 1; display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
-        .noise-profile-label { font-size: 0.5rem; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .noise-profile-slider { display: flex; align-items: center; gap: 0.2rem; }
-        .noise-profile-slider input[type="range"] { flex: 1; min-width: 40px; height: 3px; }
-        .noise-profile-slider .slider-val { font-size: 0.5rem; color: #fa0; min-width: 22px; text-align: right; }
-        .noise-profile-del { width: 16px; height: 16px; font-family: inherit; font-size: 0.7rem; font-weight: bold; background: #111; color: #666; border: 1px solid #444; border-radius: 2px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .noise-profile-del:hover { background: #600; color: #f00; border-color: #f00; }
-        .no-profiles { font-size: 0.5rem; color: #444; text-align: center; padding: 0.5rem; font-style: italic; }
         .denoise-master { display: flex; align-items: center; gap: 0.3rem; margin-top: 0.3rem; padding-top: 0.3rem; border-top: 1px solid #222; }
         .denoise-master label { font-size: 0.55rem; color: #a80; min-width: 45px; }
         .denoise-master input[type="range"] { flex: 1; }
@@ -192,18 +138,74 @@
         .denoise-toggle { padding: 0.15rem 0.4rem; font-family: inherit; font-size: 0.5rem; font-weight: bold; background: #111; color: #555; border: 1px solid #333; border-radius: 3px; cursor: pointer; text-transform: uppercase; }
         .denoise-toggle:hover { border-color: #555; color: #888; }
         .denoise-toggle.on { background: #a80; color: #000; border-color: #fa0; }
+        
+        /* === Noise Profile Styles === */
+        .noise-profiles { margin-top: 0.4rem; max-height: 150px; overflow-y: auto; }
+        .noise-profile { display: flex; align-items: center; gap: 0.3rem; padding: 0.3rem; margin-bottom: 0.25rem; background: #0a0a0a; border: 1px solid #333; border-radius: 3px; }
+        .noise-profile:hover { border-color: #a80; }
+        .noise-profile-canvas { width: 60px; height: 24px; border: 1px solid #444; background: #050505; flex-shrink: 0; }
+        .noise-profile-info { flex: 1; display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+        .noise-profile-name { display: flex; align-items: center; gap: 0.2rem; }
+        .noise-profile-name input { flex: 1; min-width: 60px; font-size: 0.5rem; padding: 0.15rem 0.25rem; background: #111; border: 1px solid #555; color: #fa0; text-align: left; border-radius: 2px; }
+        .noise-profile-name input:focus { border-color: #fa0; }
+        .noise-profile-meta { font-size: 0.45rem; color: #666; }
+        .noise-profile-slider { display: flex; align-items: center; gap: 0.2rem; }
+        .noise-profile-slider input[type="range"] { flex: 1; min-width: 40px; height: 3px; }
+        .noise-profile-slider .slider-val { font-size: 0.5rem; color: #fa0; min-width: 22px; text-align: right; }
+        .noise-profile-del { width: 16px; height: 16px; font-family: inherit; font-size: 0.7rem; font-weight: bold; background: #111; color: #666; border: 1px solid #444; border-radius: 2px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .noise-profile-del:hover { background: #600; color: #f00; border-color: #f00; }
+        .no-profiles { font-size: 0.5rem; color: #444; text-align: center; padding: 0.5rem; font-style: italic; }
+        
+        /* === Pattern Buffer Styles === */
+        .patbuf-controls { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.3rem; }
+        .patbuf-btn { padding: 0.3rem 0.5rem; font-family: inherit; font-size: 0.6rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; border: 2px solid #08a; background: #111; color: #0af; border-radius: 4px; transition: all 0.15s; }
+        .patbuf-btn:hover { background: #08a; color: #000; }
+        .patbuf-btn:disabled { border-color: #333; color: #333; cursor: not-allowed; }
+        .patbuf-btn:disabled:hover { background: #111; color: #333; }
+        .patbuf-btn.recording { background: #0af; color: #000; animation: rec-pulse 0.8s infinite; }
+        @keyframes rec-pulse { 50% { opacity: 0.7; } }
+        .patbuf-input { width: 50px; background: #111; border: 1px solid #08a; color: #0af; padding: 0.2rem; font-family: inherit; font-size: 0.6rem; text-align: center; border-radius: 3px; }
+        .patbuf-input:focus { outline: none; border-color: #0af; }
+        .patbuf-toggle { padding: 0.15rem 0.4rem; font-family: inherit; font-size: 0.5rem; font-weight: bold; background: #111; color: #555; border: 1px solid #333; border-radius: 3px; cursor: pointer; text-transform: uppercase; }
+        .patbuf-toggle:hover { border-color: #555; color: #888; }
+        .patbuf-toggle.on { background: #08a; color: #000; border-color: #0af; }
+        .patbuf-toggle.recording { background: #c00; color: #fff; border-color: #f00; box-shadow: 0 0 10px rgba(255, 0, 0, 0.4); animation: rec-btn-pulse 1s infinite; }
+        @keyframes rec-btn-pulse { 0%, 100% { box-shadow: 0 0 10px rgba(255, 0, 0, 0.4); } 50% { box-shadow: 0 0 18px rgba(255, 0, 0, 0.7); } }
+        .patbuf-status { font-size: 0.5rem; color: #08a; }
+        .patbuf-graphs { display: flex; gap: 0.4rem; margin-top: 0.3rem; }
+        .patbuf-graph-panel { flex: 1; }
+        .patbuf-graph-label { font-size: 0.5rem; color: #666; margin-bottom: 0.15rem; display: flex; justify-content: space-between; align-items: center; }
+        .patbuf-graph-label.tx-label { color: #0a0; }
+        .patbuf-graph-label.rx-label { color: #0aa; }
+        .patbuf-graph-info { font-size: 0.45rem; color: #555; }
+        .patbuf-canvas { width: 100%; height: 50px; border: 1px solid #333; background: #050505; display: block; }
+        .patbuf-canvas.tx-canvas { border-color: #0a0; }
+        .patbuf-canvas.rx-canvas { border-color: #0aa; }
+        .patbuf-slider-row { display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.3rem; padding-top: 0.3rem; border-top: 1px solid #222; }
+        .patbuf-slider-top { display: flex; align-items: center; gap: 0.3rem; }
+        .patbuf-slider-top label { font-size: 0.55rem; color: #08a; min-width: 30px; }
+        .patbuf-slider-val { font-size: 0.55rem; color: #0af; min-width: 80px; text-align: right; }
+        .patbuf-nav-btn { width: 22px; height: 18px; font-family: inherit; font-size: 0.6rem; font-weight: bold; background: #111; color: #0af; border: 1px solid #08a; border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .patbuf-nav-btn:hover { background: #08a; color: #000; }
+        .patbuf-nav-btn:disabled { border-color: #333; color: #333; cursor: not-allowed; }
+        .patbuf-nav-btn:disabled:hover { background: #111; }
+        .patbuf-timeline-container { position: relative; height: 24px; margin: 0.2rem 0; }
+        .patbuf-timeline-canvas { width: 100%; height: 24px; border: 1px solid #08a; background: #0a0a0a; display: block; cursor: crosshair; }
+        .patbuf-timeline-slider { position: absolute; top: 0; left: 0; right: 0; bottom: 0; -webkit-appearance: none; background: transparent; cursor: pointer; margin: 0; }
+        .patbuf-timeline-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: #aaa; cursor: ew-resize; border: none; border-radius: 50%; box-shadow: 0 0 3px rgba(0,0,0,0.6); }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Audio Signal Test v18</h1>
+        <h1>Audio Signal Test v24</h1>
         
+        <!-- Transmit Section -->
         <div class="section tx">
             <div class="section-title">▲ Transmit</div>
             <div class="row">
                 <label>Base</label>
                 <input type="range" id="tx-slider" min="20" max="30000" step="10" value="18000">
-                <input type="number" id="tx-input" value="18000" min="1" max="30000" step="1">
+                <input type="number" id="tx-input" value="18000" min="1" max="30000" step="1" style="width:60px;">
                 <span class="hz">Hz</span>
             </div>
             <div class="row">
@@ -225,12 +227,13 @@
             </div>
         </div>
         
+        <!-- Receive Section -->
         <div class="section rx">
             <div class="section-title">▼ Receive</div>
             <div class="row">
                 <label>Base</label>
                 <input type="range" id="rx-slider" min="20" max="30000" step="10" value="18000">
-                <input type="number" id="rx-input" value="18000" min="1" max="30000" step="1">
+                <input type="number" id="rx-input" value="18000" min="1" max="30000" step="1" style="width:60px;">
                 <span class="hz">Hz</span>
             </div>
             <div class="row">
@@ -249,16 +252,6 @@
                 <input type="number" id="rx-thresh" value="40" min="5" max="200" step="5" style="width:45px;">
                 <span class="hz">power</span>
             </div>
-            <div class="row">
-                <label>Window</label>
-                <input type="number" id="rx-window" value="300" min="10" max="2000" step="10" style="width:50px;">
-                <span class="hz">ms debounce</span>
-            </div>
-            <div class="row">
-                <label>Poll</label>
-                <input type="number" id="poll-interval" value="50" min="10" max="500" step="10" style="width:45px;">
-                <span class="hz">ms</span>
-            </div>
             <div class="binary-row">
                 <span class="binary-label">Expect</span>
                 <div class="toggle-group" id="rx-toggles"></div>
@@ -267,23 +260,7 @@
             </div>
         </div>
         
-        <div class="section peak">
-            <div class="section-title">⬡ Peak Detection</div>
-            <div class="row">
-                <label>Points</label>
-                <div class="stepper">
-                    <button class="stepper-btn" onclick="adjustPeakPoints(-1)">−</button>
-                    <span class="stepper-val" id="peak-points-val">1</span>
-                    <button class="stepper-btn" onclick="adjustPeakPoints(1)">+</button>
-                </div>
-                <span class="range-display" id="peak-points-info">±50%</span>
-                <label style="min-width:30px;">Ratio</label>
-                <input type="number" id="peak-ratio" class="peak-input" value="1.0" min="1.0" max="3.0" step="0.1" style="width:40px;">
-                <span class="hz">×</span>
-                <button class="zoom-toggle" id="peak-enabled" onclick="togglePeakDetection()" style="border-color:#a0a;background:#a0a;color:#000;">ON</button>
-            </div>
-        </div>
-        
+        <!-- De-noise Section -->
         <div class="section denoise">
             <div class="section-title">
                 <span>🔇 De-noise</span>
@@ -305,90 +282,91 @@
             </div>
         </div>
         
-        <div class="pkt-panels">
-            <div class="section tx-pkt">
-                <div class="section-title">📤 TX Packet</div>
-                <div class="pkt-row">
-                    <label>Header</label>
-                    <input type="text" id="tx-pkt-header" class="binary-input" value="10101010" maxlength="8" oninput="validatePktField(this, 'tx-pkt-header-status')">
-                    <span id="tx-pkt-header-status" class="ok">✓</span>
+        <!-- Pattern Buffer Section -->
+        <div class="section patbuf">
+            <div class="section-title">
+                <span>📊 Pattern Buffers</span>
+                <button class="patbuf-toggle on" id="patbuf-enabled" onclick="togglePatBufEnabled()">ON</button>
+            </div>
+            <div class="patbuf-controls">
+                <label style="min-width:30px; color:#08a; font-size:0.55rem;">Rate</label>
+                <input type="number" id="patbuf-rate" class="patbuf-input" value="1" min="1" max="100" style="width:40px;">
+                <span class="hz">ms</span>
+                <label style="min-width:35px; color:#08a; font-size:0.55rem;">Length</label>
+                <input type="number" id="patbuf-length" class="patbuf-input" value="30000" min="100" max="99999" style="width:65px;">
+                <span class="hz">ms</span>
+                <button class="patbuf-toggle" id="patbuf-recording" onclick="togglePatBufRecording()">STOPPED</button>
+                <button class="patbuf-btn" id="btn-snapshot" onclick="takeSnapshot()" disabled>SNAPSHOT</button>
+            </div>
+            <div class="row" style="margin-top:0.2rem;">
+                <span class="patbuf-status" id="patbuf-status">Stopped</span>
+                <span class="range-display" id="patbuf-info">—</span>
+            </div>
+            <div class="patbuf-graphs">
+                <div class="patbuf-graph-panel">
+                    <div class="patbuf-graph-label tx-label">
+                        <span>TX Region</span>
+                        <span class="patbuf-graph-info" id="patbuf-tx-info">—</span>
+                    </div>
+                    <canvas id="patbuf-tx-canvas" class="patbuf-canvas tx-canvas"></canvas>
                 </div>
-                <div class="pkt-row">
-                    <label>Payload</label>
-                    <input type="text" id="tx-pkt-payload" class="binary-input" value="00110001" maxlength="8" oninput="validatePktField(this, 'tx-pkt-payload-status')">
-                    <span id="tx-pkt-payload-status" class="ok">✓</span>
-                    <span class="hz">×</span>
-                    <input type="number" id="tx-pkt-repeat" value="3" min="1" max="10" style="width:28px;">
-                </div>
-                <div class="pkt-row">
-                    <label>Checksum</label>
-                    <input type="text" id="tx-pkt-checksum" class="binary-input" value="01010101" maxlength="8" oninput="validatePktField(this, 'tx-pkt-checksum-status')">
-                    <span id="tx-pkt-checksum-status" class="ok">✓</span>
-                </div>
-                <div class="pkt-row">
-                    <label>Pulse</label>
-                    <input type="number" id="tx-pkt-pulse-ms" value="200" min="20" max="2000" style="width:45px;">
-                    <span class="hz">ms</span>
-                </div>
-                <div class="pkt-row">
-                    <label>Gap</label>
-                    <input type="number" id="tx-pkt-gap-ms" value="150" min="20" max="2000" style="width:45px;">
-                    <span class="hz">ms</span>
+                <div class="patbuf-graph-panel">
+                    <div class="patbuf-graph-label rx-label">
+                        <span>RX Region</span>
+                        <span class="patbuf-graph-info" id="patbuf-rx-info">—</span>
+                    </div>
+                    <canvas id="patbuf-rx-canvas" class="patbuf-canvas rx-canvas"></canvas>
                 </div>
             </div>
-            
-            <div class="section rx-pkt">
-                <div class="section-title">📥 RX Packet</div>
-                <div class="pkt-row">
-                    <label>Header</label>
-                    <input type="text" id="rx-pkt-header" class="binary-input" value="10101010" maxlength="8" oninput="validatePktField(this, 'rx-pkt-header-status')">
-                    <span id="rx-pkt-header-status" class="ok">✓</span>
+            <div class="patbuf-slider-row" id="patbuf-slider-row" style="display:none;">
+                <div class="patbuf-slider-top">
+                    <label>Time</label>
+                    <button class="patbuf-nav-btn" onclick="navSlider(-10)">«</button>
+                    <button class="patbuf-nav-btn" onclick="navSlider(-1)">−</button>
+                    <button class="patbuf-nav-btn" onclick="navSlider(1)">+</button>
+                    <button class="patbuf-nav-btn" onclick="navSlider(10)">»</button>
+                    <span class="patbuf-slider-val" id="patbuf-time-val">0ms / 30000ms</span>
                 </div>
-                <div class="pkt-row">
-                    <label>Payload</label>
-                    <input type="text" id="rx-pkt-payload" class="binary-input" value="00110001" maxlength="8" oninput="validatePktField(this, 'rx-pkt-payload-status')">
-                    <span id="rx-pkt-payload-status" class="ok">✓</span>
-                    <span class="hz">×</span>
-                    <input type="number" id="rx-pkt-repeat" value="3" min="1" max="10" style="width:28px;">
-                </div>
-                <div class="pkt-row">
-                    <label>Checksum</label>
-                    <input type="text" id="rx-pkt-checksum" class="binary-input" value="01010101" maxlength="8" oninput="validatePktField(this, 'rx-pkt-checksum-status')">
-                    <span id="rx-pkt-checksum-status" class="ok">✓</span>
-                </div>
-                <div class="pkt-row">
-                    <label>Pulse</label>
-                    <input type="number" id="rx-pkt-pulse-ms" value="200" min="20" max="2000" style="width:45px;">
-                    <span class="hz">ms</span>
-                </div>
-                <div class="pkt-row">
-                    <label>Gap</label>
-                    <input type="number" id="rx-pkt-gap-ms" value="150" min="20" max="2000" style="width:45px;">
-                    <span class="hz">ms</span>
-                </div>
-                <div class="pkt-row">
-                    <label>Tolerance</label>
-                    <input type="number" id="rx-pkt-tolerance-ms" value="20" min="5" max="500" style="width:45px;">
-                    <span class="hz">ms ±</span>
-                </div>
-                <div class="pkt-row">
-                    <label>Window</label>
-                    <input type="number" id="rx-pkt-window-ms" value="5000" min="500" max="30000" style="width:50px;">
-                    <span class="hz">ms</span>
+                <div class="patbuf-timeline-container">
+                    <canvas id="patbuf-timeline-canvas" class="patbuf-timeline-canvas"></canvas>
+                    <input type="range" id="patbuf-time-slider" class="patbuf-timeline-slider" min="0" max="29999" value="0">
                 </div>
             </div>
         </div>
         
+        <!-- Air & Pulse Controls -->
         <div class="air-toggle">
             <button class="air-btn" id="btn-air" onclick="toggleAir()">OFF AIR</button>
             <div class="pulse-group">
                 <button class="pulse-btn" id="btn-pulse" onclick="manualPulse()" disabled>PULSE</button>
-                <button class="pulse-btn packet-btn" id="btn-packet" onclick="sendPacket()" disabled>PACKET</button>
                 <input type="number" id="pulse-duration" class="pulse-input" value="350" min="5" max="5000" step="5">
                 <span class="pulse-label">ms</span>
+                <button class="pulse-expander" id="pulse-expander" onclick="toggleAdvPulse()">›</button>
             </div>
         </div>
         
+        <!-- Advanced Pulse Panel -->
+        <div class="adv-pulse" id="adv-pulse">
+            <div class="adv-pulse-title">▼ Sequence Pulse</div>
+            <div class="adv-pulse-row">
+                <label>Pattern</label>
+                <input type="text" id="seq-pattern" placeholder="00000001, 00000010, 00000100" value="00000001, 00000010, 00000100">
+            </div>
+            <div class="adv-pulse-row">
+                <label>Gap</label>
+                <input type="number" id="seq-gap" value="100" min="0" max="5000" step="10">
+                <span class="hz">ms</span>
+                <label style="min-width:50px;">Repeats</label>
+                <input type="number" id="seq-repeats" value="1" min="0" max="9999" step="1">
+                <span class="hz">(0=∞)</span>
+            </div>
+            <div class="adv-pulse-row">
+                <button class="adv-pulse-btn" id="btn-seq" onclick="toggleSequence()">START</button>
+                <span class="adv-pulse-status" id="seq-status">Idle</span>
+            </div>
+        </div>
+        
+        <!-- Spectrum Graph -->
         <div class="graph-section">
             <div class="graph-header">
                 <span class="graph-title">Spectrum</span>
@@ -413,69 +391,48 @@
             </div>
         </div>
         
-        <div class="detection-info" id="detection-info">—</div>
-        
-        <div class="status-row">
-            <div class="status-box tx-status" id="tx-status">
-                <div class="label">TX</div>
-                <div class="pattern" id="tx-active-pattern">--------</div>
-            </div>
-            <div class="status-box rx-status" id="rx-status">
-                <div class="label">RX</div>
-                <div class="pattern" id="rx-detected-pattern">--------</div>
-            </div>
-            <div class="status-box pkt-status" id="pkt-status">
-                <div class="label">Packet RX</div>
-                <div class="pattern" id="pkt-detected-pattern">waiting...</div>
-            </div>
-        </div>
-        
-        <div class="timer" id="timer">00:10</div>
-        
-        <div class="log-header">
-            <span class="log-title">Event Log</span>
-            <div class="log-stats">
-                <span id="tx-count">TX:0</span>
-                <span id="rx-count">RX:0</span>
-                <span id="pkt-count">PKT:0</span>
-            </div>
-        </div>
-        <div class="log-panel" id="log"></div>
-        
+        <!-- Main Buttons -->
         <div class="button-row">
             <button class="main-btn btn-init" id="btn-init" onclick="init()">⚡ INIT</button>
-            <button class="main-btn btn-test" id="btn-test" onclick="startTest()" style="display:none;">▶ TEST</button>
             <button class="main-btn btn-reset" onclick="resetAll()">↻</button>
         </div>
-        <div class="progress"><div class="progress-fill" id="progress"></div></div>
     </div>
 
     <script>
-        const FFT_SIZE = 8192, NUM_BITS = 8;
+        // ============================================================
+        // CONSTANTS
+        // ============================================================
+        const FFT_SIZE = 8192;
+        const NUM_BITS = 8;
         const ZOOM_LEVELS = [500, 1000, 2000, 4000, 8000, 12000, 20000, 30000];
-        const HISTORY_SIZE = 500;
         
+        // ============================================================
+        // STATE VARIABLES
+        // ============================================================
+        
+        // Audio system
+        let audioCtx, analyser, micStream, frequencyData;
+        let oscillators = [], gainNodes = [];
+        let isInit = false, isSending = false, isOnAir = false;
+        
+        // Transmit settings
+        let txBaseFreq = 18000, txStep = 50, txTolerance = 4;
+        let txToggles = [0,0,0,0,0,0,0,0];
+        let txState = { active: false, pattern: '00000000' };
+        
+        // Receive settings
+        let rxBaseFreq = 18000, rxStep = 50, rxTolerance = 4, rxThreshold = 40;
+        let rxToggles = [0,0,0,0,0,0,0,0];
+        
+        // Pulse settings
+        let pulseDuration = 350;
+        let advPulseOpen = false;
+        let seqRunning = false, seqInterval = null, seqIndex = 0, seqRepeatCount = 0;
+        
+        // Graph settings
         let zoomIndex = 3;
         let hzMin = 0, hzMax = 4000, pwrMin = 0, pwrMax = 255;
         let zoomTxOn = false, zoomRxOn = false;
-        let flashQueue = [], charFlashQueue = [], pktFlashQueue = [];
-        let audioCtx, analyser, micStream, oscillators = [], gainNodes = [];
-        let detectInterval, testInterval, frequencyData;
-        let isInit = false, isRunning = false, isSending = false, isOnAir = false;
-        let txBaseFreq = 18000, txStep = 50, txTolerance = 4, txToggles = [0,0,0,0,0,0,0,0];
-        let rxBaseFreq = 18000, rxStep = 50, rxTolerance = 4, rxThreshold = 40, rxWindow = 300, pollInterval = 50, rxToggles = [0,0,0,0,0,0,0,0];
-        let pulseDuration = 350, timeLeft = 10;
-        
-        let peakPoints = 1, peakRatio = 1.0, peakEnabled = true;
-        let lastDetectionData = { powers: [], flankMaxLevels: [], peakValid: [] };
-        
-        let txState = { active: false, pattern: '00000000', startTime: 0 };
-        let rxState = { lastPattern: '', lastTime: 0 };
-        
-        let txEventCount = 0, rxEventCount = 0, pktEventCount = 0;
-        
-        // Event history for backlog packet detection
-        let eventHistory = [];
         
         // De-noise system
         let noiseProfiles = [];
@@ -484,93 +441,75 @@
         let denoiseMasterLevel = 1.0;
         let isCapturingNoise = false;
         
+        // Pattern buffer system
+        let patBufEnabled = true;
+        let patBufRecording = false;
+        let patBufRate = 1;
+        let patBufLength = 30000;
+        let patBufInterval = null;
+        let patBufWriteIndex = 0;
+        let patBufSampleCount = 0;
+        let txPatternBuffer = null, rxPatternBuffer = null;
+        let txBufBinStart = 0, txBufBinEnd = 0, txBufBinCount = 0;
+        let rxBufBinStart = 0, rxBufBinEnd = 0, rxBufBinCount = 0;
+        
+        // Snapshot data
+        let snapshotData = null;
+        let snapshotSliderPos = 0;
+        let timelineOverlays = [];
+        
+        // Canvas references
         let graphCanvas, graphCtx;
+        let patBufTxCanvas, patBufTxCtx;
+        let patBufRxCanvas, patBufRxCtx;
+        let timelineCanvas, timelineCtx;
+        
+        // ============================================================
+        // UTILITY FUNCTIONS
+        // ============================================================
         
         const $ = id => document.getElementById(id);
         const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
         const togglesToString = t => t.map(x => x ? '1' : '0').join('');
         const stringToToggles = s => s.split('').map(c => c === '1' ? 1 : 0);
         const getAllFreqs = (base, step) => Array.from({length: NUM_BITS}, (_, i) => base + i * step);
-        
         const binaryToAscii = b => parseInt(b, 2);
+        
         const ctrlChars = {0:'NUL',1:'SOH',2:'STX',3:'ETX',4:'EOT',5:'ENQ',6:'ACK',7:'BEL',8:'BS',9:'TAB',10:'LF',11:'VT',12:'FF',13:'CR',14:'SO',15:'SI',16:'DLE',17:'DC1',18:'DC2',19:'DC3',20:'DC4',21:'NAK',22:'SYN',23:'ETB',24:'CAN',25:'EM',26:'SUB',27:'ESC',28:'FS',29:'GS',30:'RS',31:'US',32:'SPC',127:'DEL'};
         const getAsciiDisplay = c => ctrlChars[c] !== undefined ? `(${ctrlChars[c]})` : (c >= 33 && c <= 126) ? `'${String.fromCharCode(c)}'` : `(x${c.toString(16).toUpperCase()})`;
-        const charSymbols = {0:'∅',8:'⌫',9:'⇥',10:'↵',13:'↩',32:'␣',127:'⌦'};
-        const getAsciiChar = c => charSymbols[c] || (c >= 33 && c <= 126 ? String.fromCharCode(c) : '?');
         
         function isValidBinary(s) { return /^[01]{8}$/.test(s); }
         
-        function validatePktField(input, statusId) {
-            const val = input.value;
-            const status = $(statusId);
-            if (isValidBinary(val)) {
-                const ascii = getAsciiDisplay(binaryToAscii(val));
-                status.className = 'ok';
-                status.textContent = `✓ ${ascii}`;
-            } else {
-                status.className = 'warn';
-                status.textContent = '⚠';
-            }
-        }
+        // ============================================================
+        // DE-NOISE SYSTEM
+        // ============================================================
         
-        function getPeakCheckDistances() {
-            if (peakPoints === 1) return [0.5];
-            if (peakPoints === 2) return [0.25, 0.5];
-            return [0.25, 0.5, 0.75];
-        }
-        
-        function getPeakPointsInfo() {
-            return '±' + getPeakCheckDistances().map(x => Math.round(x * 100) + '%').join(', ±');
-        }
-        
-        function adjustPeakPoints(dir) {
-            peakPoints = clamp(peakPoints + dir, 1, 3);
-            $('peak-points-val').textContent = peakPoints;
-            $('peak-points-info').textContent = getPeakPointsInfo();
-        }
-        
-        function togglePeakDetection() {
-            peakEnabled = !peakEnabled;
-            const btn = $('peak-enabled');
-            btn.textContent = peakEnabled ? 'ON' : 'OFF';
-            btn.style.background = peakEnabled ? '#a0a' : '#111';
-            btn.style.color = peakEnabled ? '#000' : '#555';
-        }
-        
-        // De-noise functions
         function toggleDenoiseEnabled() {
             denoiseEnabled = !denoiseEnabled;
             const btn = $('denoise-enabled');
             btn.classList.toggle('on', denoiseEnabled);
             btn.textContent = denoiseEnabled ? 'ON' : 'OFF';
-            log('denoise', '', '', denoiseEnabled ? 'De-noise enabled' : 'De-noise disabled');
         }
         
         function updateDenoiseMaster() {
             denoiseMasterLevel = parseInt($('denoise-master-slider').value) / 100;
             $('denoise-master-val').textContent = Math.round(denoiseMasterLevel * 100) + '%';
         }
-        $('denoise-master-slider').oninput = updateDenoiseMaster;
         
         async function captureNoiseProfile() {
             if (!isInit || isCapturingNoise) return;
-            
             const duration = parseInt($('denoise-duration').value) || 1000;
             const btn = $('btn-listen');
-            
             isCapturingNoise = true;
             btn.classList.add('listening');
             btn.textContent = 'LISTENING...';
             $('denoise-status').textContent = 'Capturing...';
             
-            log('denoise', '', '', `Capturing noise profile (${duration}ms)...`);
-            
-            const sampleCount = Math.ceil(duration / 50); // Sample every ~50ms
+            const sampleCount = Math.ceil(duration / 50);
             const sampleInterval = duration / sampleCount;
             const samples = [];
             const binCount = analyser.frequencyBinCount;
             
-            // Capture multiple samples over the duration
             for (let i = 0; i < sampleCount; i++) {
                 const sampleData = new Uint8Array(binCount);
                 analyser.getByteFrequencyData(sampleData);
@@ -578,26 +517,22 @@
                 await new Promise(r => setTimeout(r, sampleInterval));
             }
             
-            // Average all samples to create the noise profile
             const avgData = new Float32Array(binCount);
             for (let bin = 0; bin < binCount; bin++) {
                 let sum = 0;
-                for (const sample of samples) {
-                    sum += sample[bin];
-                }
+                for (const sample of samples) sum += sample[bin];
                 avgData[bin] = sum / samples.length;
             }
             
-            // Create the noise profile
             const profile = {
                 id: ++noiseProfileIdCounter,
+                name: `Profile ${noiseProfileIdCounter}`,
                 data: avgData,
                 amount: 1.0,
                 timestamp: Date.now(),
-                duration: duration,
+                duration,
                 samples: samples.length
             };
-            
             noiseProfiles.push(profile);
             renderNoiseProfiles();
             
@@ -605,14 +540,16 @@
             btn.classList.remove('listening');
             btn.textContent = 'LISTEN';
             $('denoise-status').textContent = `Profile #${profile.id} added`;
-            
-            log('denoise', '', '', `Noise profile #${profile.id} captured (${samples.length} samples)`);
         }
         
         function deleteNoiseProfile(id) {
             noiseProfiles = noiseProfiles.filter(p => p.id !== id);
             renderNoiseProfiles();
-            log('denoise', '', '', `Noise profile #${id} deleted`);
+        }
+        
+        function updateNoiseProfileName(id, name) {
+            const profile = noiseProfiles.find(p => p.id === id);
+            if (profile) profile.name = name;
         }
         
         function updateNoiseProfileAmount(id, value) {
@@ -626,42 +563,34 @@
         
         function renderNoiseProfiles() {
             const container = $('noise-profiles');
-            
             if (noiseProfiles.length === 0) {
                 container.innerHTML = '<div class="no-profiles">No noise profiles captured</div>';
                 return;
             }
-            
             container.innerHTML = '';
-            
             for (const profile of noiseProfiles) {
                 const el = document.createElement('div');
                 el.className = 'noise-profile';
                 el.id = `noise-profile-${profile.id}`;
                 
-                // Create mini canvas for visualization
                 const canvas = document.createElement('canvas');
                 canvas.className = 'noise-profile-canvas';
-                canvas.width = 120;
-                canvas.height = 48;
-                
-                // Draw the noise profile snapshot
+                canvas.width = 120; canvas.height = 48;
                 drawNoiseProfileMini(canvas, profile.data);
                 
                 const timeStr = new Date(profile.timestamp).toLocaleTimeString('en-US', {hour12:false, hour:'2-digit', minute:'2-digit', second:'2-digit'});
-                
                 el.innerHTML = `
                     <div class="noise-profile-info">
-                        <div class="noise-profile-label">#${profile.id} @ ${timeStr} (${profile.duration}ms)</div>
+                        <div class="noise-profile-name">
+                            <input type="text" value="${profile.name}" onchange="updateNoiseProfileName(${profile.id}, this.value)" onclick="this.select()">
+                        </div>
+                        <div class="noise-profile-meta">${timeStr} · ${profile.duration}ms</div>
                         <div class="noise-profile-slider">
-                            <input type="range" min="0" max="100" value="${Math.round(profile.amount * 100)}" 
-                                   oninput="updateNoiseProfileAmount(${profile.id}, this.value / 100)">
+                            <input type="range" min="0" max="100" value="${Math.round(profile.amount * 100)}" oninput="updateNoiseProfileAmount(${profile.id}, this.value / 100)">
                             <span class="slider-val">${Math.round(profile.amount * 100)}%</span>
                         </div>
                     </div>
-                    <button class="noise-profile-del" onclick="deleteNoiseProfile(${profile.id})">×</button>
-                `;
-                
+                    <button class="noise-profile-del" onclick="deleteNoiseProfile(${profile.id})">×</button>`;
                 el.insertBefore(canvas, el.firstChild);
                 container.appendChild(el);
             }
@@ -669,115 +598,448 @@
         
         function drawNoiseProfileMini(canvas, data) {
             const ctx = canvas.getContext('2d');
-            const w = canvas.width;
-            const h = canvas.height;
+            const w = canvas.width, h = canvas.height;
             const dpr = window.devicePixelRatio || 1;
-            
-            canvas.width = w * dpr;
-            canvas.height = h * dpr;
+            canvas.width = w * dpr; canvas.height = h * dpr;
             ctx.scale(dpr, dpr);
-            canvas.style.width = (w / 2) + 'px';
-            canvas.style.height = (h / 2) + 'px';
-            
-            ctx.fillStyle = '#050505';
-            ctx.fillRect(0, 0, w, h);
-            
+            canvas.style.width = (w / 2) + 'px'; canvas.style.height = (h / 2) + 'px';
+            ctx.fillStyle = '#050505'; ctx.fillRect(0, 0, w, h);
             if (!audioCtx || !data) return;
             
             const binW = audioCtx.sampleRate / FFT_SIZE;
-            const displayHz = 8000; // Show up to 8kHz in mini view
+            const displayHz = 8000;
             const binsToShow = Math.min(data.length, Math.ceil(displayHz / binW));
-            
-            // Find max for scaling
             let maxVal = 1;
-            for (let i = 0; i < binsToShow; i++) {
-                if (data[i] > maxVal) maxVal = data[i];
-            }
+            for (let i = 0; i < binsToShow; i++) if (data[i] > maxVal) maxVal = data[i];
             
-            // Draw bars
             const barWidth = w / binsToShow;
             ctx.fillStyle = '#a80';
-            
             for (let i = 0; i < binsToShow; i++) {
                 const barH = (data[i] / maxVal) * h * 0.9;
                 ctx.fillRect(i * barWidth, h - barH, Math.max(barWidth - 0.5, 0.5), barH);
             }
-            
-            // Draw border
-            ctx.strokeStyle = '#444';
-            ctx.strokeRect(0, 0, w, h);
+            ctx.strokeStyle = '#444'; ctx.strokeRect(0, 0, w, h);
         }
         
-        // Apply de-noise to frequency data
         function applyDenoise(rawData) {
-            if (!denoiseEnabled || noiseProfiles.length === 0 || denoiseMasterLevel === 0) {
-                return rawData;
-            }
-            
+            if (!denoiseEnabled || noiseProfiles.length === 0 || denoiseMasterLevel === 0) return rawData;
             const result = new Uint8Array(rawData.length);
-            
             for (let i = 0; i < rawData.length; i++) {
                 let totalNoise = 0;
-                
-                // Sum weighted noise from all profiles
-                for (const profile of noiseProfiles) {
-                    totalNoise += (profile.data[i] || 0) * profile.amount;
-                }
-                
-                // Apply master level
+                for (const profile of noiseProfiles) totalNoise += (profile.data[i] || 0) * profile.amount;
                 totalNoise *= denoiseMasterLevel;
-                
-                // Subtract noise, clamp to 0
                 result[i] = Math.max(0, rawData[i] - totalNoise);
             }
-            
             return result;
         }
         
-        function checkPeak(centerPwr, freq, stepHz, binW, data) {
-            const flankMaxLevel = centerPwr / peakRatio;
-            if (!peakEnabled) return { valid: true, flankMaxLevel };
-            const distances = getPeakCheckDistances();
-            for (const side of [-1, 1]) {
-                let lastPwr = centerPwr;
-                for (let i = 0; i < distances.length; i++) {
-                    const checkFreq = freq + (side * stepHz * distances[i]);
-                    const checkBin = Math.round(checkFreq / binW);
-                    const checkPwr = data[clamp(checkBin, 0, data.length - 1)] || 0;
-                    if (i === 0) { if (checkPwr >= flankMaxLevel) return { valid: false, flankMaxLevel }; }
-                    else { if (checkPwr > lastPwr) return { valid: false, flankMaxLevel }; }
-                    lastPwr = checkPwr;
+        // ============================================================
+        // PATTERN BUFFER SYSTEM
+        // ============================================================
+        
+        function togglePatBufEnabled() {
+            patBufEnabled = !patBufEnabled;
+            const btn = $('patbuf-enabled');
+            btn.classList.toggle('on', patBufEnabled);
+            btn.textContent = patBufEnabled ? 'ON' : 'OFF';
+            if (patBufEnabled && isInit) {
+                initPatternBuffers();
+            } else {
+                stopPatternBufferCapture();
+                patBufRecording = false;
+                updateRecordingButton();
+            }
+        }
+        
+        function togglePatBufRecording() {
+            if (!patBufEnabled || !isInit) return;
+            patBufRecording = !patBufRecording;
+            updateRecordingButton();
+            patBufRecording ? startPatternBufferCapture() : stopPatternBufferCapture();
+        }
+        
+        function updateRecordingButton() {
+            const btn = $('patbuf-recording');
+            btn.classList.remove('on', 'recording');
+            if (patBufRecording) {
+                btn.classList.add('recording');
+                btn.textContent = 'RECORDING';
+            } else {
+                btn.textContent = 'STOPPED';
+            }
+        }
+        
+        function getPatBufBinRange(baseFreq, step) {
+            const binW = audioCtx.sampleRate / FFT_SIZE;
+            const lowHz = baseFreq - step;
+            const highHz = baseFreq + 7 * step + step;
+            const startBin = Math.max(0, Math.floor(lowHz / binW));
+            const endBin = Math.min(analyser.frequencyBinCount - 1, Math.ceil(highHz / binW));
+            return { startBin, endBin, binCount: endBin - startBin + 1, lowHz, highHz };
+        }
+        
+        function initPatternBuffers() {
+            if (!audioCtx || !analyser) return;
+            patBufRate = clamp(parseInt($('patbuf-rate').value) || 1, 1, 100);
+            patBufLength = clamp(parseInt($('patbuf-length').value) || 30000, 100, 99999);
+            patBufSampleCount = Math.ceil(patBufLength / patBufRate);
+            
+            const txRange = getPatBufBinRange(txBaseFreq, txStep);
+            const rxRange = getPatBufBinRange(rxBaseFreq, rxStep);
+            txBufBinStart = txRange.startBin; txBufBinEnd = txRange.endBin; txBufBinCount = txRange.binCount;
+            rxBufBinStart = rxRange.startBin; rxBufBinEnd = rxRange.endBin; rxBufBinCount = rxRange.binCount;
+            
+            txPatternBuffer = new Uint8Array(patBufSampleCount * txBufBinCount);
+            rxPatternBuffer = new Uint8Array(patBufSampleCount * rxBufBinCount);
+            patBufWriteIndex = 0;
+            
+            const txKb = (txPatternBuffer.length / 1024).toFixed(1);
+            const rxKb = (rxPatternBuffer.length / 1024).toFixed(1);
+            $('patbuf-info').textContent = `TX:${txBufBinCount}×${patBufSampleCount}=${txKb}KB | RX:${rxBufBinCount}×${patBufSampleCount}=${rxKb}KB`;
+            $('patbuf-tx-info').textContent = `${txRange.lowHz}-${txRange.highHz}Hz (${txBufBinCount} bins)`;
+            $('patbuf-rx-info').textContent = `${rxRange.lowHz}-${rxRange.highHz}Hz (${rxBufBinCount} bins)`;
+        }
+        
+        function startPatternBufferCapture() {
+            if (patBufInterval) clearInterval(patBufInterval);
+            if (!patBufEnabled || !patBufRecording || !isInit) return;
+            $('patbuf-status').textContent = 'Recording';
+            $('btn-snapshot').classList.add('recording');
+            
+            patBufInterval = setInterval(() => {
+                if (!analyser || !txPatternBuffer || !rxPatternBuffer) return;
+                analyser.getByteFrequencyData(frequencyData);
+                const data = applyDenoise(frequencyData);
+                
+                const txOffset = patBufWriteIndex * txBufBinCount;
+                for (let i = 0; i < txBufBinCount; i++) txPatternBuffer[txOffset + i] = data[txBufBinStart + i] || 0;
+                
+                const rxOffset = patBufWriteIndex * rxBufBinCount;
+                for (let i = 0; i < rxBufBinCount; i++) rxPatternBuffer[rxOffset + i] = data[rxBufBinStart + i] || 0;
+                
+                patBufWriteIndex = (patBufWriteIndex + 1) % patBufSampleCount;
+            }, patBufRate);
+        }
+        
+        function stopPatternBufferCapture() {
+            if (patBufInterval) { clearInterval(patBufInterval); patBufInterval = null; }
+            $('patbuf-status').textContent = 'Stopped';
+            $('btn-snapshot').classList.remove('recording');
+        }
+        
+        function takeSnapshot() {
+            if (!txPatternBuffer || !rxPatternBuffer) return;
+            
+            const txData = new Uint8Array(patBufSampleCount * txBufBinCount);
+            const rxData = new Uint8Array(patBufSampleCount * rxBufBinCount);
+            
+            for (let t = 0; t < patBufSampleCount; t++) {
+                const srcIdx = (patBufWriteIndex + t) % patBufSampleCount;
+                const txSrcOffset = srcIdx * txBufBinCount, txDstOffset = t * txBufBinCount;
+                for (let b = 0; b < txBufBinCount; b++) txData[txDstOffset + b] = txPatternBuffer[txSrcOffset + b];
+                const rxSrcOffset = srcIdx * rxBufBinCount, rxDstOffset = t * rxBufBinCount;
+                for (let b = 0; b < rxBufBinCount; b++) rxData[rxDstOffset + b] = rxPatternBuffer[rxSrcOffset + b];
+            }
+            
+            snapshotData = {
+                txData, rxData,
+                txBinCount: txBufBinCount, rxBinCount: rxBufBinCount,
+                txBinStart: txBufBinStart, rxBinStart: rxBufBinStart,
+                sampleCount: patBufSampleCount, rate: patBufRate, length: patBufLength,
+                timestamp: Date.now(), txBaseFreq, txStep, rxBaseFreq, rxStep,
+                txThresholdHits: computeThresholdCrossings(txData, txBufBinCount, patBufSampleCount, txBaseFreq, txStep),
+                rxThresholdHits: computeThresholdCrossings(rxData, rxBufBinCount, patBufSampleCount, rxBaseFreq, rxStep)
+            };
+            
+            snapshotSliderPos = patBufSampleCount - 1;
+            const slider = $('patbuf-time-slider');
+            slider.max = patBufSampleCount - 1;
+            slider.value = snapshotSliderPos;
+            $('patbuf-slider-row').style.display = 'flex';
+            
+            setupTimelineCanvas();
+            updateSnapshotTimeDisplay();
+            drawSnapshotGraphs();
+            drawTimeline();
+        }
+        
+        function computeThresholdCrossings(data, binCount, sampleCount, baseFreq, step) {
+            const hits = new Uint8Array(sampleCount);
+            const binW = audioCtx.sampleRate / FFT_SIZE;
+            const lowHz = baseFreq - step;
+            
+            for (let t = 0; t < sampleCount; t++) {
+                const offset = t * binCount;
+                let hitMask = 0;
+                for (let bit = 0; bit < NUM_BITS; bit++) {
+                    const bitFreq = baseFreq + bit * step;
+                    const bitBinCenter = Math.round((bitFreq - lowHz) / binW);
+                    const tolBins = Math.ceil(rxTolerance / binW);
+                    let maxPwr = 0;
+                    for (let db = -tolBins; db <= tolBins; db++) {
+                        const checkBin = bitBinCenter + db;
+                        if (checkBin >= 0 && checkBin < binCount) {
+                            const pwr = data[offset + checkBin] || 0;
+                            if (pwr > maxPwr) maxPwr = pwr;
+                        }
+                    }
+                    if (maxPwr >= rxThreshold) hitMask |= (1 << bit);
+                }
+                hits[t] = hitMask;
+            }
+            return hits;
+        }
+        
+        function updateSnapshotTimeDisplay() {
+            const timeMs = snapshotSliderPos * snapshotData.rate;
+            $('patbuf-time-val').textContent = `${timeMs}ms / ${snapshotData.length}ms`;
+        }
+        
+        function navSlider(delta) {
+            if (!snapshotData) return;
+            snapshotSliderPos = clamp(snapshotSliderPos + delta, 0, snapshotData.sampleCount - 1);
+            $('patbuf-time-slider').value = snapshotSliderPos;
+            updateSnapshotTimeDisplay();
+            drawSnapshotGraphs();
+            drawTimeline();
+        }
+        
+        function reinitPatternBuffersIfNeeded() {
+            if (isInit && patBufEnabled) {
+                const wasRecording = patBufRecording;
+                stopPatternBufferCapture();
+                initPatternBuffers();
+                if (wasRecording) { patBufRecording = true; updateRecordingButton(); startPatternBufferCapture(); }
+            }
+        }
+        
+        // ============================================================
+        // CANVAS SETUP & DRAWING
+        // ============================================================
+        
+        function setupPatBufCanvases() {
+            patBufTxCanvas = $('patbuf-tx-canvas');
+            patBufRxCanvas = $('patbuf-rx-canvas');
+            const setupCanvas = (canvas) => {
+                const ctx = canvas.getContext('2d');
+                const rect = canvas.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+                ctx.scale(dpr, dpr);
+                return ctx;
+            };
+            patBufTxCtx = setupCanvas(patBufTxCanvas);
+            patBufRxCtx = setupCanvas(patBufRxCanvas);
+        }
+        
+        function setupTimelineCanvas() {
+            timelineCanvas = $('patbuf-timeline-canvas');
+            const rect = timelineCanvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            timelineCanvas.width = rect.width * dpr;
+            timelineCanvas.height = rect.height * dpr;
+            timelineCtx = timelineCanvas.getContext('2d');
+            timelineCtx.scale(dpr, dpr);
+            
+            let isDragging = false;
+            const updateFromX = (clientX) => {
+                if (!snapshotData) return;
+                const canvasRect = timelineCanvas.getBoundingClientRect();
+                const ratio = clamp((clientX - canvasRect.left) / canvasRect.width, 0, 1);
+                snapshotSliderPos = clamp(Math.round(ratio * (snapshotData.sampleCount - 1)), 0, snapshotData.sampleCount - 1);
+                $('patbuf-time-slider').value = snapshotSliderPos;
+                updateSnapshotTimeDisplay();
+                drawSnapshotGraphs();
+                drawTimeline();
+            };
+            
+            timelineCanvas.onmousedown = (e) => { isDragging = true; updateFromX(e.clientX); };
+            document.addEventListener('mousemove', (e) => { if (isDragging) updateFromX(e.clientX); });
+            document.addEventListener('mouseup', () => { isDragging = false; });
+            timelineCanvas.ontouchstart = (e) => { isDragging = true; if (e.touches.length > 0) { updateFromX(e.touches[0].clientX); e.preventDefault(); } };
+            document.addEventListener('touchmove', (e) => { if (isDragging && e.touches.length > 0) updateFromX(e.touches[0].clientX); });
+            document.addEventListener('touchend', () => { isDragging = false; });
+        }
+        
+        function drawTimeline() {
+            if (!snapshotData || !timelineCtx) return;
+            const dpr = window.devicePixelRatio || 1;
+            const w = timelineCanvas.width / dpr, h = timelineCanvas.height / dpr;
+            const halfH = h / 2;
+            
+            timelineCtx.fillStyle = '#0a0a0a';
+            timelineCtx.fillRect(0, 0, w, h);
+            timelineCtx.strokeStyle = '#333';
+            timelineCtx.beginPath(); timelineCtx.moveTo(0, halfH); timelineCtx.lineTo(w, halfH); timelineCtx.stroke();
+            
+            const pixelsPerSample = w / snapshotData.sampleCount;
+            
+            for (let t = 0; t < snapshotData.sampleCount; t++) {
+                if (snapshotData.txThresholdHits[t] > 0) {
+                    timelineCtx.fillStyle = 'rgba(0, 100, 50, 0.8)';
+                    timelineCtx.fillRect(t * pixelsPerSample, 0, Math.max(pixelsPerSample, 1), halfH - 1);
+                }
+                if (snapshotData.rxThresholdHits[t] > 0) {
+                    timelineCtx.fillStyle = 'rgba(0, 80, 120, 0.8)';
+                    timelineCtx.fillRect(t * pixelsPerSample, halfH + 1, Math.max(pixelsPerSample, 1), halfH - 1);
                 }
             }
-            return { valid: true, flankMaxLevel };
-        }
-        
-        function log(type, pattern, ascii, extra = '') {
-            const now = Date.now();
-            const ts = new Date(now).toLocaleTimeString('en-US', {hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'}) + '.' + (now % 1000).toString().padStart(3, '0');
             
-            if (type === 'tx') { txEventCount++; $('tx-count').textContent = `TX:${txEventCount}`; }
-            if (type === 'rx') { rxEventCount++; $('rx-count').textContent = `RX:${rxEventCount}`; }
-            if (type === 'pkt') { pktEventCount++; $('pkt-count').textContent = `PKT:${pktEventCount}`; }
+            for (const o of timelineOverlays) {
+                const startX = (o.startMs / snapshotData.rate) * pixelsPerSample;
+                const endX = (o.endMs / snapshotData.rate) * pixelsPerSample;
+                timelineCtx.fillStyle = o.color;
+                timelineCtx.globalAlpha = o.alpha || 0.5;
+                if (o.layer === 'tx') timelineCtx.fillRect(startX, 0, endX - startX, halfH - 1);
+                else if (o.layer === 'rx') timelineCtx.fillRect(startX, halfH + 1, endX - startX, halfH - 1);
+                else timelineCtx.fillRect(startX, 0, endX - startX, h);
+                timelineCtx.globalAlpha = 1;
+            }
             
-            const el = document.createElement('div');
-            el.className = `log-entry ${type}`;
-            const tag = type === 'tx' ? 'TX▲' : type === 'rx' ? 'RX▼' : type === 'pkt' ? 'PKT' : type === 'match' ? '✓✓' : type === 'denoise' ? '🔇' : type === 'info' ? '···' : '!!!';
-            const msg = pattern ? `${pattern} ${ascii}${extra ? ' ' + extra : ''}` : extra;
-            el.innerHTML = `<span class="ts">${ts}</span><span class="tag">${tag}</span><span class="msg">${msg}</span>`;
-            $('log').appendChild(el);
-            $('log').scrollTop = $('log').scrollHeight;
+            const posX = snapshotSliderPos * pixelsPerSample;
+            timelineCtx.save();
+            timelineCtx.globalCompositeOperation = 'difference';
+            timelineCtx.strokeStyle = '#fff'; timelineCtx.lineWidth = 2;
+            timelineCtx.beginPath(); timelineCtx.moveTo(posX, 0); timelineCtx.lineTo(posX, h); timelineCtx.stroke();
+            timelineCtx.restore();
+            
+            timelineCtx.font = '8px Courier New';
+            timelineCtx.fillStyle = '#0a0'; timelineCtx.fillText('TX', 2, 10);
+            timelineCtx.fillStyle = '#0aa'; timelineCtx.fillText('RX', 2, h - 3);
         }
         
-        // Store RX event in history for backlog analysis
-        function recordRxEvent(pattern, time) {
-            eventHistory.push({ pattern, time });
-            if (eventHistory.length > HISTORY_SIZE) eventHistory.shift();
+        function drawSnapshotGraphs() {
+            if (!snapshotData || !patBufTxCtx || !patBufRxCtx) return;
+            const dpr = window.devicePixelRatio || 1;
+            drawSnapshotGraph(patBufTxCtx, patBufTxCanvas.width / dpr, patBufTxCanvas.height / dpr, snapshotData.txData, snapshotData.txBinCount, snapshotSliderPos, '#0f0', '#0a0', snapshotData.txBaseFreq, snapshotData.txStep);
+            drawSnapshotGraph(patBufRxCtx, patBufRxCanvas.width / dpr, patBufRxCanvas.height / dpr, snapshotData.rxData, snapshotData.rxBinCount, snapshotSliderPos, '#0ff', '#0aa', snapshotData.rxBaseFreq, snapshotData.rxStep);
         }
         
-        function updateTimer() {
-            $('timer').textContent = `${Math.floor(timeLeft/60).toString().padStart(2,'0')}:${(timeLeft%60).toString().padStart(2,'0')}`;
+        function drawSnapshotGraph(ctx, w, h, data, binCount, timeIdx, colorBright, colorDim, baseFreq, step) {
+            ctx.fillStyle = '#050505'; ctx.fillRect(0, 0, w, h);
+            if (!data || binCount === 0) { ctx.fillStyle = '#333'; ctx.font = '8px Courier New'; ctx.textAlign = 'center'; ctx.fillText('No data', w / 2, h / 2); return; }
+            
+            const offset = timeIdx * binCount;
+            const barWidth = w / binCount;
+            const binW = audioCtx.sampleRate / FFT_SIZE;
+            const lowHz = baseFreq - step;
+            
+            for (let bit = 0; bit < NUM_BITS; bit++) {
+                const binIdx = Math.round((baseFreq + bit * step - lowHz) / binW);
+                if (binIdx >= 0 && binIdx < binCount) {
+                    const x = binIdx * barWidth + barWidth / 2;
+                    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+                    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+                    ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = '6px Courier New'; ctx.textAlign = 'center';
+                    ctx.fillText(bit + 1, x, 8);
+                }
+            }
+            
+            for (let i = 0; i < binCount; i++) {
+                const val = data[offset + i] || 0;
+                const barH = (val / 255) * h * 0.9;
+                const intensity = val / 255;
+                ctx.fillStyle = intensity > 0.3 ? colorBright : colorDim;
+                ctx.globalAlpha = 0.3 + intensity * 0.7;
+                ctx.fillRect(i * barWidth, h - barH, Math.max(barWidth - 0.5, 1), barH);
+            }
+            ctx.globalAlpha = 1;
+            
+            const threshY = h - (rxThreshold / 255) * h * 0.9;
+            ctx.strokeStyle = 'rgba(255,255,0,0.4)'; ctx.setLineDash([2, 2]);
+            ctx.beginPath(); ctx.moveTo(0, threshY); ctx.lineTo(w, threshY); ctx.stroke();
+            ctx.setLineDash([]);
         }
+        
+        function setupGraph() {
+            graphCanvas = $('graph');
+            graphCtx = graphCanvas.getContext('2d');
+            const rect = graphCanvas.getBoundingClientRect();
+            graphCanvas.width = rect.width * devicePixelRatio;
+            graphCanvas.height = rect.height * devicePixelRatio;
+            graphCtx.scale(devicePixelRatio, devicePixelRatio);
+        }
+        
+        function drawGraph() {
+            if (!graphCtx) { requestAnimationFrame(drawGraph); return; }
+            const w = graphCanvas.width / devicePixelRatio;
+            const h = graphCanvas.height / devicePixelRatio;
+            const hzRange = hzMax - hzMin, pwrRange = pwrMax - pwrMin;
+            
+            graphCtx.fillStyle = 'rgb(5, 5, 5)'; graphCtx.fillRect(0, 0, w, h);
+            
+            const hzToX = hz => ((hz - hzMin) / hzRange) * w;
+            const pwrToY = pwr => h - ((clamp(pwr, pwrMin, pwrMax) - pwrMin) / pwrRange) * h;
+            const txFreqs = getAllFreqs(txBaseFreq, txStep);
+            const rxFreqs = getAllFreqs(rxBaseFreq, rxStep);
+            
+            // Draw TX frequency bands
+            for (let i = 0; i < NUM_BITS; i++) {
+                const freq = txFreqs[i];
+                if (freq + txTolerance < hzMin || freq - txTolerance > hzMax) continue;
+                const x1 = hzToX(freq - txTolerance), x2 = hzToX(freq + txTolerance);
+                graphCtx.fillStyle = txToggles[i] ? 'rgba(0, 255, 0, 0.10)' : 'rgba(0, 255, 0, 0.03)';
+                graphCtx.fillRect(x1, 0, Math.max(x2 - x1, 1), h);
+                graphCtx.strokeStyle = txToggles[i] ? 'rgba(0, 255, 0, 0.4)' : 'rgba(0, 255, 0, 0.12)';
+                graphCtx.beginPath(); graphCtx.moveTo(hzToX(freq), 0); graphCtx.lineTo(hzToX(freq), h); graphCtx.stroke();
+            }
+            
+            // Draw RX frequency bands
+            for (let i = 0; i < NUM_BITS; i++) {
+                const freq = rxFreqs[i];
+                if (freq + rxTolerance < hzMin || freq - rxTolerance > hzMax) continue;
+                const x1 = hzToX(freq - rxTolerance), x2 = hzToX(freq + rxTolerance);
+                graphCtx.fillStyle = rxToggles[i] ? 'rgba(0, 150, 255, 0.10)' : 'rgba(0, 150, 255, 0.03)';
+                graphCtx.fillRect(x1, 0, Math.max(x2 - x1, 1), h);
+                graphCtx.strokeStyle = rxToggles[i] ? 'rgba(0, 200, 255, 0.4)' : 'rgba(0, 150, 255, 0.12)';
+                graphCtx.beginPath(); graphCtx.moveTo(hzToX(freq), 0); graphCtx.lineTo(hzToX(freq), h); graphCtx.stroke();
+                graphCtx.fillStyle = rxToggles[i] ? 'rgba(0, 200, 255, 0.6)' : 'rgba(100, 100, 100, 0.3)';
+                graphCtx.font = '7px Courier New';
+                graphCtx.fillText(i + 1, hzToX(freq) - 2, 9);
+            }
+            
+            // Draw live spectrum data
+            if (isOnAir && analyser) {
+                analyser.getByteFrequencyData(frequencyData);
+                const displayData = applyDenoise(frequencyData);
+                const binW = audioCtx.sampleRate / analyser.fftSize;
+                const startBin = Math.max(0, Math.floor(hzMin / binW));
+                const endBin = Math.min(displayData.length, Math.ceil(hzMax / binW));
+                
+                for (let i = startBin; i < endBin; i++) {
+                    const freq = i * binW, pwr = displayData[i];
+                    if (pwr < pwrMin) continue;
+                    const x = hzToX(freq);
+                    const barH = ((Math.min(pwr, pwrMax) - pwrMin) / pwrRange) * h;
+                    const v = pwr / 255;
+                    let inTx = isSending && stringToToggles(txState.pattern).some((t, j) => t && Math.abs(freq - txFreqs[j]) <= txTolerance);
+                    let inRx = rxFreqs.some((f) => Math.abs(freq - f) <= rxTolerance);
+                    graphCtx.fillStyle = inTx ? `rgba(0, 255, 0, ${0.4 + v * 0.6})` : inRx ? `rgba(0, 200, 255, ${0.3 + v * 0.7})` : `rgba(100, 100, 100, ${0.2 + v * 0.6})`;
+                    graphCtx.fillRect(x, h - barH, Math.max(w / (endBin - startBin) - 1, 1), barH);
+                }
+            }
+            
+            // Draw threshold line
+            if (rxThreshold >= pwrMin && rxThreshold <= pwrMax) {
+                graphCtx.strokeStyle = 'rgba(255, 255, 0, 0.3)'; graphCtx.setLineDash([3, 3]);
+                graphCtx.beginPath(); graphCtx.moveTo(0, pwrToY(rxThreshold)); graphCtx.lineTo(w, pwrToY(rxThreshold)); graphCtx.stroke();
+                graphCtx.setLineDash([]);
+            }
+            
+            // Draw Hz labels
+            graphCtx.fillStyle = '#444'; graphCtx.font = '8px Courier New';
+            const step = hzRange <= 500 ? 100 : hzRange <= 1000 ? 200 : hzRange <= 4000 ? 500 : hzRange <= 10000 ? 2000 : 5000;
+            for (let f = Math.ceil(hzMin / step) * step; f <= hzMax; f += step) {
+                graphCtx.fillText(f >= 1000 ? `${f/1000}k` : f, hzToX(f) - 8, h - 2);
+            }
+            
+            requestAnimationFrame(drawGraph);
+        }
+        
+        // ============================================================
+        // GRAPH ZOOM CONTROLS
+        // ============================================================
         
         function getTxRange() { return { min: txBaseFreq - txTolerance - txStep, max: txBaseFreq + 7 * txStep + txTolerance + txStep }; }
         function getRxRange() { return { min: rxBaseFreq - rxTolerance - rxStep, max: rxBaseFreq + 7 * rxStep + rxTolerance + rxStep }; }
@@ -802,10 +1064,7 @@
             updateZoomInputs();
         }
         
-        function updateZoomInputs() {
-            $('hz-min').value = hzMin; $('hz-max').value = hzMax;
-            $('pwr-min').value = pwrMin; $('pwr-max').value = pwrMax;
-        }
+        function updateZoomInputs() { $('hz-min').value = hzMin; $('hz-max').value = hzMax; $('pwr-min').value = pwrMin; $('pwr-max').value = pwrMax; }
         
         function readZoomInputs() {
             zoomTxOn = zoomRxOn = false;
@@ -817,62 +1076,9 @@
             updateZoomInputs();
         }
         
-        $('hz-min').onchange = $('hz-max').onchange = $('pwr-min').onchange = $('pwr-max').onchange = readZoomInputs;
-        $('peak-ratio').onchange = () => { peakRatio = clamp(parseFloat($('peak-ratio').value) || 1.0, 1.0, 3.0); $('peak-ratio').value = peakRatio; };
-        
-        function triggerFlash() { flashQueue.push({ startTime: performance.now() }); }
-        function triggerCharFlash(char) { charFlashQueue.push({ startTime: performance.now(), char }); }
-        function triggerPktFlash(char) { pktFlashQueue.push({ startTime: performance.now(), char }); }
-        
-        function calculateFlashIntensity() {
-            const now = performance.now();
-            let intensity = 0;
-            flashQueue = flashQueue.filter(f => {
-                const elapsed = now - f.startTime;
-                if (elapsed > 700) return false;
-                intensity += elapsed < 200 ? 0.5 : 0.5 * (1 - (elapsed - 200) / 500);
-                return true;
-            });
-            return Math.min(intensity, 1);
-        }
-        
-        function calculatePktFlashIntensity() {
-            const now = performance.now();
-            let intensity = 0;
-            pktFlashQueue = pktFlashQueue.filter(f => {
-                const elapsed = now - f.startTime;
-                if (elapsed > 1000) return false;
-                intensity += elapsed < 300 ? 0.7 : 0.7 * (1 - (elapsed - 300) / 700);
-                return true;
-            });
-            return Math.min(intensity, 1);
-        }
-        
-        function getCharFlashState() {
-            const now = performance.now();
-            let result = { char: null, opacity: 0 };
-            charFlashQueue = charFlashQueue.filter(f => {
-                const elapsed = now - f.startTime;
-                if (elapsed > 1000) return false;
-                const opacity = elapsed < 300 ? Math.min(1, elapsed / 100) : 1 - (elapsed - 300) / 700;
-                if (opacity > result.opacity) result = { char: f.char, opacity };
-                return true;
-            });
-            return result;
-        }
-        
-        function getPktCharFlashState() {
-            const now = performance.now();
-            let result = { char: null, opacity: 0 };
-            pktFlashQueue = pktFlashQueue.filter(f => {
-                const elapsed = now - f.startTime;
-                if (elapsed > 1200) return false;
-                const opacity = elapsed < 400 ? Math.min(1, elapsed / 150) : 1 - (elapsed - 400) / 800;
-                if (opacity > result.opacity) result = { char: f.char, opacity };
-                return true;
-            });
-            return result;
-        }
+        // ============================================================
+        // TOGGLE & DISPLAY FUNCTIONS
+        // ============================================================
         
         function createToggles(containerId, toggleArray, updateCallback) {
             const container = $(containerId);
@@ -907,277 +1113,132 @@
             if (zoomRxOn) applyZoomToggles();
         }
         
-        const updateTxBaseFreq = f => { txBaseFreq = clamp(Math.round(f), 1, 30000); $('tx-input').value = txBaseFreq; $('tx-slider').value = clamp(txBaseFreq, 20, 30000); updateTxDisplay(); };
-        const updateRxBaseFreq = f => { rxBaseFreq = clamp(Math.round(f), 1, 30000); $('rx-input').value = rxBaseFreq; $('rx-slider').value = clamp(rxBaseFreq, 20, 30000); updateRxDisplay(); };
+        const updateTxBaseFreq = f => { txBaseFreq = clamp(Math.round(f), 1, 30000); $('tx-input').value = txBaseFreq; $('tx-slider').value = clamp(txBaseFreq, 20, 30000); updateTxDisplay(); reinitPatternBuffersIfNeeded(); };
+        const updateRxBaseFreq = f => { rxBaseFreq = clamp(Math.round(f), 1, 30000); $('rx-input').value = rxBaseFreq; $('rx-slider').value = clamp(rxBaseFreq, 20, 30000); updateRxDisplay(); reinitPatternBuffersIfNeeded(); };
         
-        $('tx-slider').oninput = () => updateTxBaseFreq(+$('tx-slider').value);
-        $('tx-input').onchange = () => updateTxBaseFreq(+$('tx-input').value || 1);
-        $('tx-step').onchange = () => { txStep = clamp(+$('tx-step').value || 50, 1, 500); updateTxDisplay(); };
-        $('tx-tolerance').onchange = () => { txTolerance = clamp(+$('tx-tolerance').value || 4, 1, 100); updateTxDisplay(); };
-        $('rx-slider').oninput = () => updateRxBaseFreq(+$('rx-slider').value);
-        $('rx-input').onchange = () => updateRxBaseFreq(+$('rx-input').value || 1);
-        $('rx-step').onchange = () => { rxStep = clamp(+$('rx-step').value || 50, 1, 500); updateRxDisplay(); };
-        $('rx-tolerance').onchange = () => { rxTolerance = clamp(+$('rx-tolerance').value || 4, 1, 100); updateRxDisplay(); };
-        $('rx-thresh').onchange = () => { rxThreshold = clamp(+$('rx-thresh').value || 40, 5, 200); };
-        $('rx-window').onchange = () => { rxWindow = +$('rx-window').value || 300; };
-        $('poll-interval').onchange = () => { 
-            pollInterval = clamp(+$('poll-interval').value || 50, 10, 500); 
-            if (isInit && detectInterval) { clearInterval(detectInterval); startDetection(); }
-        };
-        $('pulse-duration').onchange = () => { pulseDuration = clamp(+$('pulse-duration').value || 350, 5, 5000); };
+        // ============================================================
+        // AIR & PULSE CONTROLS
+        // ============================================================
         
         function toggleAir() {
             if (!isInit) return;
             isOnAir = !isOnAir;
             $('btn-air').classList.toggle('on', isOnAir);
             $('btn-air').textContent = isOnAir ? 'ON AIR' : 'OFF AIR';
-            if (isOnAir) {
-                log('info', '', '', '════════ ON AIR ════════');
-                eventHistory = [];
-            } else {
-                log('info', '', '', '════════ OFF AIR ════════');
-                $('detection-info').textContent = '—';
-                $('tx-active-pattern').textContent = '--------';
-                $('rx-detected-pattern').textContent = '--------';
-                $('pkt-detected-pattern').textContent = 'waiting...';
-                $('tx-status').classList.remove('active');
-                $('rx-status').classList.remove('match');
-                $('pkt-status').classList.remove('pkt-ok');
-            }
         }
         
         function manualPulse() {
             if (!isInit || isSending) return;
             if (!isOnAir) toggleAir();
-            sendSignal();
+            sendPatternPulse(togglesToString(txToggles), pulseDuration);
         }
         
-        // TX Packet
-        async function sendPacket() {
-            if (!isInit || isSending) return;
-            if (!isOnAir) toggleAir();
-            
-            const header = $('tx-pkt-header').value;
-            const payload = $('tx-pkt-payload').value;
-            const checksum = $('tx-pkt-checksum').value;
-            const repeat = parseInt($('tx-pkt-repeat').value) || 3;
-            const pulseMs = parseInt($('tx-pkt-pulse-ms').value) || 200;
-            const gapMs = parseInt($('tx-pkt-gap-ms').value) || 150;
-            
-            if (!isValidBinary(header) || !isValidBinary(payload) || !isValidBinary(checksum)) {
-                log('err', '', '', 'Invalid TX packet config!');
-                return;
-            }
-            
-            log('pkt', '', '', `▶ TX PKT [H:${header}][P:${payload}×${repeat}][C:${checksum}]`);
-            
-            await sendPatternPulse(header, pulseMs, 'H');
-            await sleep(gapMs);
-            
-            for (let i = 0; i < repeat; i++) {
-                await sendPatternPulse(payload, pulseMs, `P${i+1}`);
-                if (i < repeat - 1) await sleep(gapMs);
-            }
-            await sleep(gapMs);
-            
-            await sendPatternPulse(checksum, pulseMs, 'C');
-            
-            log('pkt', '', '', '◼ TX PKT END');
-        }
-        
-        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-        
-        async function sendPatternPulse(pattern, durMs, label) {
+        async function sendPatternPulse(pattern, durMs) {
             return new Promise(resolve => {
                 const toggles = stringToToggles(pattern);
-                const charCode = binaryToAscii(pattern);
-                
-                log('tx', pattern, getAsciiDisplay(charCode), `[${label}] ${durMs}ms`);
-                
                 isSending = true;
                 txState.active = true;
                 txState.pattern = pattern;
-                
                 for (let i = 0; i < NUM_BITS; i++) {
                     oscillators[i].frequency.setValueAtTime(txBaseFreq + i * txStep, audioCtx.currentTime);
                     gainNodes[i].gain.setValueAtTime(toggles[i] ? 0.15 : 0, audioCtx.currentTime);
                 }
-                
                 setTimeout(() => {
                     gainNodes.forEach(g => g.gain.setValueAtTime(0, audioCtx.currentTime));
-                    setTimeout(() => {
-                        isSending = false;
-                        txState.active = false;
-                        resolve();
-                    }, 50);
+                    setTimeout(() => { isSending = false; txState.active = false; resolve(); }, 50);
                 }, durMs);
             });
         }
         
-        function setupGraph() {
-            graphCanvas = $('graph');
-            graphCtx = graphCanvas.getContext('2d');
-            const rect = graphCanvas.getBoundingClientRect();
-            graphCanvas.width = rect.width * devicePixelRatio;
-            graphCanvas.height = rect.height * devicePixelRatio;
-            graphCtx.scale(devicePixelRatio, devicePixelRatio);
+        // ============================================================
+        // ADVANCED PULSE SEQUENCE
+        // ============================================================
+        
+        function toggleAdvPulse() {
+            advPulseOpen = !advPulseOpen;
+            $('adv-pulse').classList.toggle('open', advPulseOpen);
+            $('pulse-expander').textContent = advPulseOpen ? 'v' : '›';
         }
         
-        function drawGraph() {
-            if (!graphCtx) { requestAnimationFrame(drawGraph); return; }
-            
-            const w = graphCanvas.width / devicePixelRatio;
-            const h = graphCanvas.height / devicePixelRatio;
-            const flashIntensity = calculateFlashIntensity();
-            const pktFlashIntensity = calculatePktFlashIntensity();
-            const charFlash = getCharFlashState();
-            const pktCharFlash = getPktCharFlashState();
-            const hzRange = hzMax - hzMin;
-            const pwrRange = pwrMax - pwrMin;
-            
-            // Background: cyan flash for pulse match, orange flash for packet
-            let bgR = 5, bgG = 5, bgB = 5;
-            if (pktFlashIntensity > 0) {
-                bgR = 5 + 120 * pktFlashIntensity;
-                bgG = 5 + 60 * pktFlashIntensity;
-                bgB = 5;
-            } else if (flashIntensity > 0) {
-                bgG = 5 + 80 * flashIntensity;
-                bgB = 5 + 80 * flashIntensity;
-            }
-            graphCtx.fillStyle = `rgb(${bgR}, ${bgG}, ${bgB})`;
-            graphCtx.fillRect(0, 0, w, h);
-            
-            const hzToX = hz => ((hz - hzMin) / hzRange) * w;
-            const pwrToY = pwr => h - ((clamp(pwr, pwrMin, pwrMax) - pwrMin) / pwrRange) * h;
-            
-            const txFreqs = getAllFreqs(txBaseFreq, txStep);
-            const rxFreqs = getAllFreqs(rxBaseFreq, rxStep);
-            
-            // TX bands
-            for (let i = 0; i < NUM_BITS; i++) {
-                const freq = txFreqs[i];
-                if (freq + txTolerance < hzMin || freq - txTolerance > hzMax) continue;
-                const x1 = hzToX(freq - txTolerance), x2 = hzToX(freq + txTolerance);
-                graphCtx.fillStyle = txToggles[i] ? 'rgba(0, 255, 0, 0.10)' : 'rgba(0, 255, 0, 0.03)';
-                graphCtx.fillRect(x1, 0, Math.max(x2 - x1, 1), h);
-                graphCtx.strokeStyle = txToggles[i] ? 'rgba(0, 255, 0, 0.4)' : 'rgba(0, 255, 0, 0.12)';
-                graphCtx.beginPath(); graphCtx.moveTo(hzToX(freq), 0); graphCtx.lineTo(hzToX(freq), h); graphCtx.stroke();
-            }
-            
-            // RX bands
-            for (let i = 0; i < NUM_BITS; i++) {
-                const freq = rxFreqs[i];
-                if (freq + rxTolerance < hzMin || freq - rxTolerance > hzMax) continue;
-                const x1 = hzToX(freq - rxTolerance), x2 = hzToX(freq + rxTolerance);
-                graphCtx.fillStyle = rxToggles[i] ? 'rgba(0, 150, 255, 0.10)' : 'rgba(0, 150, 255, 0.03)';
-                graphCtx.fillRect(x1, 0, Math.max(x2 - x1, 1), h);
-                graphCtx.strokeStyle = rxToggles[i] ? 'rgba(0, 200, 255, 0.4)' : 'rgba(0, 150, 255, 0.12)';
-                graphCtx.beginPath(); graphCtx.moveTo(hzToX(freq), 0); graphCtx.lineTo(hzToX(freq), h); graphCtx.stroke();
-                
-                graphCtx.fillStyle = rxToggles[i] ? 'rgba(0, 200, 255, 0.6)' : 'rgba(100, 100, 100, 0.3)';
-                graphCtx.font = '7px Courier New';
-                graphCtx.fillText(i + 1, hzToX(freq) - 2, 9);
-                
-                if (peakEnabled && lastDetectionData.flankMaxLevels[i] > 0) {
-                    const flankMax = lastDetectionData.flankMaxLevels[i];
-                    const threshY = pwrToY(flankMax);
-                    graphCtx.strokeStyle = lastDetectionData.peakValid[i] ? 'rgba(0, 255, 0, 0.5)' : 'rgba(255, 100, 0, 0.5)';
-                    graphCtx.setLineDash([3, 3]);
-                    graphCtx.beginPath();
-                    graphCtx.moveTo(Math.max(0, hzToX(freq - rxStep * 0.5)), threshY);
-                    graphCtx.lineTo(Math.min(w, hzToX(freq + rxStep * 0.5)), threshY);
-                    graphCtx.stroke();
-                    graphCtx.setLineDash([]);
-                }
-            }
-            
-            // Spectrum - with de-noise applied
-            if (isOnAir && analyser) {
-                analyser.getByteFrequencyData(frequencyData);
-                
-                // Apply de-noise to the display data
-                const displayData = applyDenoise(frequencyData);
-                
-                const binW = audioCtx.sampleRate / analyser.fftSize;
-                const startBin = Math.max(0, Math.floor(hzMin / binW));
-                const endBin = Math.min(displayData.length, Math.ceil(hzMax / binW));
-                
-                for (let i = startBin; i < endBin; i++) {
-                    const freq = i * binW, pwr = displayData[i];
-                    if (pwr < pwrMin) continue;
-                    const x = hzToX(freq);
-                    const barH = ((Math.min(pwr, pwrMax) - pwrMin) / pwrRange) * h;
-                    const v = pwr / 255;
-                    
-                    let inTx = isSending && stringToToggles(txState.pattern).some((t, j) => t && Math.abs(freq - txFreqs[j]) <= txTolerance);
-                    let inRx = rxFreqs.some((f) => Math.abs(freq - f) <= rxTolerance);
-                    
-                    graphCtx.fillStyle = inTx ? `rgba(0, 255, 0, ${0.4 + v * 0.6})` : 
-                                         inRx ? `rgba(0, 200, 255, ${0.3 + v * 0.7})` : 
-                                         `rgba(100, 100, 100, ${0.2 + v * 0.6})`;
-                    
-                    graphCtx.fillRect(x, h - barH, Math.max(w / (endBin - startBin) - 1, 1), barH);
-                }
-            }
-            
-            // Threshold
-            if (rxThreshold >= pwrMin && rxThreshold <= pwrMax) {
-                const threshY = pwrToY(rxThreshold);
-                graphCtx.strokeStyle = 'rgba(255, 255, 0, 0.3)';
-                graphCtx.setLineDash([3, 3]);
-                graphCtx.beginPath(); graphCtx.moveTo(0, threshY); graphCtx.lineTo(w, threshY); graphCtx.stroke();
-                graphCtx.setLineDash([]);
-            }
-            
-            // Freq markers
-            graphCtx.fillStyle = '#444';
-            graphCtx.font = '8px Courier New';
-            const step = hzRange <= 500 ? 100 : hzRange <= 1000 ? 200 : hzRange <= 4000 ? 500 : hzRange <= 10000 ? 2000 : 5000;
-            for (let f = Math.ceil(hzMin / step) * step; f <= hzMax; f += step) {
-                graphCtx.fillText(f >= 1000 ? `${f/1000}k` : f, hzToX(f) - 8, h - 2);
-            }
-            
-            // Char flash (cyan for pulse match)
-            if (charFlash.char && charFlash.opacity > 0) {
-                graphCtx.save();
-                graphCtx.font = 'bold 40px Courier New';
-                graphCtx.textAlign = 'center';
-                graphCtx.textBaseline = 'middle';
-                graphCtx.shadowColor = `rgba(0, 255, 255, ${charFlash.opacity})`;
-                graphCtx.shadowBlur = 20;
-                graphCtx.fillStyle = `rgba(0, 255, 255, ${charFlash.opacity})`;
-                graphCtx.fillText(charFlash.char, w / 2, h / 2);
-                graphCtx.restore();
-            }
-            
-            // Packet char flash (orange)
-            if (pktCharFlash.char && pktCharFlash.opacity > 0) {
-                graphCtx.save();
-                graphCtx.font = 'bold 48px Courier New';
-                graphCtx.textAlign = 'center';
-                graphCtx.textBaseline = 'middle';
-                graphCtx.shadowColor = `rgba(255, 170, 0, ${pktCharFlash.opacity})`;
-                graphCtx.shadowBlur = 25;
-                graphCtx.fillStyle = `rgba(255, 170, 0, ${pktCharFlash.opacity})`;
-                graphCtx.fillText(pktCharFlash.char, w / 2, h / 2);
-                graphCtx.restore();
-            }
-            
-            requestAnimationFrame(drawGraph);
+        function parseSequencePatterns() {
+            const raw = $('seq-pattern').value;
+            const patterns = raw.split(',').map(s => s.trim()).filter(s => isValidBinary(s));
+            return patterns;
         }
+        
+        function toggleSequence() {
+            if (seqRunning) {
+                stopSequence();
+            } else {
+                startSequence();
+            }
+        }
+        
+        function startSequence() {
+            const patterns = parseSequencePatterns();
+            if (patterns.length === 0) { $('seq-status').textContent = 'Invalid patterns!'; return; }
+            
+            const gap = clamp(parseInt($('seq-gap').value) || 100, 0, 5000);
+            const repeats = clamp(parseInt($('seq-repeats').value) || 1, 0, 9999);
+            const pulseMs = pulseDuration;
+            
+            seqRunning = true;
+            seqIndex = 0;
+            seqRepeatCount = 0;
+            
+            $('btn-seq').textContent = 'STOP';
+            $('btn-seq').classList.add('running');
+            $('seq-status').textContent = `Running... (${patterns.length} patterns)`;
+            
+            if (!isOnAir) toggleAir();
+            
+            const runStep = async () => {
+                if (!seqRunning) return;
+                
+                const pattern = patterns[seqIndex];
+                await sendPatternPulse(pattern, pulseMs);
+                
+                seqIndex++;
+                if (seqIndex >= patterns.length) {
+                    seqIndex = 0;
+                    seqRepeatCount++;
+                    if (repeats > 0 && seqRepeatCount >= repeats) {
+                        stopSequence();
+                        return;
+                    }
+                }
+                
+                $('seq-status').textContent = `Rep ${seqRepeatCount + 1}${repeats > 0 ? '/' + repeats : ''}, Pat ${seqIndex + 1}/${patterns.length}`;
+                
+                if (seqRunning) {
+                    seqInterval = setTimeout(runStep, gap);
+                }
+            };
+            
+            runStep();
+        }
+        
+        function stopSequence() {
+            seqRunning = false;
+            if (seqInterval) { clearTimeout(seqInterval); seqInterval = null; }
+            $('btn-seq').textContent = 'START';
+            $('btn-seq').classList.remove('running');
+            $('seq-status').textContent = 'Stopped';
+        }
+        
+        // ============================================================
+        // INITIALIZATION & RESET
+        // ============================================================
         
         async function init() {
             if (isInit) return;
             $('btn-init').disabled = true;
-            log('info', '', '', 'Initializing...');
             
             try {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100 });
                 if (audioCtx.state === 'suspended') await audioCtx.resume();
                 
                 micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
-                log('info', '', '', 'Microphone ready ✓');
                 
                 analyser = audioCtx.createAnalyser();
                 analyser.fftSize = FFT_SIZE;
@@ -1199,286 +1260,94 @@
                 }
                 
                 setupGraph();
-                startDetection();
+                setupPatBufCanvases();
                 requestAnimationFrame(drawGraph);
+                if (patBufEnabled) initPatternBuffers();
                 
                 isInit = true;
                 $('btn-init').style.display = 'none';
-                $('btn-test').style.display = 'block';
                 $('btn-pulse').disabled = false;
-                $('btn-packet').disabled = false;
                 $('btn-listen').disabled = false;
+                $('btn-snapshot').disabled = false;
                 
-                ['tx-pkt-header', 'tx-pkt-payload', 'tx-pkt-checksum', 'rx-pkt-header', 'rx-pkt-payload', 'rx-pkt-checksum'].forEach(id => {
-                    validatePktField($(id), id + '-status');
-                });
-                
-                log('info', '', '', '════════ READY ════════');
             } catch (e) {
-                log('err', '', '', `ERROR: ${e.message}`);
                 $('btn-init').disabled = false;
+                alert('Error: ' + e.message);
             }
-        }
-        
-        function startDetection() {
-            const binW = audioCtx.sampleRate / analyser.fftSize;
-            const rawData = new Uint8Array(analyser.frequencyBinCount);
-            
-            detectInterval = setInterval(() => {
-                if (!analyser || !isOnAir) return;
-                
-                analyser.getByteFrequencyData(rawData);
-                
-                // Apply de-noise to the data used for detection
-                const data = applyDenoise(rawData);
-                
-                const rxFreqs = getAllFreqs(rxBaseFreq, rxStep);
-                const now = Date.now();
-                
-                const detected = [], powers = [], peakResults = [], flankMaxLevels = [];
-                
-                for (let i = 0; i < NUM_BITS; i++) {
-                    const freq = rxFreqs[i];
-                    const lo = Math.max(0, Math.floor((freq - rxTolerance) / binW));
-                    const hi = Math.min(data.length - 1, Math.ceil((freq + rxTolerance) / binW));
-                    let maxP = 0;
-                    for (let b = lo; b <= hi; b++) if (data[b] > maxP) maxP = data[b];
-                    powers.push(maxP);
-                    
-                    const aboveThresh = maxP >= rxThreshold;
-                    let peakResult = { valid: true, flankMaxLevel: 0 };
-                    if (aboveThresh) peakResult = checkPeak(maxP, freq, rxStep, binW, data);
-                    peakResults.push(peakResult.valid);
-                    flankMaxLevels.push(aboveThresh ? peakResult.flankMaxLevel : 0);
-                    detected.push((aboveThresh && peakResult.valid) ? 1 : 0);
-                }
-                
-                lastDetectionData = { powers, flankMaxLevels, peakValid: peakResults };
-                
-                const rxDetStr = togglesToString(detected);
-                const rxDetCharCode = binaryToAscii(rxDetStr);
-                
-                $('tx-active-pattern').textContent = isSending ? `${txState.pattern} ${getAsciiDisplay(binaryToAscii(txState.pattern))}` : '--------';
-                $('tx-status').classList.toggle('active', isSending);
-                $('rx-detected-pattern').textContent = `${rxDetStr} ${getAsciiDisplay(rxDetCharCode)}`;
-                
-                const txInfo = isSending ? `TX:${txState.pattern}` : 'TX:idle';
-                const denoiseInfo = denoiseEnabled && noiseProfiles.length > 0 ? ` [DN:${noiseProfiles.length}]` : '';
-                $('detection-info').innerHTML = `${txInfo} | RX:${rxDetStr}${denoiseInfo}`;
-                
-                // RX pulse detection
-                if (detected.some(b => b)) {
-                    if (now - rxState.lastTime > rxWindow || rxDetStr !== rxState.lastPattern) {
-                        rxState.lastTime = now;
-                        rxState.lastPattern = rxDetStr;
-                        
-                        // Record in history for packet detection
-                        recordRxEvent(rxDetStr, now);
-                        
-                        const expStr = togglesToString(rxToggles);
-                        const isMatch = rxDetStr === expStr;
-                        $('rx-status').classList.toggle('match', isMatch);
-                        
-                        log('rx', rxDetStr, getAsciiDisplay(rxDetCharCode), isSending ? '[during TX]' : '');
-                        
-                        if (isMatch) {
-                            log('match', rxDetStr, getAsciiDisplay(rxDetCharCode), '= expected');
-                            triggerFlash();
-                            triggerCharFlash(getAsciiChar(rxDetCharCode));
-                        }
-                        
-                        // Check for packet completion using backlog
-                        checkPacketFromBacklog(now);
-                    }
-                } else {
-                    $('rx-status').classList.remove('match');
-                }
-            }, pollInterval);
-        }
-        
-        // Backlog-based packet detection
-        function checkPacketFromBacklog(now) {
-            const header = $('rx-pkt-header').value;
-            const expectedPayload = $('rx-pkt-payload').value;
-            const checksum = $('rx-pkt-checksum').value;
-            const expectedRepeat = parseInt($('rx-pkt-repeat').value) || 3;
-            const pulseMs = parseInt($('rx-pkt-pulse-ms').value) || 200;
-            const gapMs = parseInt($('rx-pkt-gap-ms').value) || 150;
-            const toleranceMs = parseInt($('rx-pkt-tolerance-ms').value) || 20;
-            const windowMs = parseInt($('rx-pkt-window-ms').value) || 5000;
-            
-            if (!isValidBinary(header) || !isValidBinary(expectedPayload) || !isValidBinary(checksum)) return;
-            
-            // Find most recent checksum in history
-            const recentEvents = eventHistory.filter(e => now - e.time <= windowMs);
-            
-            // Look for checksum matches
-            for (let ci = recentEvents.length - 1; ci >= 0; ci--) {
-                const checksumEvent = recentEvents[ci];
-                if (checksumEvent.pattern !== checksum) continue;
-                
-                // Look for a header before this checksum
-                for (let hi = ci - 1; hi >= 0; hi--) {
-                    const headerEvent = recentEvents[hi];
-                    if (headerEvent.pattern !== header) continue;
-                    
-                    const headerTime = headerEvent.time;
-                    const checksumTime = checksumEvent.time;
-                    
-                    // Calculate expected timing
-                    // Header -> gap -> P1 -> gap -> P2 -> ... -> gap -> Checksum
-                    // P[i] expected at: headerTime + pulseMs + gapMs + i * (pulseMs + gapMs)
-                    // Checksum expected at: headerTime + pulseMs + gapMs + expectedRepeat * (pulseMs + gapMs)
-                    
-                    const expectedChecksumTime = headerTime + pulseMs + gapMs + expectedRepeat * (pulseMs + gapMs);
-                    const checksumTimeDiff = Math.abs(checksumTime - expectedChecksumTime);
-                    
-                    // Check if checksum timing is within reasonable range (use larger tolerance for checksum)
-                    if (checksumTimeDiff > toleranceMs * 3 + expectedRepeat * toleranceMs) continue;
-                    
-                    // Find payloads between header and checksum
-                    const payloads = [];
-                    for (let pi = hi + 1; pi < ci; pi++) {
-                        const payloadEvent = recentEvents[pi];
-                        // Check if this event falls within expected payload timing slots
-                        for (let slot = 0; slot < expectedRepeat; slot++) {
-                            const expectedPayloadTime = headerTime + pulseMs + gapMs + slot * (pulseMs + gapMs);
-                            const timeDiff = Math.abs(payloadEvent.time - expectedPayloadTime);
-                            if (timeDiff <= toleranceMs) {
-                                payloads.push({ slot, pattern: payloadEvent.pattern, time: payloadEvent.time });
-                                break;
-                            }
-                        }
-                    }
-                    
-                    // Need at least 1 payload
-                    if (payloads.length === 0) continue;
-                    
-                    // Compute average payload via majority voting
-                    const avgPayload = computeAveragePayload(payloads.map(p => p.pattern));
-                    
-                    // Mark these events as consumed (prevent re-triggering)
-                    // Remove from history
-                    const usedIndices = new Set([hi, ci, ...payloads.map(p => recentEvents.indexOf(recentEvents.find(e => e.time === p.time)))]);
-                    eventHistory = eventHistory.filter((e, i) => {
-                        const idx = recentEvents.indexOf(e);
-                        return idx === -1 || !usedIndices.has(idx);
-                    });
-                    
-                    // Report packet
-                    const avgPayloadChar = binaryToAscii(avgPayload);
-                    $('pkt-detected-pattern').textContent = `✓ ${avgPayload} ${getAsciiDisplay(avgPayloadChar)}`;
-                    $('pkt-status').classList.add('pkt-ok');
-                    
-                    log('pkt', '', '', `✓✓ RX PKT [H:${header}][P:${avgPayload}×${payloads.length}][C:${checksum}]`);
-                    log('pkt', avgPayload, getAsciiDisplay(avgPayloadChar), `← Payload (${payloads.length} samples)`);
-                    
-                    triggerPktFlash(getAsciiChar(avgPayloadChar));
-                    
-                    setTimeout(() => {
-                        $('pkt-detected-pattern').textContent = 'waiting...';
-                        $('pkt-status').classList.remove('pkt-ok');
-                    }, 2000);
-                    
-                    return; // Found a valid packet
-                }
-            }
-        }
-        
-        function computeAveragePayload(payloads) {
-            if (payloads.length === 0) return '00000000';
-            const result = [];
-            for (let i = 0; i < NUM_BITS; i++) {
-                let ones = 0;
-                for (const p of payloads) {
-                    if (p[i] === '1') ones++;
-                }
-                result.push(ones > payloads.length / 2 ? '1' : '0');
-            }
-            return result.join('');
-        }
-        
-        function sendSignal() {
-            const pattern = togglesToString(txToggles);
-            sendPatternPulse(pattern, pulseDuration, 'P');
-        }
-        
-        function startTest() {
-            if (!isInit || isRunning) return;
-            if (!isOnAir) toggleAir();
-            isRunning = true;
-            timeLeft = 10;
-            $('btn-test').disabled = true;
-            $('timer').classList.add('active');
-            log('info', '', '', '═══ TEST START ═══');
-            sendSignal();
-            updateTimer();
-            testInterval = setInterval(() => {
-                timeLeft--;
-                updateTimer();
-                $('progress').style.width = `${((10 - timeLeft) / 10) * 100}%`;
-                if (timeLeft % 2 === 0 && timeLeft > 0) sendSignal();
-                if (timeLeft <= 0) endTest();
-            }, 1000);
-        }
-        
-        function endTest() {
-            isRunning = false;
-            clearInterval(testInterval);
-            $('timer').classList.remove('active');
-            $('btn-test').disabled = false;
-            $('progress').style.width = '100%';
-            log('info', '', '', '═══ TEST END ═══');
         }
         
         function resetAll() {
-            clearInterval(testInterval);
-            isRunning = false;
-            timeLeft = 10;
-            updateTimer();
-            $('progress').style.width = '0%';
-            $('timer').classList.remove('active');
-            $('btn-test').disabled = false;
-            $('detection-info').textContent = '—';
-            $('log').innerHTML = '';
-            flashQueue = [];
-            charFlashQueue = [];
-            pktFlashQueue = [];
-            txEventCount = rxEventCount = pktEventCount = 0;
-            eventHistory = [];
-            rxState = { lastPattern: '', lastTime: 0 };
-            txState = { active: false, pattern: '00000000', startTime: 0 };
-            lastDetectionData = { powers: [], flankMaxLevels: [], peakValid: [] };
-            $('tx-active-pattern').textContent = '--------';
-            $('rx-detected-pattern').textContent = '--------';
-            $('pkt-detected-pattern').textContent = 'waiting...';
-            $('tx-status').classList.remove('active');
-            $('rx-status').classList.remove('match');
-            $('pkt-status').classList.remove('pkt-ok');
-            $('tx-count').textContent = 'TX:0';
-            $('rx-count').textContent = 'RX:0';
-            $('pkt-count').textContent = 'PKT:0';
+            txState = { active: false, pattern: '00000000' };
             $('denoise-status').textContent = 'Ready';
-            log('info', '', '', 'Reset');
+            snapshotData = null;
+            timelineOverlays = [];
+            $('patbuf-slider-row').style.display = 'none';
+            
+            if (patBufTxCtx && patBufRxCtx) {
+                const dpr = window.devicePixelRatio || 1;
+                patBufTxCtx.fillStyle = '#050505';
+                patBufTxCtx.fillRect(0, 0, patBufTxCanvas.width / dpr, patBufTxCanvas.height / dpr);
+                patBufRxCtx.fillStyle = '#050505';
+                patBufRxCtx.fillRect(0, 0, patBufRxCanvas.width / dpr, patBufRxCanvas.height / dpr);
+            }
+            
+            stopPatternBufferCapture();
+            patBufRecording = false;
+            updateRecordingButton();
+            stopSequence();
         }
         
+        // ============================================================
+        // EVENT HANDLERS
+        // ============================================================
+        
         document.addEventListener('DOMContentLoaded', () => {
+            // Initialize toggles
             createToggles('tx-toggles', txToggles, updateTxDisplay);
             createToggles('rx-toggles', rxToggles, updateRxDisplay);
             updateTxBaseFreq(txBaseFreq);
             updateRxBaseFreq(rxBaseFreq);
             updateZoomInputs();
-            $('peak-points-info').textContent = getPeakPointsInfo();
+            
+            // Setup canvases
             setupGraph();
+            setupPatBufCanvases();
             requestAnimationFrame(drawGraph);
             renderNoiseProfiles();
-            log('info', '', '', 'Audio Signal Test v18');
-            log('info', '', '', '─────────────────────');
-            log('info', '', '', '📦 Timing-validated packets');
-            log('info', '', '', '🔇 De-noise profiles');
+            
+            // Input handlers - TX
+            $('tx-slider').oninput = () => updateTxBaseFreq(+$('tx-slider').value);
+            $('tx-input').onchange = () => updateTxBaseFreq(+$('tx-input').value || 1);
+            $('tx-step').onchange = () => { txStep = clamp(+$('tx-step').value || 50, 1, 500); updateTxDisplay(); reinitPatternBuffersIfNeeded(); };
+            $('tx-tolerance').onchange = () => { txTolerance = clamp(+$('tx-tolerance').value || 4, 1, 100); updateTxDisplay(); };
+            
+            // Input handlers - RX
+            $('rx-slider').oninput = () => updateRxBaseFreq(+$('rx-slider').value);
+            $('rx-input').onchange = () => updateRxBaseFreq(+$('rx-input').value || 1);
+            $('rx-step').onchange = () => { rxStep = clamp(+$('rx-step').value || 50, 1, 500); updateRxDisplay(); reinitPatternBuffersIfNeeded(); };
+            $('rx-tolerance').onchange = () => { rxTolerance = clamp(+$('rx-tolerance').value || 4, 1, 100); updateRxDisplay(); };
+            $('rx-thresh').onchange = () => { rxThreshold = clamp(+$('rx-thresh').value || 40, 5, 200); };
+            
+            // Input handlers - Pulse
+            $('pulse-duration').onchange = () => { pulseDuration = clamp(+$('pulse-duration').value || 350, 5, 5000); };
+            
+            // Input handlers - De-noise
+            $('denoise-master-slider').oninput = updateDenoiseMaster;
+            
+            // Input handlers - Pattern buffer
+            $('patbuf-rate').onchange = function() { patBufRate = clamp(parseInt(this.value) || 1, 1, 100); this.value = patBufRate; reinitPatternBuffersIfNeeded(); };
+            $('patbuf-length').onchange = function() { patBufLength = clamp(parseInt(this.value) || 30000, 100, 99999); this.value = patBufLength; reinitPatternBuffersIfNeeded(); };
+            $('patbuf-time-slider').oninput = function() { if (!snapshotData) return; snapshotSliderPos = parseInt(this.value); updateSnapshotTimeDisplay(); drawSnapshotGraphs(); drawTimeline(); };
+            
+            // Input handlers - Graph zoom
+            $('hz-min').onchange = $('hz-max').onchange = $('pwr-min').onchange = $('pwr-max').onchange = readZoomInputs;
         });
         
-        window.addEventListener('resize', () => { if (graphCanvas) setupGraph(); });
+        window.addEventListener('resize', () => {
+            if (graphCanvas) setupGraph();
+            if (patBufTxCanvas) setupPatBufCanvases();
+            if (snapshotData) { setupTimelineCanvas(); drawSnapshotGraphs(); drawTimeline(); }
+        });
     </script>
 </body>
 </html>
