@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio Signal Test v17</title>
+    <title>Audio Signal Test v18</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Courier New', monospace; background: #000; color: #fff; min-height: 100vh; padding: 0.75rem; font-size: 12px; }
@@ -13,12 +13,14 @@
         .section.tx { border-color: #0a0; }
         .section.rx { border-color: #0aa; }
         .section.peak { border-color: #a0a; }
+        .section.denoise { border-color: #a80; }
         .section.tx-pkt { border-color: #0a0; background: rgba(0,50,0,0.15); }
         .section.rx-pkt { border-color: #0aa; background: rgba(0,50,50,0.15); }
         .section-title { font-size: 0.6rem; color: #666; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.3rem; display: flex; justify-content: space-between; align-items: center; }
         .section.tx .section-title, .section.tx-pkt .section-title { color: #0f0; }
         .section.rx .section-title, .section.rx-pkt .section-title { color: #0ff; }
         .section.peak .section-title { color: #f0f; }
+        .section.denoise .section-title { color: #fa0; }
         .row { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.25rem; font-size: 0.65rem; flex-wrap: wrap; }
         .row:last-child { margin-bottom: 0; }
         .row label { color: #888; min-width: 50px; flex-shrink: 0; }
@@ -26,6 +28,7 @@
         input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: #fff; cursor: pointer; border-radius: 50%; }
         .section.tx input[type="range"]::-webkit-slider-thumb { background: #0f0; }
         .section.rx input[type="range"]::-webkit-slider-thumb { background: #0ff; }
+        .section.denoise input[type="range"]::-webkit-slider-thumb { background: #fa0; }
         input[type="number"], input[type="text"] { background: #111; border: 1px solid #444; color: #fff; padding: 0.2rem 0.25rem; font-family: inherit; font-size: 0.65rem; text-align: center; }
         input[type="number"] { width: 50px; }
         input[type="text"].binary-input { width: 72px; font-family: inherit; letter-spacing: 1px; }
@@ -34,6 +37,7 @@
         .range-display { font-size: 0.55rem; color: #666; margin-left: auto; }
         .section.tx .range-display, .section.tx-pkt .range-display { color: #0a0; }
         .section.rx .range-display, .section.rx-pkt .range-display { color: #0aa; }
+        .section.denoise .range-display { color: #a80; }
         .binary-row { display: flex; align-items: center; gap: 0.25rem; margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px solid #222; }
         .binary-label { font-size: 0.55rem; color: #666; min-width: 40px; }
         .section.tx .binary-label { color: #0a0; }
@@ -121,6 +125,8 @@
         .log-entry.info .msg { color: #666; }
         .log-entry.err .tag { color: #f00; }
         .log-entry.err .msg { color: #f00; }
+        .log-entry.denoise .tag { color: #fa0; }
+        .log-entry.denoise .msg { color: #a80; }
         .timer { text-align: center; font-size: 1.1rem; font-weight: bold; margin: 0.2rem 0; }
         .timer.active { animation: pulse 1s infinite; }
         @keyframes pulse { 50% { opacity: 0.4; } }
@@ -156,11 +162,41 @@
         .section.rx-pkt .ok { color: #0ff; }
         .pkt-panels { display: flex; gap: 0.5rem; }
         .pkt-panels .section { flex: 1; }
+        
+        /* De-noise styles */
+        .denoise-controls { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+        .denoise-btn { padding: 0.3rem 0.5rem; font-family: inherit; font-size: 0.6rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; border: 2px solid #a80; background: #111; color: #fa0; border-radius: 4px; transition: all 0.15s; }
+        .denoise-btn:hover { background: #a80; color: #000; }
+        .denoise-btn:disabled { border-color: #333; color: #333; cursor: not-allowed; }
+        .denoise-btn:disabled:hover { background: #111; color: #333; }
+        .denoise-btn.listening { background: #fa0; color: #000; animation: listen-pulse 0.5s infinite; }
+        @keyframes listen-pulse { 50% { opacity: 0.6; } }
+        .denoise-input { width: 45px; background: #111; border: 1px solid #a80; color: #fa0; padding: 0.2rem; font-family: inherit; font-size: 0.6rem; text-align: center; border-radius: 3px; }
+        .denoise-input:focus { outline: none; border-color: #fa0; }
+        .noise-profiles { margin-top: 0.4rem; max-height: 120px; overflow-y: auto; }
+        .noise-profile { display: flex; align-items: center; gap: 0.3rem; padding: 0.3rem; margin-bottom: 0.25rem; background: #0a0a0a; border: 1px solid #333; border-radius: 3px; }
+        .noise-profile:hover { border-color: #a80; }
+        .noise-profile-canvas { width: 60px; height: 24px; border: 1px solid #444; background: #050505; flex-shrink: 0; }
+        .noise-profile-info { flex: 1; display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+        .noise-profile-label { font-size: 0.5rem; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .noise-profile-slider { display: flex; align-items: center; gap: 0.2rem; }
+        .noise-profile-slider input[type="range"] { flex: 1; min-width: 40px; height: 3px; }
+        .noise-profile-slider .slider-val { font-size: 0.5rem; color: #fa0; min-width: 22px; text-align: right; }
+        .noise-profile-del { width: 16px; height: 16px; font-family: inherit; font-size: 0.7rem; font-weight: bold; background: #111; color: #666; border: 1px solid #444; border-radius: 2px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .noise-profile-del:hover { background: #600; color: #f00; border-color: #f00; }
+        .no-profiles { font-size: 0.5rem; color: #444; text-align: center; padding: 0.5rem; font-style: italic; }
+        .denoise-master { display: flex; align-items: center; gap: 0.3rem; margin-top: 0.3rem; padding-top: 0.3rem; border-top: 1px solid #222; }
+        .denoise-master label { font-size: 0.55rem; color: #a80; min-width: 45px; }
+        .denoise-master input[type="range"] { flex: 1; }
+        .denoise-master .master-val { font-size: 0.55rem; color: #fa0; min-width: 28px; text-align: right; }
+        .denoise-toggle { padding: 0.15rem 0.4rem; font-family: inherit; font-size: 0.5rem; font-weight: bold; background: #111; color: #555; border: 1px solid #333; border-radius: 3px; cursor: pointer; text-transform: uppercase; }
+        .denoise-toggle:hover { border-color: #555; color: #888; }
+        .denoise-toggle.on { background: #a80; color: #000; border-color: #fa0; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Audio Signal Test v17</h1>
+        <h1>Audio Signal Test v18</h1>
         
         <div class="section tx">
             <div class="section-title">▲ Transmit</div>
@@ -245,6 +281,27 @@
                 <input type="number" id="peak-ratio" class="peak-input" value="1.0" min="1.0" max="3.0" step="0.1" style="width:40px;">
                 <span class="hz">×</span>
                 <button class="zoom-toggle" id="peak-enabled" onclick="togglePeakDetection()" style="border-color:#a0a;background:#a0a;color:#000;">ON</button>
+            </div>
+        </div>
+        
+        <div class="section denoise">
+            <div class="section-title">
+                <span>🔇 De-noise</span>
+                <button class="denoise-toggle on" id="denoise-enabled" onclick="toggleDenoiseEnabled()">ON</button>
+            </div>
+            <div class="denoise-controls">
+                <button class="denoise-btn" id="btn-listen" onclick="captureNoiseProfile()" disabled>LISTEN</button>
+                <input type="number" id="denoise-duration" class="denoise-input" value="1000" min="100" max="10000" step="100">
+                <span class="hz">ms</span>
+                <span class="range-display" id="denoise-status">Ready</span>
+            </div>
+            <div class="denoise-master">
+                <label>Master</label>
+                <input type="range" id="denoise-master-slider" min="0" max="100" value="100">
+                <span class="master-val" id="denoise-master-val">100%</span>
+            </div>
+            <div class="noise-profiles" id="noise-profiles">
+                <div class="no-profiles">No noise profiles captured</div>
             </div>
         </div>
         
@@ -420,6 +477,13 @@
         // Event history for backlog packet detection
         let eventHistory = [];
         
+        // De-noise system
+        let noiseProfiles = [];
+        let noiseProfileIdCounter = 0;
+        let denoiseEnabled = true;
+        let denoiseMasterLevel = 1.0;
+        let isCapturingNoise = false;
+        
         let graphCanvas, graphCtx;
         
         const $ = id => document.getElementById(id);
@@ -473,6 +537,203 @@
             btn.style.color = peakEnabled ? '#000' : '#555';
         }
         
+        // De-noise functions
+        function toggleDenoiseEnabled() {
+            denoiseEnabled = !denoiseEnabled;
+            const btn = $('denoise-enabled');
+            btn.classList.toggle('on', denoiseEnabled);
+            btn.textContent = denoiseEnabled ? 'ON' : 'OFF';
+            log('denoise', '', '', denoiseEnabled ? 'De-noise enabled' : 'De-noise disabled');
+        }
+        
+        function updateDenoiseMaster() {
+            denoiseMasterLevel = parseInt($('denoise-master-slider').value) / 100;
+            $('denoise-master-val').textContent = Math.round(denoiseMasterLevel * 100) + '%';
+        }
+        $('denoise-master-slider').oninput = updateDenoiseMaster;
+        
+        async function captureNoiseProfile() {
+            if (!isInit || isCapturingNoise) return;
+            
+            const duration = parseInt($('denoise-duration').value) || 1000;
+            const btn = $('btn-listen');
+            
+            isCapturingNoise = true;
+            btn.classList.add('listening');
+            btn.textContent = 'LISTENING...';
+            $('denoise-status').textContent = 'Capturing...';
+            
+            log('denoise', '', '', `Capturing noise profile (${duration}ms)...`);
+            
+            const sampleCount = Math.ceil(duration / 50); // Sample every ~50ms
+            const sampleInterval = duration / sampleCount;
+            const samples = [];
+            const binCount = analyser.frequencyBinCount;
+            
+            // Capture multiple samples over the duration
+            for (let i = 0; i < sampleCount; i++) {
+                const sampleData = new Uint8Array(binCount);
+                analyser.getByteFrequencyData(sampleData);
+                samples.push(sampleData);
+                await new Promise(r => setTimeout(r, sampleInterval));
+            }
+            
+            // Average all samples to create the noise profile
+            const avgData = new Float32Array(binCount);
+            for (let bin = 0; bin < binCount; bin++) {
+                let sum = 0;
+                for (const sample of samples) {
+                    sum += sample[bin];
+                }
+                avgData[bin] = sum / samples.length;
+            }
+            
+            // Create the noise profile
+            const profile = {
+                id: ++noiseProfileIdCounter,
+                data: avgData,
+                amount: 1.0,
+                timestamp: Date.now(),
+                duration: duration,
+                samples: samples.length
+            };
+            
+            noiseProfiles.push(profile);
+            renderNoiseProfiles();
+            
+            isCapturingNoise = false;
+            btn.classList.remove('listening');
+            btn.textContent = 'LISTEN';
+            $('denoise-status').textContent = `Profile #${profile.id} added`;
+            
+            log('denoise', '', '', `Noise profile #${profile.id} captured (${samples.length} samples)`);
+        }
+        
+        function deleteNoiseProfile(id) {
+            noiseProfiles = noiseProfiles.filter(p => p.id !== id);
+            renderNoiseProfiles();
+            log('denoise', '', '', `Noise profile #${id} deleted`);
+        }
+        
+        function updateNoiseProfileAmount(id, value) {
+            const profile = noiseProfiles.find(p => p.id === id);
+            if (profile) {
+                profile.amount = value;
+                const valSpan = document.querySelector(`#noise-profile-${id} .slider-val`);
+                if (valSpan) valSpan.textContent = Math.round(value * 100) + '%';
+            }
+        }
+        
+        function renderNoiseProfiles() {
+            const container = $('noise-profiles');
+            
+            if (noiseProfiles.length === 0) {
+                container.innerHTML = '<div class="no-profiles">No noise profiles captured</div>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            for (const profile of noiseProfiles) {
+                const el = document.createElement('div');
+                el.className = 'noise-profile';
+                el.id = `noise-profile-${profile.id}`;
+                
+                // Create mini canvas for visualization
+                const canvas = document.createElement('canvas');
+                canvas.className = 'noise-profile-canvas';
+                canvas.width = 120;
+                canvas.height = 48;
+                
+                // Draw the noise profile snapshot
+                drawNoiseProfileMini(canvas, profile.data);
+                
+                const timeStr = new Date(profile.timestamp).toLocaleTimeString('en-US', {hour12:false, hour:'2-digit', minute:'2-digit', second:'2-digit'});
+                
+                el.innerHTML = `
+                    <div class="noise-profile-info">
+                        <div class="noise-profile-label">#${profile.id} @ ${timeStr} (${profile.duration}ms)</div>
+                        <div class="noise-profile-slider">
+                            <input type="range" min="0" max="100" value="${Math.round(profile.amount * 100)}" 
+                                   oninput="updateNoiseProfileAmount(${profile.id}, this.value / 100)">
+                            <span class="slider-val">${Math.round(profile.amount * 100)}%</span>
+                        </div>
+                    </div>
+                    <button class="noise-profile-del" onclick="deleteNoiseProfile(${profile.id})">×</button>
+                `;
+                
+                el.insertBefore(canvas, el.firstChild);
+                container.appendChild(el);
+            }
+        }
+        
+        function drawNoiseProfileMini(canvas, data) {
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            const dpr = window.devicePixelRatio || 1;
+            
+            canvas.width = w * dpr;
+            canvas.height = h * dpr;
+            ctx.scale(dpr, dpr);
+            canvas.style.width = (w / 2) + 'px';
+            canvas.style.height = (h / 2) + 'px';
+            
+            ctx.fillStyle = '#050505';
+            ctx.fillRect(0, 0, w, h);
+            
+            if (!audioCtx || !data) return;
+            
+            const binW = audioCtx.sampleRate / FFT_SIZE;
+            const displayHz = 8000; // Show up to 8kHz in mini view
+            const binsToShow = Math.min(data.length, Math.ceil(displayHz / binW));
+            
+            // Find max for scaling
+            let maxVal = 1;
+            for (let i = 0; i < binsToShow; i++) {
+                if (data[i] > maxVal) maxVal = data[i];
+            }
+            
+            // Draw bars
+            const barWidth = w / binsToShow;
+            ctx.fillStyle = '#a80';
+            
+            for (let i = 0; i < binsToShow; i++) {
+                const barH = (data[i] / maxVal) * h * 0.9;
+                ctx.fillRect(i * barWidth, h - barH, Math.max(barWidth - 0.5, 0.5), barH);
+            }
+            
+            // Draw border
+            ctx.strokeStyle = '#444';
+            ctx.strokeRect(0, 0, w, h);
+        }
+        
+        // Apply de-noise to frequency data
+        function applyDenoise(rawData) {
+            if (!denoiseEnabled || noiseProfiles.length === 0 || denoiseMasterLevel === 0) {
+                return rawData;
+            }
+            
+            const result = new Uint8Array(rawData.length);
+            
+            for (let i = 0; i < rawData.length; i++) {
+                let totalNoise = 0;
+                
+                // Sum weighted noise from all profiles
+                for (const profile of noiseProfiles) {
+                    totalNoise += (profile.data[i] || 0) * profile.amount;
+                }
+                
+                // Apply master level
+                totalNoise *= denoiseMasterLevel;
+                
+                // Subtract noise, clamp to 0
+                result[i] = Math.max(0, rawData[i] - totalNoise);
+            }
+            
+            return result;
+        }
+        
         function checkPeak(centerPwr, freq, stepHz, binW, data) {
             const flankMaxLevel = centerPwr / peakRatio;
             if (!peakEnabled) return { valid: true, flankMaxLevel };
@@ -501,7 +762,7 @@
             
             const el = document.createElement('div');
             el.className = `log-entry ${type}`;
-            const tag = type === 'tx' ? 'TX▲' : type === 'rx' ? 'RX▼' : type === 'pkt' ? 'PKT' : type === 'match' ? '✓✓' : type === 'info' ? '···' : '!!!';
+            const tag = type === 'tx' ? 'TX▲' : type === 'rx' ? 'RX▼' : type === 'pkt' ? 'PKT' : type === 'match' ? '✓✓' : type === 'denoise' ? '🔇' : type === 'info' ? '···' : '!!!';
             const msg = pattern ? `${pattern} ${ascii}${extra ? ' ' + extra : ''}` : extra;
             el.innerHTML = `<span class="ts">${ts}</span><span class="tag">${tag}</span><span class="msg">${msg}</span>`;
             $('log').appendChild(el);
@@ -831,15 +1092,19 @@
                 }
             }
             
-            // Spectrum
+            // Spectrum - with de-noise applied
             if (isOnAir && analyser) {
                 analyser.getByteFrequencyData(frequencyData);
+                
+                // Apply de-noise to the display data
+                const displayData = applyDenoise(frequencyData);
+                
                 const binW = audioCtx.sampleRate / analyser.fftSize;
                 const startBin = Math.max(0, Math.floor(hzMin / binW));
-                const endBin = Math.min(frequencyData.length, Math.ceil(hzMax / binW));
+                const endBin = Math.min(displayData.length, Math.ceil(hzMax / binW));
                 
                 for (let i = startBin; i < endBin; i++) {
-                    const freq = i * binW, pwr = frequencyData[i];
+                    const freq = i * binW, pwr = displayData[i];
                     if (pwr < pwrMin) continue;
                     const x = hzToX(freq);
                     const barH = ((Math.min(pwr, pwrMax) - pwrMin) / pwrRange) * h;
@@ -942,6 +1207,7 @@
                 $('btn-test').style.display = 'block';
                 $('btn-pulse').disabled = false;
                 $('btn-packet').disabled = false;
+                $('btn-listen').disabled = false;
                 
                 ['tx-pkt-header', 'tx-pkt-payload', 'tx-pkt-checksum', 'rx-pkt-header', 'rx-pkt-payload', 'rx-pkt-checksum'].forEach(id => {
                     validatePktField($(id), id + '-status');
@@ -956,12 +1222,16 @@
         
         function startDetection() {
             const binW = audioCtx.sampleRate / analyser.fftSize;
-            const data = new Uint8Array(analyser.frequencyBinCount);
+            const rawData = new Uint8Array(analyser.frequencyBinCount);
             
             detectInterval = setInterval(() => {
                 if (!analyser || !isOnAir) return;
                 
-                analyser.getByteFrequencyData(data);
+                analyser.getByteFrequencyData(rawData);
+                
+                // Apply de-noise to the data used for detection
+                const data = applyDenoise(rawData);
+                
                 const rxFreqs = getAllFreqs(rxBaseFreq, rxStep);
                 const now = Date.now();
                 
@@ -993,7 +1263,8 @@
                 $('rx-detected-pattern').textContent = `${rxDetStr} ${getAsciiDisplay(rxDetCharCode)}`;
                 
                 const txInfo = isSending ? `TX:${txState.pattern}` : 'TX:idle';
-                $('detection-info').innerHTML = `${txInfo} | RX:${rxDetStr}`;
+                const denoiseInfo = denoiseEnabled && noiseProfiles.length > 0 ? ` [DN:${noiseProfiles.length}]` : '';
+                $('detection-info').innerHTML = `${txInfo} | RX:${rxDetStr}${denoiseInfo}`;
                 
                 // RX pulse detection
                 if (detected.some(b => b)) {
@@ -1187,6 +1458,7 @@
             $('tx-count').textContent = 'TX:0';
             $('rx-count').textContent = 'RX:0';
             $('pkt-count').textContent = 'PKT:0';
+            $('denoise-status').textContent = 'Ready';
             log('info', '', '', 'Reset');
         }
         
@@ -1199,9 +1471,11 @@
             $('peak-points-info').textContent = getPeakPointsInfo();
             setupGraph();
             requestAnimationFrame(drawGraph);
-            log('info', '', '', 'Audio Signal Test v17');
+            renderNoiseProfiles();
+            log('info', '', '', 'Audio Signal Test v18');
             log('info', '', '', '─────────────────────');
             log('info', '', '', '📦 Timing-validated packets');
+            log('info', '', '', '🔇 De-noise profiles');
         });
         
         window.addEventListener('resize', () => { if (graphCanvas) setupGraph(); });
